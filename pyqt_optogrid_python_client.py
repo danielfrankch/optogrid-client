@@ -2,14 +2,13 @@ import asyncio
 import sys
 import struct
 import threading
-from typing import Dict, List, Optional, Tuple, Any
-import tempfile
+from typing import Dict, List, Optional, Tuple
+
 import os
 import zmq
 import matplotlib
 matplotlib.use('Qt5Agg')
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
+
 import numpy as np
 import csv
 import datetime
@@ -19,6 +18,11 @@ from ahrs.filters import EKF
 import pyqtgraph as pg
 import queue
 import pandas as pd
+from PyQt5.QtGui import QFont
+
+os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "0"
+os.environ["QT_SCALE_FACTOR"] = "1"
+os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "0"
 
 # Suppress Qt warnings about meta types
 os.environ['QT_LOGGING_RULES'] = '*.warning=false'
@@ -41,7 +45,6 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QOpenGLWidget
 from PyQt5.QtGui import QVector3D
 from PyQt5.QtCore import QTimer
-import math
 from OpenGL.GL import glLineWidth
 
 # Constants and mappings (same as original)
@@ -512,11 +515,13 @@ class BrainMapWidget(QWidget):
             import os
             
             # Save to temporary file and load as QPixmap
-            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmp_file:
-                brain_image.save(tmp_file.name, 'PNG')
-                self.brain_pixmap = QPixmap(tmp_file.name)
-                os.unlink(tmp_file.name)  # Clean up temp file
-            
+            fd, tmp_path = tempfile.mkstemp(suffix='.png')
+            os.close(fd)  # Close file descriptor immediately
+
+            brain_image.save(tmp_path, 'PNG')
+            self.brain_pixmap = QPixmap(tmp_path)
+            os.unlink(tmp_path)  # Delete temp file after loading
+
             self.setFixedSize(new_size[0], new_size[1])
             self.calculate_led_positions(new_size[0], new_size[1])
             
