@@ -1,0 +1,12 @@
+bleak==0.21.1
+Pillow
+pip install PyQt5 bleak pillow asyncio
+zmq
+tornado
+matplotlib
+numpy
+PyOpenGL
+PyOpenGL_accelerate
+ahrs
+pyqtgraph
+pandas
