@@ -152,7 +152,7 @@ uuid_to_type = {
     "56781700-5678-1234-1234-5678abcdeff0": "bool",
     "56781701-5678-1234-1234-5678abcdeff0": "uint8",
     "56781702-5678-1234-1234-5678abcdeff0": "uint8",
-    "56781703-5678-1234-1234-5678abcdeff0": "int16[10]",
+    "56781703-5678-1234-1234-5678abcdeff0": "uint32+int16[9]",
 
     # Secure DFU
     "8ec90003-f315-4f60-9fb8-838830daea50": "bool"
@@ -176,8 +176,12 @@ def decode_value(uuid: str, data: bytes) -> str:
             return str(struct.unpack('<f', data[:4])[0])
         elif type_str == "bool":
             return "True" if data[0] == 1 else "False"
-        elif type_str == "int16[10]":
-            return ", ".join(str(struct.unpack('<h', data[i:i+2])[0]) for i in range(0, 20, 2))
+        elif type_str == "uint32+int16[9]":
+            # First 4 bytes: uint32 sample count
+            sample_count = int.from_bytes(data[:4], byteorder='little')
+            # Next 18 bytes: 9 int16 values (2 bytes each)
+            imu_values = [struct.unpack('<h', data[4+i:4+i+2])[0] for i in range(0, 18, 2)]
+            return f"{sample_count}, " + ", ".join(str(val) for val in imu_values)
         else:
             return data.hex()
     except Exception:
@@ -201,11 +205,6 @@ def encode_value(uuid: str, value_str: str) -> bytes:
             return struct.pack('<f', float(value_str))
         elif type_str == "bool":
             return struct.pack('<B', 1 if value_str.lower() in ['true', '1', 'yes'] else 0)
-        elif type_str == "int16[10]":
-            values = [int(x.strip()) for x in value_str.split(',')]
-            if len(values) != 7:
-                raise ValueError("Expected 6 comma-separated values")
-            return b''.join(struct.pack('<h', val) for val in values)
         else:
             return bytes.fromhex(value_str.replace(' ', ''))
     except Exception as e:
@@ -363,14 +362,14 @@ class IMU3DWidget(QOpenGLWidget):
         glTranslatef(0.0, 0.0, -6.0)
         
         # Apply rotations
-        glRotatef(self.roll-180, 0, 0, 1)
+        glRotatef(-self.roll, 0, 0, 1)
         glRotatef(self.pitch, 1, 0, 0)
-        glRotatef(90-self.yaw, 0, 1, 0)
+        glRotatef(self.yaw, 0, 1, 0)
+        
         # glRotatef(0, 0, 0, 1)
         # glRotatef(0, 1, 0, 0)
         # glRotatef(180, 0, 1, 0)
         
-
 
         # Draw rat head (5 shapes total)
         
@@ -1025,7 +1024,6 @@ class OptoGridBLEClient(QMainWindow):
         self.setWindowTitle("OptoGrid BLE Browser")
         
         self.imu_counter = 0
-        self.last_imu_time = None
         self.yaw_angle = 0.0
         # self.fusion_beta = 0.8 # Madgwick filter beta value
 
@@ -1033,6 +1031,14 @@ class OptoGridBLEClient(QMainWindow):
         self.imu_data_buffer = []
         # self.fusion_filter = Madgwick(frequency=100, beta=self.fusion_beta)  # Initialize with 100hz data rate, lower beta
         # self.q = np.array([1.0, 0.0, 0.0, 0.0])        # Initial quaternion
+
+        # Add battery voltage tracking
+        self.current_battery_voltage = None  # Store current voltage
+        
+        # Battery voltage auto-read timer (1 minute = 60000 ms)
+        self.battery_timer = QTimer()
+        self.battery_timer.timeout.connect(self.read_battery_voltage)
+        
 
         self.var_acc = 0.0001  # Lower value = trust accelerometer more for tilt
         self.var_gyro = 10   # Higher value = less gyro drift
@@ -1121,7 +1127,6 @@ class OptoGridBLEClient(QMainWindow):
         mag_x = imu_values[7]
         mag_y = imu_values[8]
         mag_z = imu_values[9]
-        timestamp = imu_values[0]
 
         # --- STEP 1: Apply calibration to raw sensor data ---
         mag_raw = np.array([mag_x, mag_y, mag_z]) # Raw magnetometer data
@@ -1138,12 +1143,12 @@ class OptoGridBLEClient(QMainWindow):
         # --- Compute heading from calibrated magnetometer (relative to North) ---
         # Heading (degrees) = arctan2(Y, X) in horizontal plane
         # Assume device is flat (no tilt compensation)
-        heading_rad = np.arctan2(mag[0], mag[1])
-        heading_deg = (np.degrees(heading_rad) + 360) % 360  # Normalize to 0-360
+        # heading_rad = np.arctan2(mag[0], mag[1])
+        # heading_deg = (np.degrees(heading_rad) + 360) % 360  # Normalize to 0-360
 
-        # Optional: log or print heading for debugging
-        if self.imu_counter % 100 == 0:  # Log every 100th sample
-            self.log(f"Magnetometer heading (deg): {heading_deg:.1f}")
+        # # Optional: log or print heading for debugging
+        # if self.imu_counter % 100 == 0:  # Log every 100th sample
+        #     self.log(f"Magnetometer heading (deg): {heading_deg:.1f}")
 
         # Use magnetometer magnitude to determine validity
         mag_magnitude = np.linalg.norm(mag)
@@ -1166,15 +1171,15 @@ class OptoGridBLEClient(QMainWindow):
         # Your mapping: Mag_Device_X = Mag_Y, Mag_Device_Y = Mag_X, Mag_Device_Z = Mag_Z
         acc_device = acc.copy()
         gyr_device = gyr.copy()
-        mag_device = np.array([mag_calibrated[1], mag_calibrated[0], mag_calibrated[2]])
+        mag_device = np.array([mag_calibrated[0], mag_calibrated[1], mag_calibrated[2]])
 
         # Remap 2: match IMU and Magnetometer axes to rat local reference frame
         # IMU_X_Local_Frame = IMU_X
         # IMU_Y_Local_Frame = IMU_Y
         # IMU_Z_Local_Frame = IMU_Z
-        acc_world = np.array([acc_device[0], acc_device[1], acc_device[2]])  
-        gyr_world = np.array([gyr_device[0], gyr_device[1], gyr_device[2]])
-        mag_world = np.array([mag_device[0], mag_device[1], mag_device[2]])  
+        acc_world = np.array([-acc_device[2], -acc_device[0], acc_device[1]])  
+        gyr_world = np.array([-gyr_device[2], -gyr_device[0], gyr_device[1]])
+        mag_world = np.array([-mag_device[2], -mag_device[1], mag_device[0]])  
 
         # acc_local_frame = acc.copy()  # Already in local frame
         # gyr_local_frame = gyr.copy()  # Already in local frame
@@ -1243,7 +1248,7 @@ class OptoGridBLEClient(QMainWindow):
 
         # self.log(f"Orientation - Roll: {self.last_roll:.1f}°, Pitch: {self.last_pitch:.1f}°, Yaw: {self.last_yaw:.1f}°")
 
-        return smooth_roll, smooth_pitch, smooth_yaw, timestamp
+        return smooth_roll, smooth_pitch, smooth_yaw
 
 
 
@@ -1500,6 +1505,21 @@ class OptoGridBLEClient(QMainWindow):
         # left_layout.addWidget(QLabel("Log Output:"))
         self.log_text = QTextEdit()
         self.log_text.setFixedSize(600, 200) 
+        # Set a monospace font for consistent spacing
+        log_font = QFont("Consolas", 9)  # or "Courier New", "Monaco"
+        if not log_font.exactMatch():
+            log_font = QFont("Courier New", 9)
+        self.log_text.setFont(log_font)
+        
+        # Set consistent line spacing
+        self.log_text.setStyleSheet("""
+            QTextEdit {
+                line-height: 1.2;
+                font-family: "Consolas", "Courier New", monospace;
+                font-size: 9pt;
+                border: 1px solid #ccc;
+            }
+        """)
         left_layout.addWidget(self.log_text)
         left_layout.addSpacing(2)  # Add this line for minimal vertical gap
 
@@ -1860,6 +1880,9 @@ class OptoGridBLEClient(QMainWindow):
         """Handle unexpected disconnections"""
         self.log(f"BLE device disconnected unexpectedly at sample {self.imu_counter}")
         
+        # Stop battery timer on disconnect
+        self.battery_timer.stop()
+
         # Flush any remaining IMU data to CSV
         if hasattr(self, "imu_data_buffer") and self.imu_data_buffer:
             self.flush_imu_buffer()
@@ -1899,6 +1922,7 @@ class OptoGridBLEClient(QMainWindow):
         if self.selected_device and self.selected_device.name:
             self.load_magnetometer_calibration(self.selected_device.name)
         
+        self.battery_timer.start(60000)  # Read every 60 seconds
         self.read_battery_voltage()
     
     def on_connect_error(self, error: str):
@@ -1913,6 +1937,10 @@ class OptoGridBLEClient(QMainWindow):
         self.status_led_button.setEnabled(False)
         self.battery_voltage_button.setEnabled(False)
         self.imu_enable_button.setEnabled(False)
+
+        # Stop battery timer on connection failure
+        self.battery_timer.stop()
+
         # Clean up worker
         if self.current_worker:
             self.current_worker.quit()
@@ -2042,25 +2070,23 @@ class OptoGridBLEClient(QMainWindow):
             if self.imu_counter % 100 == 0:  # Log every 100th message
                 self.log(f"IMU Data: {imu_values_str}")
 
+            
+
             # --- Update 3D orientation widget using AHRS sensor fusion ---
             if hasattr(self, 'imu_3d_widget') and self.imu_3d_widget:
-                smooth_roll, smooth_pitch, smooth_yaw, timestamp = self.process_imu_orientation(imu_values)
+                smooth_roll, smooth_pitch, smooth_yaw = self.process_imu_orientation(imu_values)
 
                 # Update 3D visualization
                 self.imu_3d_widget.set_orientation(smooth_roll, smooth_pitch, smooth_yaw)
-                self.last_imu_time = timestamp
             if self.imu_counter % 100 == 0:  # Log every 100th message (1 Hz)
                 self.log(f"roll: {int(smooth_roll)}, pitch: {int(smooth_pitch)}, yaw: {int(smooth_yaw)}")
                 # self.imu_counter = 0  # Reset counter after logging
 
 
-            # --- Update IMU plot ---
-            if hasattr(self, 'imu_plot_widget') and self.imu_plot_widget:
-                # Pass the raw imu_values to the plot widget
-                self.imu_plot_widget.update_plot(imu_values)
-
             # Buffer IMU data for later processing
             if getattr(self, "imu_enable_state", False):
+
+
                 # Get uncertainty from fusion_filter (EKF)
                 uncertainty = None
                 if hasattr(self.fusion_filter, "P"):
@@ -2072,12 +2098,26 @@ class OptoGridBLEClient(QMainWindow):
 
                 # Add sync value (default 0)
                 imu_data_with_sync = imu_values + [0]
+ 
 
                 # Add smoothed roll, pitch, yaw and uncertainty to CSV
-                row = imu_data_with_sync + [smooth_roll, smooth_pitch, smooth_yaw, uncertainty]
+                if self.current_battery_voltage is not None:
+                    battery_v = self.current_battery_voltage
+                    self.current_battery_voltage = None # Reset after reading
+                else:
+                    battery_v = ""
+
+                row = imu_data_with_sync + [smooth_roll, smooth_pitch, smooth_yaw, uncertainty, battery_v]
                 self.imu_data_buffer.append(row)
                 if len(self.imu_data_buffer) >= 100:
                     self.flush_imu_buffer()
+
+            # --- Update IMU plot ---
+            if hasattr(self, 'imu_plot_widget') and self.imu_plot_widget:
+                # Pass the raw imu_values to the plot widget
+                self.imu_plot_widget.update_plot(imu_values)
+
+
         except Exception as e:
             self.log(f"Error in IMU data handler: {str(e)}")
 
@@ -2373,7 +2413,8 @@ class OptoGridBLEClient(QMainWindow):
     def read_battery_voltage(self):
         """Read the battery voltage characteristic and log the value"""
         if not self.client or not self.client.is_connected:
-            QMessageBox.warning(self, "Not Connected", "Please connect to a device first!")
+            # Don't show warning popup for auto-reads, just log silently
+            self.log("Battery auto-read skipped: not connected")
             return
 
         # Battery Voltage UUID
@@ -2384,15 +2425,24 @@ class OptoGridBLEClient(QMainWindow):
 
         async def do_read():
             try:
+                # Double-check connection before attempting read
+                if not self.client or not self.client.is_connected:
+                    raise Exception("Device disconnected during read attempt")
+                    
                 val = await self.client.read_gatt_char(battery_voltage_uuid)
                 voltage = decode_value(battery_voltage_uuid, val)
                 voltage = int(voltage)  # voltage in mV
                 self.battery_voltage_read.emit(voltage)
 
             except Exception as e:
+                # Stop timer on any error to prevent repeated failures
+                if hasattr(self, 'battery_timer') and self.battery_timer.isActive():
+                    self.battery_timer.stop()
+                    self.log("Battery auto-read stopped due to error")
                 self.log(f"Error reading battery voltage: {e}")
-            self.battery_voltage_button.setText("Read Battery Voltage")
-            self.battery_voltage_button.setEnabled(True)
+            finally:
+                self.battery_voltage_button.setText("Read Battery Voltage")
+                self.battery_voltage_button.setEnabled(True)
 
         self.current_worker = AsyncWorker(do_read())
         self.current_worker.finished.connect(lambda _: None)
@@ -2403,6 +2453,7 @@ class OptoGridBLEClient(QMainWindow):
     def update_battery_voltage_bar(self, voltage):
         self.battery_voltage_bar.setValue(voltage)
         self.battery_voltage_bar.setFormat("%.2f V" % (voltage / 1000.0))
+        self.current_battery_voltage = voltage/1000
         self.log(f"Battery Voltage: {voltage} mV")
 
     def toggle_imu_enable(self):
@@ -2435,10 +2486,11 @@ class OptoGridBLEClient(QMainWindow):
                 self.imu_csv_writer = csv.writer(self.imu_csv_file)
                 # Write header
                 self.imu_csv_writer.writerow([
-                    "timestamp", "acc_x", "acc_y", "acc_z",
+                    "sample", 
+                    "acc_x", "acc_y", "acc_z", 
                     "gyro_x", "gyro_y", "gyro_z",
                     "mag_x", "mag_y", "mag_z", "sync",
-                    "roll", "pitch", "yaw", "uncertainty"
+                    "roll", "pitch", "yaw", "uncertainty", "bat_v"
                 ])
                 self.log(f"IMU logging started: {filename}")
             except Exception as e:
@@ -2625,6 +2677,10 @@ class OptoGridBLEClient(QMainWindow):
         try:
             print("Starting cleanup...")
             
+            # Stop the battery timer
+            if hasattr(self, 'battery_timer'):
+                self.battery_timer.stop()
+
             # First stop the ZMQ listener
             if hasattr(self, 'zmq_listener'):
                 print("Stopping ZMQ listener...")

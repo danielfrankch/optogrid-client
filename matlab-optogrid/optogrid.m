@@ -16,6 +16,7 @@ classdef optogrid < handle
         ZMQSocket = "tcp://localhost:5555"
         context
         socket
+        trigger_success_flag = 0 % Defaults to 0, when trigger success, set 1
     end
 
     methods
