@@ -34,11 +34,20 @@ pyenv local 3.12.4
 sudo apt update && sudo apt install -y \
   libxcb-xinerama0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
   libxcb-render-util0 libxcb-xkb1 libxkbcommon-x11-0 libx11-xcb1
+sudo apt install qt5-qmake qtbase5-dev build-essential
+
+7.5 Install pyqt5 separatly in RPi instead of using pip install requirements
+sudo apt install python3-pyqt5
+
+
 
 8. run setup script
 ./env_setup_linux.sh
 
 9. activate virtual enviornment
+
+888 For RPi, just run
+python3 headless_optogrid_backend.py
 
 10. run the pyqt client server
 

@@ -9,7 +9,6 @@ tornado
 matplotlib
 numpy
 PyOpenGL
-PyOpenGL_accelerate
 ahrs
 pyqtgraph
 pandas

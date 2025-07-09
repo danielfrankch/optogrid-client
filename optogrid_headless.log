@@ -1,0 +1,23 @@
+2025-07-09 21:30:35,285 - INFO - Starting OptoGrid Backend in headless mode...
+2025-07-09 21:31:27,021 - INFO - Received command: optogrid.connect = OptoGrid 1
+2025-07-09 21:31:34,325 - INFO - Received command: optogrid.connect = OptoGrid 1
+2025-07-09 21:31:39,392 - INFO - Received command: optogrid.connect = OptoGrid 1
+2025-07-09 21:37:56,261 - INFO - Starting OptoGrid Headless Client...
+2025-07-09 21:37:56,261 - INFO - ZMQ server listening on port 5555...
+2025-07-09 21:38:06,596 - INFO - Received ZMQ command: optogrid.connect = OptoGrid 1
+2025-07-09 21:38:06,596 - INFO - Scanning for device: OptoGrid 1
+2025-07-09 21:38:10,728 - INFO - Connecting to OptoGrid 1...
+2025-07-09 21:38:13,718 - INFO - BLE notifications enabled
+2025-07-09 21:38:13,782 - INFO - EKF filter frequency set to 100 Hz
+2025-07-09 21:38:13,958 - INFO - Magnetometer calibration file not found: data/OptoGrid 1 Calibration.csv
+2025-07-09 21:38:13,958 - INFO - Using default calibration (no offset correction)
+2025-07-09 21:38:13,958 - INFO - Connected to OptoGrid 1
+2025-07-09 21:38:21,803 - INFO - Received ZMQ command: optogrid.trigger
+2025-07-09 21:38:22,080 - INFO - Sent opto trigger
+2025-07-09 21:38:26,076 - INFO - Received signal 2, shutting down...
+2025-07-09 21:38:26,085 - INFO - Cleaning up resources...
+2025-07-09 21:38:26,087 - WARNING - BLE device disconnected unexpectedly at sample 0
+2025-07-09 21:38:26,087 - INFO - BLE disconnected
+2025-07-09 21:38:26,088 - INFO - ZMQ closed
+2025-07-09 21:38:26,088 - INFO - Cleaning up resources...
+2025-07-09 21:38:26,088 - INFO - ZMQ closed

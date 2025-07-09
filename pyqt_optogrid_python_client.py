@@ -2799,6 +2799,7 @@ class OptoGridBLEClient(QMainWindow):
             print("Closing application...")
             event.accept()
 
+
 def main():
     """Main application entry point"""
     app = QApplication(sys.argv)
