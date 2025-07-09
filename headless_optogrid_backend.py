@@ -225,43 +225,86 @@ class HeadlessOptoGridClient:
         self.last_yaw = None
         self.last_mag = np.zeros(3)
 
+
     
     def setup_gpio_trigger(self, pin=17):
-        """Setup GPIO pin for rising edge detection"""
-        try:
-            # Check if GPIO is already initialized
-            try:
-                GPIO.setmode(GPIO.BCM)
-            except Exception as e:
-                self.logger.warning(f"GPIO setmode warning: {e}")
-                # Try to cleanup and reinitialize
-                GPIO.cleanup()
-                GPIO.setmode(GPIO.BCM)
+        """Setup GPIO pin for rising edge detection with detailed diagnostics"""
+        if not GPIO_AVAILABLE:
+            self.logger.error("RPi.GPIO not available")
+            return
             
-            # Setup pin
+        try:
+            # Step 1: Check if we're on a Raspberry Pi
+            try:
+                with open('/proc/cpuinfo', 'r') as f:
+                    cpuinfo = f.read()
+                    if 'BCM' not in cpuinfo and 'Raspberry Pi' not in cpuinfo:
+                        self.logger.error("Not running on a Raspberry Pi")
+                        return
+            except:
+                self.logger.warning("Could not verify Raspberry Pi hardware")
+            
+            # Step 2: Clean up any existing GPIO state
+            self.logger.info("Cleaning up GPIO...")
+            GPIO.cleanup()
+            
+            # Step 3: Set GPIO mode
+            self.logger.info("Setting GPIO mode to BCM...")
+            GPIO.setmode(GPIO.BCM)
+            
+            # Step 4: Setup pin as input
+            self.logger.info(f"Setting up GPIO{pin} as input...")
             GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
             
-            # Remove any existing edge detection on this pin
+            # Step 5: Test pin reading
+            self.logger.info(f"Testing GPIO{pin} read...")
+            pin_state = GPIO.input(pin)
+            self.logger.info(f"GPIO{pin} current state: {pin_state}")
+            
+            # Step 6: Remove any existing event detection
+            self.logger.info(f"Removing existing event detection on GPIO{pin}...")
             try:
                 GPIO.remove_event_detect(pin)
-            except Exception:
-                pass  # Ignore if no detection was set
+            except Exception as e:
+                self.logger.info(f"No existing event detection to remove: {e}")
             
-            # Add edge detection with longer bouncetime
-            GPIO.add_event_detect(pin, GPIO.RISING, callback=self.gpio_trigger_callback, bouncetime=300)
-            self.logger.info(f"GPIO pin {pin} configured for rising edge detection")
+            # Step 7: Add event detection (this is where it usually fails)
+            self.logger.info(f"Adding event detection on GPIO{pin}...")
+            GPIO.add_event_detect(pin, GPIO.RISING, callback=self.gpio_trigger_callback, bouncetime=200)
             
+            self.logger.info(f"GPIO{pin} successfully configured!")
+            
+        except RuntimeError as e:
+            if "This module can only be run on a Raspberry Pi" in str(e):
+                self.logger.error("Not running on Raspberry Pi hardware")
+            elif "No access to /dev/mem" in str(e):
+                self.logger.error("No permission to access GPIO - run with sudo or fix permissions")
+            else:
+                self.logger.error(f"GPIO RuntimeError: {e}")
+                
         except Exception as e:
-            self.logger.error(f"GPIO setup failed: {e}")
-            self.logger.info("Possible solutions:")
-            self.logger.info("1. Run with sudo: sudo python headless_optogrid_client.py")
-            self.logger.info("2. Add user to gpio group: sudo usermod -a -G gpio $USER")
-            self.logger.info("3. Check if another process is using GPIO")
-
+            self.logger.error(f"GPIO setup failed at step: {e}")
+            self.logger.error(f"Error type: {type(e).__name__}")
+            
+            # Additional debugging info
+            import os
+            self.logger.info("=== GPIO Debug Info ===")
+            self.logger.info(f"User: {os.getenv('USER')}")
+            self.logger.info(f"Groups: {os.popen('groups').read().strip()}")
+            
+            # Check GPIO device files
+            gpio_files = ['/dev/gpiomem', '/dev/mem', '/sys/class/gpio']
+            for file_path in gpio_files:
+                if os.path.exists(file_path):
+                    stat = os.stat(file_path)
+                    self.logger.info(f"{file_path}: exists, mode: {oct(stat.st_mode)}")
+                else:
+                    self.logger.info(f"{file_path}: does not exist")
+    
     def gpio_trigger_callback(self, channel):
         """GPIO trigger callback"""
-        self.logger.info(f"GPIO trigger detected on pin {channel}")
-        asyncio.create_task(self.do_send_trigger())
+        print(f"[GPIO] Rising edge detected on GPIO{channel}")
+        self.logger.info(f"GPIO trigger on pin {channel}")
 
     def signal_handler(self, signum, frame):
         """Handle shutdown signals"""
