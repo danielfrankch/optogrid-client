@@ -225,81 +225,112 @@ class HeadlessOptoGridClient:
         self.last_yaw = None
         self.last_mag = np.zeros(3)
 
-
     
     def setup_gpio_trigger(self, pin=17):
-        """Setup GPIO pin for rising edge detection with detailed diagnostics"""
+        """Setup GPIO pin for rising edge detection - FORCE INTERRUPT MODE"""
         if not GPIO_AVAILABLE:
             self.logger.error("RPi.GPIO not available")
             return
             
         try:
-            # Step 1: Check if we're on a Raspberry Pi
+            # STEP 1: Nuclear cleanup - kill everything GPIO related
+            self.logger.info("Nuclear GPIO cleanup...")
+            
+            # Cleanup RPi.GPIO
             try:
-                with open('/proc/cpuinfo', 'r') as f:
-                    cpuinfo = f.read()
-                    if 'BCM' not in cpuinfo and 'Raspberry Pi' not in cpuinfo:
-                        self.logger.error("Not running on a Raspberry Pi")
-                        return
+                GPIO.cleanup()
             except:
-                self.logger.warning("Could not verify Raspberry Pi hardware")
+                pass
+                
+            # Force unexport the pin via sysfs
+            try:
+                with open(f'/sys/class/gpio/unexport', 'w') as f:
+                    f.write(str(pin))
+            except:
+                pass
+                
+            # Wait for hardware to settle
+            import time
+            time.sleep(0.2)
             
-            # Step 2: Clean up any existing GPIO state
-            self.logger.info("Cleaning up GPIO...")
-            GPIO.cleanup()
-            
-            # Step 3: Set GPIO mode
-            self.logger.info("Setting GPIO mode to BCM...")
+            # STEP 2: Fresh GPIO setup
+            self.logger.info("Fresh GPIO setup...")
             GPIO.setmode(GPIO.BCM)
             
-            # Step 4: Setup pin as input
-            self.logger.info(f"Setting up GPIO{pin} as input...")
+            # STEP 3: Setup pin with explicit parameters
             GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
             
-            # Step 5: Test pin reading
-            self.logger.info(f"Testing GPIO{pin} read...")
-            pin_state = GPIO.input(pin)
-            self.logger.info(f"GPIO{pin} current state: {pin_state}")
+            # Verify pin setup
+            state = GPIO.input(pin)
+            self.logger.info(f"GPIO{pin} setup complete, current state: {state}")
             
-            # Step 6: Remove any existing event detection
-            self.logger.info(f"Removing existing event detection on GPIO{pin}...")
-            try:
-                GPIO.remove_event_detect(pin)
-            except Exception as e:
-                self.logger.info(f"No existing event detection to remove: {e}")
-            
-            # Step 7: Add event detection (this is where it usually fails)
-            self.logger.info(f"Adding event detection on GPIO{pin}...")
-            GPIO.add_event_detect(pin, GPIO.RISING, callback=self.gpio_trigger_callback, bouncetime=200)
-            
-            self.logger.info(f"GPIO{pin} successfully configured!")
-            
-        except RuntimeError as e:
-            if "This module can only be run on a Raspberry Pi" in str(e):
-                self.logger.error("Not running on Raspberry Pi hardware")
-            elif "No access to /dev/mem" in str(e):
-                self.logger.error("No permission to access GPIO - run with sudo or fix permissions")
-            else:
-                self.logger.error(f"GPIO RuntimeError: {e}")
-                
+            # STEP 4: Add event detection with retry mechanism
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    self.logger.info(f"Adding edge detection attempt {attempt + 1}/{max_retries}")
+                    
+                    # Remove any existing detection first
+                    try:
+                        GPIO.remove_event_detect(pin)
+                        time.sleep(0.1)
+                    except:
+                        pass
+                    
+                    # Add the interrupt
+                    GPIO.add_event_detect(
+                        pin, 
+                        GPIO.RISING, 
+                        callback=self.gpio_trigger_callback, 
+                        bouncetime=200
+                    )
+                    
+                    # Test if it worked
+                    if GPIO.event_detected(pin):
+                        GPIO.event_detected(pin)  # Clear any pending events
+                    
+                    self.logger.info(f"SUCCESS: GPIO{pin} interrupt configured!")
+                    return
+                    
+                except RuntimeError as e:
+                    self.logger.warning(f"Attempt {attempt + 1} failed: {e}")
+                    if attempt < max_retries - 1:
+                        time.sleep(0.5)
+                    else:
+                        raise e
+                        
         except Exception as e:
-            self.logger.error(f"GPIO setup failed at step: {e}")
-            self.logger.error(f"Error type: {type(e).__name__}")
-            
-            # Additional debugging info
-            import os
-            self.logger.info("=== GPIO Debug Info ===")
-            self.logger.info(f"User: {os.getenv('USER')}")
-            self.logger.info(f"Groups: {os.popen('groups').read().strip()}")
-            
-            # Check GPIO device files
-            gpio_files = ['/dev/gpiomem', '/dev/mem', '/sys/class/gpio']
-            for file_path in gpio_files:
-                if os.path.exists(file_path):
-                    stat = os.stat(file_path)
-                    self.logger.info(f"{file_path}: exists, mode: {oct(stat.st_mode)}")
-                else:
-                    self.logger.info(f"{file_path}: does not exist")
+            self.logger.error(f"FAILED to setup GPIO interrupt: {e}")
+            raise e
+    
+    def gpio_trigger_callback(self, channel):
+        """GPIO interrupt callback"""
+        import time
+        timestamp = time.strftime('%H:%M:%S.%f')[:-3]
+        print(f"[GPIO INTERRUPT] Rising edge on GPIO{channel} at {timestamp}")
+        self.logger.info(f"GPIO interrupt triggered on pin {channel}")
+        
+        # Trigger device if connected
+        if self.client and self.client.is_connected:
+            # Create task in the main event loop
+            import asyncio
+            try:
+                loop = asyncio.get_event_loop()
+                asyncio.run_coroutine_threadsafe(self.do_send_trigger(), loop)
+            except Exception as e:
+                self.logger.error(f"Failed to send trigger: {e}")
+    
+    # Add this to __init__ method right after GPIO setup
+    def __init__(self):
+        # ...existing init code...
+        
+        # Setup GPIO with nuclear option
+        if GPIO_AVAILABLE:
+            try:
+                self.setup_gpio_trigger(pin=17)
+            except Exception as e:
+                self.logger.error(f"GPIO setup completely failed: {e}")
+                # Don't exit, continue without GPIO
     
     def gpio_trigger_callback(self, channel):
         """GPIO trigger callback"""
