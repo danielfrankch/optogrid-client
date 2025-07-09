@@ -4,14 +4,14 @@ classdef optogrid < handle
         DeviceName = "OptoGrid 1"
         OptoSetting = struct(...
             'sequence_length', 1, ...
-            'led_selection', 33024, ...
-            'duration', 1000, ...
-            'period', 20, ...
-            'pulse_width', 5, ...
+            'led_selection', uint64(34359738368), ...
+            'duration', 550, ...
+            'period', 25, ...
+            'pulse_width', 10, ...
             'amplitude', 100, ...
             'pwm_frequency', 50000, ...
             'ramp_up', 0, ...
-            'ramp_down', 2000)
+            'ramp_down', 200)
         BatteryReading = []
         ZMQSocket = "tcp://localhost:5555"
         context
@@ -85,6 +85,38 @@ classdef optogrid < handle
                 success = 0;
             end
         end
+
+    function [success, DeviceName, battery_voltage_mV] = readbattery(obj)
+        obj.socket.send_string(sprintf('optogrid.readbattery'));
+        try
+            reply = char(obj.socket.recv_string());
+        catch
+            reply = '';
+        end
+        
+        % Default values
+        success = 0;
+        DeviceName = obj.DeviceName; % Use the DeviceName property
+        battery_voltage_mV = 0;
+
+        if contains(reply, 'Battery Voltage')
+            success = 1;
+            % Extract device name and voltage using regular expressions
+            device_pattern = '^(.*?) Battery Voltage';
+            voltage_pattern = 'Battery Voltage = (\d+) mV';
+            
+            device_tokens = regexp(reply, device_pattern, 'tokens');
+            voltage_tokens = regexp(reply, voltage_pattern, 'tokens');
+            
+            if ~isempty(device_tokens)
+                DeviceName = device_tokens{1}{1};
+            end
+            
+            if ~isempty(voltage_tokens)
+                battery_voltage_mV = str2double(voltage_tokens{1}{1});
+            end
+        end
+    end
 
         function success = program(obj)
             obj.socket.send_string(sprintf('optogrid.program'));

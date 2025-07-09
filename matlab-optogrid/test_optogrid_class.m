@@ -53,6 +53,14 @@ else
     disp('Disable IMU: Failed');
 end
 
+%% Test 7: Read Battery Voltage
+[success, device_name, battery_voltage_mV] = og.readbattery();
+if success
+    fprintf('Read Battery: Success - Device: %s, Voltage: %d mV\n', device_name, battery_voltage_mV);
+else
+    fprintf('Read Battery: Failed - Device: %s\n', device_name);
+end
+
 %% Cleanup
 og.cleanup();
 disp('Test complete!');

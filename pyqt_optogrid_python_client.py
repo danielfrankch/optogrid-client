@@ -895,6 +895,7 @@ class ZMQListener(QThread):
     connect_requested = pyqtSignal(str)  
     enable_imu_requested = pyqtSignal()  
     disable_imu_requested = pyqtSignal() 
+    read_battery_requested = pyqtSignal() 
     startup_message = pyqtSignal(str)
     reply_ready = pyqtSignal(str)
     
@@ -943,6 +944,11 @@ class ZMQListener(QThread):
                         reply = self.reply_queue.get()
                         self.socket.send_string(reply)
                         
+                    elif "optogrid.readbattery" in message:
+                        self.read_battery_requested.emit()
+                        reply = self.reply_queue.get()
+                        self.socket.send_string(reply)
+
                     elif "optogrid.sync" in message:
                         try:
                             sync_value = int(message.split('=')[1].strip())
@@ -1093,6 +1099,7 @@ class OptoGridBLEClient(QMainWindow):
         self.zmq_listener.connect_requested.connect(self.handle_connect_request)
         self.zmq_listener.enable_imu_requested.connect(self.handle_enable_imu_request)
         self.zmq_listener.disable_imu_requested.connect(self.handle_disable_imu_request)
+        self.zmq_listener.read_battery_requested.connect(self.handle_read_battery_request)
         self.imu_enable_state = False
         self.zmq_listener.reply_ready.connect(self.zmq_listener.send_reply)
 
@@ -1448,6 +1455,30 @@ class OptoGridBLEClient(QMainWindow):
             self.toggle_imu_enable()  # Use existing method
             self.zmq_listener.reply_queue.put("IMU disabled, and logging stopped")
 
+    def handle_read_battery_request(self):
+        """Handle ZMQ battery voltage read request"""
+        if not self.client or not self.client.is_connected:
+            self.zmq_listener.reply_queue.put("Error: Not connected to device")
+            return
+
+        # Extract device name from GATT table
+        device_name = "Unknown Device"
+        for i in range(self.gatt_tree.topLevelItemCount()):
+            item = self.gatt_tree.topLevelItem(i)
+            if item.text(1) == "Device ID":  # Look for the Device ID characteristic
+                device_name = item.text(2)  # Get the current value
+                break
+
+        # Use existing read_battery_voltage method but capture the result
+        self.battery_voltage_read.disconnect()  # Temporarily disconnect existing handler
+
+        def battery_read_handler(voltage):
+            reply = f"{device_name} Battery Voltage = {voltage} mV"
+            self.zmq_listener.reply_queue.put(reply)
+            self.battery_voltage_read.connect(self.update_battery_voltage_bar)  # Reconnect
+
+        self.battery_voltage_read.connect(battery_read_handler)
+        self.read_battery_voltage()  # Trigger the existing read function
 
     def setup_ui(self):
         """Setup the user interface"""
@@ -1922,7 +1953,7 @@ class OptoGridBLEClient(QMainWindow):
         if self.selected_device and self.selected_device.name:
             self.load_magnetometer_calibration(self.selected_device.name)
         
-        self.battery_timer.start(60000)  # Read every 60 seconds
+        # self.battery_timer.start(60000)  # Read every 60 seconds
         self.read_battery_voltage()
     
     def on_connect_error(self, error: str):

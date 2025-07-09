@@ -57,3 +57,8 @@ pip install zmq
 
 15. 
 
+
+
+
+## Windows to make MATLAB support zmq
+1. 
