@@ -180,11 +180,16 @@ class HeadlessOptoGridClient:
         # Setup GPIO with nuclear option
         if GPIO_AVAILABLE:
             try:
-                self.setup_gpio_trigger(pin=17)
+                # GPIO setup
+                self.gpio_pin = 17  # GPIO pin to monitor
+                self.setup_gpio_trigger(self.gpio_pin)
             except Exception as e:
                 self.logger.error(f"GPIO setup completely failed: {e}")
                 # Don't exit, continue without GPIO
         
+        # Store the main event loop
+        self.loop = asyncio.get_event_loop()
+
         # Signal handlers for graceful shutdown
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
@@ -248,13 +253,13 @@ class HeadlessOptoGridClient:
     
     def gpio_trigger_callback(self):
         """Callback function for GPIO interrupt"""
-        print(f"[GPIOZERO] Rising edge detected on GPIO")
-        self.logger.info(f"Rising edge detected on GPIO")
+        print(f"[GPIOZERO] Rising edge detected on GPIO {self.gpio_pin}")
+        self.logger.info(f"Rising edge detected on GPIO {self.gpio_pin}")
         
         # Trigger device if connected
         if self.client and self.client.is_connected:
             try:
-                asyncio.run_coroutine_threadsafe(self.do_send_trigger(), asyncio.get_event_loop())
+                asyncio.run_coroutine_threadsafe(self.do_send_trigger(), self.loop)
             except Exception as e:
                 self.logger.error(f"Failed to send trigger from GPIO: {e}")
 
