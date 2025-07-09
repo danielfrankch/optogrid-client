@@ -225,15 +225,38 @@ class HeadlessOptoGridClient:
         self.last_yaw = None
         self.last_mag = np.zeros(3)
 
+    
     def setup_gpio_trigger(self, pin=17):
         """Setup GPIO pin for rising edge detection"""
         try:
-            GPIO.setmode(GPIO.BCM)
+            # Check if GPIO is already initialized
+            try:
+                GPIO.setmode(GPIO.BCM)
+            except Exception as e:
+                self.logger.warning(f"GPIO setmode warning: {e}")
+                # Try to cleanup and reinitialize
+                GPIO.cleanup()
+                GPIO.setmode(GPIO.BCM)
+            
+            # Setup pin
             GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-            GPIO.add_event_detect(pin, GPIO.RISING, callback=self.gpio_trigger_callback, bouncetime=200)
+            
+            # Remove any existing edge detection on this pin
+            try:
+                GPIO.remove_event_detect(pin)
+            except Exception:
+                pass  # Ignore if no detection was set
+            
+            # Add edge detection with longer bouncetime
+            GPIO.add_event_detect(pin, GPIO.RISING, callback=self.gpio_trigger_callback, bouncetime=300)
             self.logger.info(f"GPIO pin {pin} configured for rising edge detection")
+            
         except Exception as e:
             self.logger.error(f"GPIO setup failed: {e}")
+            self.logger.info("Possible solutions:")
+            self.logger.info("1. Run with sudo: sudo python headless_optogrid_client.py")
+            self.logger.info("2. Add user to gpio group: sudo usermod -a -G gpio $USER")
+            self.logger.info("3. Check if another process is using GPIO")
 
     def gpio_trigger_callback(self, channel):
         """GPIO trigger callback"""
