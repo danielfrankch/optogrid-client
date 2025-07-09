@@ -177,9 +177,13 @@ class HeadlessOptoGridClient:
         self.imu_csv_writer = None
         self.current_battery_voltage = None
         
-        # Setup GPIO if available
+        # Setup GPIO with nuclear option
         if GPIO_AVAILABLE:
-            self.setup_gpio_trigger()
+            try:
+                self.setup_gpio_trigger(pin=17)
+            except Exception as e:
+                self.logger.error(f"GPIO setup completely failed: {e}")
+                # Don't exit, continue without GPIO
         
         # Signal handlers for graceful shutdown
         signal.signal(signal.SIGINT, self.signal_handler)
@@ -321,17 +325,6 @@ class HeadlessOptoGridClient:
             except Exception as e:
                 self.logger.error(f"Failed to send trigger: {e}")
     
-    # Add this to __init__ method right after GPIO setup
-    def __init__(self):
-        # ...existing init code...
-        
-        # Setup GPIO with nuclear option
-        if GPIO_AVAILABLE:
-            try:
-                self.setup_gpio_trigger(pin=17)
-            except Exception as e:
-                self.logger.error(f"GPIO setup completely failed: {e}")
-                # Don't exit, continue without GPIO
     
     def gpio_trigger_callback(self, channel):
         """GPIO trigger callback"""
