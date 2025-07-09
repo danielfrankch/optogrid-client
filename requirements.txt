@@ -13,3 +13,4 @@ PyOpenGL_accelerate
 ahrs
 pyqtgraph
 pandas
+RPi.GPIO

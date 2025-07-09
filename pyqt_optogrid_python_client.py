@@ -19,6 +19,11 @@ import pyqtgraph as pg
 import queue
 import pandas as pd
 from PyQt5.QtGui import QFont
+try:
+    import RPi.GPIO as GPIO
+    GPIO_AVAILABLE = True
+except ImportError:
+    GPIO_AVAILABLE = False
 
 os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "0"
 os.environ["QT_SCALE_FACTOR"] = "1"
@@ -1110,6 +1115,12 @@ class OptoGridBLEClient(QMainWindow):
         self.setup_ui()
         self.setup_connections()
 
+        # Setup GPIO trigger only if GPIO is available
+        if GPIO_AVAILABLE:
+            self.setup_gpio_trigger(pin=17)  # Use GPIO pin 17 for rising edge detection
+        else:
+            self.log("Skipping GPIO setup: Not available on this device.")
+            
         # Start in non-debug mode
         self.toggle_debug_mode(False)
         self.debug_button.setEnabled(True)  # Keep debug button always enabled
@@ -1119,9 +1130,27 @@ class OptoGridBLEClient(QMainWindow):
 
 
 
+    def setup_gpio_trigger(self, pin=17):
+        """Setup GPIO pin for rising edge detection to trigger send_trigger."""
+        if not GPIO_AVAILABLE:
+            self.log("GPIO functionality is not available on this device.")
+            return
+    
+        GPIO.setmode(GPIO.BCM)  # Use BCM numbering
+        GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)  # Set pin as input with pull-down resistor
+    
+        # Add event detection for rising edge
+        GPIO.add_event_detect(pin, GPIO.RISING, callback=self.gpio_trigger_callback, bouncetime=200)
+        self.log(f"GPIO pin {pin} configured for rising edge detection.")
 
-
-
+    def gpio_trigger_callback(self, channel):
+        """Callback function for GPIO rising edge detection."""
+        if not GPIO_AVAILABLE:
+            self.log("GPIO functionality is not available on this device.")
+            return
+    
+        self.log(f"Rising edge detected on GPIO pin {channel}. Sending trigger...")
+        self.send_trigger()
 
     def process_imu_orientation(self, imu_values):
         """Process IMU data and calculate orientation with magnetometer as compass"""
@@ -2380,14 +2409,14 @@ class OptoGridBLEClient(QMainWindow):
             self.current_worker.wait()
             self.current_worker = None
         
-        self.log("Sending opto trigger...")
-        self.trigger_button.setText("Triggering...")
-        self.trigger_button.setEnabled(False)
-        
         self.current_worker = AsyncWorker(self.do_send_trigger())
         self.current_worker.finished.connect(self.on_trigger_complete)
         self.current_worker.error.connect(self.on_trigger_error)
         self.current_worker.start()
+
+        self.log("Sending opto trigger...")
+        self.trigger_button.setText("Triggering...")
+        self.trigger_button.setEnabled(False)
     
     async def do_send_trigger(self):
         """Perform the actual trigger operation"""
@@ -2758,6 +2787,11 @@ class OptoGridBLEClient(QMainWindow):
                 except Exception as e:
                     print(f"Error disconnecting BLE: {e}")
                 self.client = None
+
+            # Cleanup GPIO
+            if GPIO_AVAILABLE:
+                GPIO.cleanup()
+                self.log("GPIO resources cleaned up.")
 
         except Exception as e:
             print(f"Error during cleanup: {e}")
