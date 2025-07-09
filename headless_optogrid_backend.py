@@ -225,6 +225,7 @@ class HeadlessOptoGridClient:
         self.last_yaw = None
         self.last_mag = np.zeros(3)
 
+
     
     def setup_gpio_trigger(self, pin=17):
         """Setup GPIO pin for rising edge detection - FORCE INTERRUPT MODE"""
