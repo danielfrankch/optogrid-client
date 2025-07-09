@@ -16,7 +16,7 @@ import queue
 import signal
 
 try:
-    import lgpio
+    from gpiozero import Button
     GPIO_AVAILABLE = True
 except ImportError:
     GPIO_AVAILABLE = False
@@ -231,30 +231,25 @@ class HeadlessOptoGridClient:
 
 
     
-        def setup_gpio_trigger(self, pin=17):
-            """Setup GPIO pin for rising edge detection using LGPIO"""
-            try:
-                # Open GPIO chip
-                self.chip = lgpio.gpiochip_open(0)  # Open GPIO chip 0
-                
-                # Claim the pin as input
-                lgpio.gpio_claim_input(self.chip, pin)
-                
-                # Set debounce time
-                lgpio.gpio_set_debounce(self.chip, pin, 200)  # 200ms debounce
-                
-                # Register callback for rising edge detection
-                lgpio.gpio_register_callback(self.chip, pin, lgpio.RISING_EDGE, self.gpio_trigger_callback)
-                
-                self.logger.info(f"GPIO {pin} configured successfully for rising edge detection using LGPIO")
-            except Exception as e:
-                self.logger.error(f"Failed to setup GPIO {pin} using LGPIO: {e}")
+    def setup_gpio_trigger(self, pin):
+        """Setup GPIO pin for rising edge detection using gpiozero"""
+        try:
+            self.logger.info(f"Setting up GPIO {pin} for rising edge detection...")
+            
+            # Create a Button object for the pin
+            self.button = Button(pin, pull_up=False)
+            
+            # Attach the callback to the rising edge
+            self.button.when_pressed = self.gpio_trigger_callback
+            
+            self.logger.info(f"GPIO {pin} successfully configured using gpiozero")
+        except Exception as e:
+            self.logger.error(f"Failed to setup GPIO {pin} using gpiozero: {e}")
     
-    def gpio_trigger_callback(self, chip, gpio, level, tick):
+    def gpio_trigger_callback(self):
         """Callback function for GPIO interrupt"""
-        timestamp = time.strftime('%H:%M:%S.%f')[:-3]
-        print(f"[LGPIO] GPIO {gpio} rising edge detected at {timestamp}")
-        self.logger.info(f"GPIO {gpio} rising edge detected")
+        print(f"[GPIOZERO] Rising edge detected on GPIO {self.gpio_pin}")
+        self.logger.info(f"Rising edge detected on GPIO {self.gpio_pin}")
         
         # Trigger device if connected
         if self.client and self.client.is_connected:

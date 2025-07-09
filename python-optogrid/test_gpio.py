@@ -1,31 +1,29 @@
 #!/usr/bin/env python3
 """
-Simple GPIO interrupt test script using LGPIO
+Simple GPIO interrupt test script using gpiozero
 Tests rising edge detection on GPIO 17
 """
 
-import lgpio
+from gpiozero import Button
 import time
 import signal
 import sys
 
 # Configuration
 GPIO_PIN = 17
-BOUNCE_TIME_MS = 200  # milliseconds
 
-def gpio_callback(chip, gpio, level, tick):
+def gpio_callback():
     """Callback function for GPIO interrupt"""
     timestamp = time.strftime('%H:%M:%S.%f')[:-3]
-    print(f"GPIO {gpio} rising edge detected at {timestamp}")
+    print(f"GPIO {GPIO_PIN} rising edge detected at {timestamp}")
 
 def signal_handler(sig, frame):
     """Handle Ctrl+C gracefully"""
-    print("\nCleaning up GPIO and exiting...")
-    lgpio.gpiochip_close(chip)
+    print("\nExiting...")
     sys.exit(0)
 
 def main():
-    print("GPIO Interrupt Test with LGPIO")
+    print("GPIO Interrupt Test with gpiozero")
     print(f"Testing rising edge detection on GPIO {GPIO_PIN}")
     print("Connect GPIO 17 to 3.3V to trigger")
     print("Press Ctrl+C to exit")
@@ -35,16 +33,9 @@ def main():
         # Setup signal handler for clean exit
         signal.signal(signal.SIGINT, signal_handler)
         
-        # Open GPIO chip
-        global chip
-        chip = lgpio.gpiochip_open(0)  # Open GPIO chip 0
-        
-        # Setup GPIO pin
-        lgpio.gpio_claim_input(chip, GPIO_PIN)
-        
-        # Add interrupt detection
-        lgpio.gpio_set_debounce(chip, GPIO_PIN, BOUNCE_TIME_MS)
-        lgpio.gpio_register_callback(chip, GPIO_PIN, lgpio.RISING_EDGE, gpio_callback)
+        # Setup GPIO pin with gpiozero
+        button = Button(GPIO_PIN, pull_up=False)
+        button.when_pressed = gpio_callback
         
         print("GPIO interrupt setup complete. Waiting for triggers...")
         
@@ -54,9 +45,6 @@ def main():
             
     except Exception as e:
         print(f"Error: {e}")
-    finally:
-        lgpio.gpiochip_close(chip)
-        print("GPIO cleaned up")
 
 if __name__ == "__main__":
     main()

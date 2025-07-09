@@ -12,4 +12,5 @@ PyOpenGL
 ahrs
 pyqtgraph
 pandas
+gpiozero
 lgpio
