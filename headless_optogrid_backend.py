@@ -248,8 +248,8 @@ class HeadlessOptoGridClient:
     
     def gpio_trigger_callback(self):
         """Callback function for GPIO interrupt"""
-        print(f"[GPIOZERO] Rising edge detected on GPIO {self.gpio_pin}")
-        self.logger.info(f"Rising edge detected on GPIO {self.gpio_pin}")
+        print(f"[GPIOZERO] Rising edge detected on GPIO")
+        self.logger.info(f"Rising edge detected on GPIO")
         
         # Trigger device if connected
         if self.client and self.client.is_connected:
