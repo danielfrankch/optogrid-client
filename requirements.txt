@@ -12,4 +12,4 @@ PyOpenGL
 ahrs
 pyqtgraph
 pandas
-RPi.GPIO
+lgpio

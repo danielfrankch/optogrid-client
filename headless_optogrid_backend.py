@@ -16,7 +16,7 @@ import queue
 import signal
 
 try:
-    import RPi.GPIO as GPIO
+    import lgpio
     GPIO_AVAILABLE = True
 except ImportError:
     GPIO_AVAILABLE = False
@@ -231,105 +231,37 @@ class HeadlessOptoGridClient:
 
 
     
-    def setup_gpio_trigger(self, pin=17):
-        """Setup GPIO pin for rising edge detection - FORCE INTERRUPT MODE"""
-        if not GPIO_AVAILABLE:
-            self.logger.error("RPi.GPIO not available")
-            return
-            
-        try:
-            # STEP 1: Nuclear cleanup - kill everything GPIO related
-            self.logger.info("Nuclear GPIO cleanup...")
-            
-            # Cleanup RPi.GPIO
+        def setup_gpio_trigger(self, pin=17):
+            """Setup GPIO pin for rising edge detection using LGPIO"""
             try:
-                GPIO.cleanup()
-            except:
-                pass
+                # Open GPIO chip
+                self.chip = lgpio.gpiochip_open(0)  # Open GPIO chip 0
                 
-            # Force unexport the pin via sysfs
-            try:
-                with open(f'/sys/class/gpio/unexport', 'w') as f:
-                    f.write(str(pin))
-            except:
-                pass
+                # Claim the pin as input
+                lgpio.gpio_claim_input(self.chip, pin)
                 
-            # Wait for hardware to settle
-            import time
-            time.sleep(0.2)
-            
-            # STEP 2: Fresh GPIO setup
-            self.logger.info("Fresh GPIO setup...")
-            GPIO.setmode(GPIO.BCM)
-            
-            # STEP 3: Setup pin with explicit parameters
-            GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-            
-            # Verify pin setup
-            state = GPIO.input(pin)
-            self.logger.info(f"GPIO{pin} setup complete, current state: {state}")
-            
-            # STEP 4: Add event detection with retry mechanism
-            max_retries = 3
-            for attempt in range(max_retries):
-                try:
-                    self.logger.info(f"Adding edge detection attempt {attempt + 1}/{max_retries}")
-                    
-                    # Remove any existing detection first
-                    try:
-                        GPIO.remove_event_detect(pin)
-                        time.sleep(0.1)
-                    except:
-                        pass
-                    
-                    # Add the interrupt
-                    GPIO.add_event_detect(
-                        pin, 
-                        GPIO.RISING, 
-                        callback=self.gpio_trigger_callback, 
-                        bouncetime=200
-                    )
-                    
-                    # Test if it worked
-                    if GPIO.event_detected(pin):
-                        GPIO.event_detected(pin)  # Clear any pending events
-                    
-                    self.logger.info(f"SUCCESS: GPIO{pin} interrupt configured!")
-                    return
-                    
-                except RuntimeError as e:
-                    self.logger.warning(f"Attempt {attempt + 1} failed: {e}")
-                    if attempt < max_retries - 1:
-                        time.sleep(0.5)
-                    else:
-                        raise e
-                        
-        except Exception as e:
-            self.logger.error(f"FAILED to setup GPIO interrupt: {e}")
-            raise e
+                # Set debounce time
+                lgpio.gpio_set_debounce(self.chip, pin, 200)  # 200ms debounce
+                
+                # Register callback for rising edge detection
+                lgpio.gpio_register_callback(self.chip, pin, lgpio.RISING_EDGE, self.gpio_trigger_callback)
+                
+                self.logger.info(f"GPIO {pin} configured successfully for rising edge detection using LGPIO")
+            except Exception as e:
+                self.logger.error(f"Failed to setup GPIO {pin} using LGPIO: {e}")
     
-    def gpio_trigger_callback(self, channel):
-        """GPIO interrupt callback"""
-        import time
+    def gpio_trigger_callback(self, chip, gpio, level, tick):
+        """Callback function for GPIO interrupt"""
         timestamp = time.strftime('%H:%M:%S.%f')[:-3]
-        print(f"[GPIO INTERRUPT] Rising edge on GPIO{channel} at {timestamp}")
-        self.logger.info(f"GPIO interrupt triggered on pin {channel}")
+        print(f"[LGPIO] GPIO {gpio} rising edge detected at {timestamp}")
+        self.logger.info(f"GPIO {gpio} rising edge detected")
         
         # Trigger device if connected
         if self.client and self.client.is_connected:
-            # Create task in the main event loop
-            import asyncio
             try:
-                loop = asyncio.get_event_loop()
-                asyncio.run_coroutine_threadsafe(self.do_send_trigger(), loop)
+                asyncio.run_coroutine_threadsafe(self.do_send_trigger(), asyncio.get_event_loop())
             except Exception as e:
-                self.logger.error(f"Failed to send trigger: {e}")
-    
-    
-    def gpio_trigger_callback(self, channel):
-        """GPIO trigger callback"""
-        print(f"[GPIO] Rising edge detected on GPIO{channel}")
-        self.logger.info(f"GPIO trigger on pin {channel}")
+                self.logger.error(f"Failed to send trigger from GPIO: {e}")
 
     def signal_handler(self, signum, frame):
         """Handle shutdown signals"""
@@ -863,13 +795,13 @@ class HeadlessOptoGridClient:
             except Exception as e:
                 self.logger.error(f"Error disconnecting BLE: {e}")
         
-        # Cleanup GPIO
-        if GPIO_AVAILABLE:
+        # Close GPIO chip
+        if hasattr(self, 'chip'):
             try:
-                GPIO.cleanup()
-                self.logger.info("GPIO cleaned up")
+                lgpio.gpiochip_close(self.chip)
+                self.logger.info("LGPIO chip closed")
             except Exception as e:
-                self.logger.error(f"GPIO cleanup error: {e}")
+                self.logger.error(f"Failed to close LGPIO chip: {e}")
         
         # Close ZMQ
         try:
