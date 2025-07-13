@@ -14,9 +14,10 @@ import logging
 from bleak import BleakScanner, BleakClient, BLEDevice
 import queue
 import signal
+import time
 
 try:
-    from gpiozero import Button
+    from gpiozero import Button, OutputDevice
     GPIO_AVAILABLE = True
 except ImportError:
     GPIO_AVAILABLE = False
@@ -183,6 +184,10 @@ class HeadlessOptoGridClient:
                 # GPIO setup
                 self.gpio_pin = 17  # GPIO pin to monitor
                 self.setup_gpio_trigger(self.gpio_pin)
+                
+
+                self.pulse_pin = 27  # GPIO pin for pulse output
+                self.pulse_out = OutputDevice(self.pulse_pin, initial_value=False)
             except Exception as e:
                 self.logger.error(f"GPIO setup completely failed: {e}")
                 # Don't exit, continue without GPIO
@@ -256,6 +261,12 @@ class HeadlessOptoGridClient:
         print(f"[GPIOZERO] Rising edge detected on GPIO {self.gpio_pin}")
         self.logger.info(f"Rising edge detected on GPIO {self.gpio_pin}")
         
+        # Send 1ms pulse on GPIO 27
+        self.pulse_out.on()
+        time.sleep(0.001)  # 1ms
+        self.pulse_out.off()
+        self.logger.info(f"Sent 1ms pulse on GPIO {self.pulse_pin}")
+
         # Trigger device if connected
         if self.client and self.client.is_connected:
             try:
