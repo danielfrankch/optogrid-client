@@ -39,9 +39,12 @@ sudo apt install qt5-qmake qtbase5-dev build-essential
 7.5 Install pyqt5 separatly in RPi instead of using pip install requirements
 sudo apt install python3-pyqt5
 
-
+7.6 If you are on RPI, to install lgpio, you need this:
+sudo apt update
+sudo apt install python3-lgpio
 
 8. run setup script
+chmod +x env_setup_linux.sh
 ./env_setup_linux.sh
 
 9. activate virtual enviornment
