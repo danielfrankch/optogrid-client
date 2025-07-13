@@ -262,10 +262,10 @@ class HeadlessOptoGridClient:
         self.logger.info(f"Rising edge detected on GPIO {self.gpio_pin}")
         
         # Send 1ms pulse on GPIO 27
-        self.pulse_out.on()
-        time.sleep(0.001)  # 1ms
-        self.pulse_out.off()
-        self.logger.info(f"Sent 1ms pulse on GPIO {self.pulse_pin}")
+        # self.pulse_out.on()
+        # time.sleep(0.001)  # 1ms
+        # self.pulse_out.off()
+        # self.logger.info(f"Sent 1ms pulse on GPIO {self.pulse_pin}")
 
         # Trigger device if connected
         if self.client and self.client.is_connected:
