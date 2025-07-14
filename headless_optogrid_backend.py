@@ -287,7 +287,7 @@ class HeadlessOptoGridClient:
 
     async def run(self):
         """Main run loop"""
-        self.logger.info("Starting OptoGrid Headless Client...")
+        self.logger.info("OptoGrid Headless Client Started")
         
         
         while self.running:
