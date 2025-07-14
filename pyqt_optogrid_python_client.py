@@ -19,11 +19,13 @@ import pyqtgraph as pg
 import queue
 import pandas as pd
 from PyQt5.QtGui import QFont
+import socket
 try:
     import RPi.GPIO as GPIO
     GPIO_AVAILABLE = True
 except ImportError:
     GPIO_AVAILABLE = False
+    
 
 os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "0"
 os.environ["QT_SCALE_FACTOR"] = "1"
@@ -918,9 +920,9 @@ class ZMQListener(QThread):
             # Add timeout to prevent blocking
             self.socket.setsockopt(zmq.RCVTIMEO, 100)  # 100ms timeout
             self.socket.setsockopt(zmq.LINGER, 0)      # Don't wait when closing
-            self.socket.bind('tcp://*:5555')
-            self.startup_message.emit("ZMQ server listening on port 5555...")
-            
+            ip = self.get_ip()
+            self.zmq_socket.bind(f"tcp://{ip}:5555")
+            self.startup_message.emit(f"ZMQ server listening on tcp://{ip}:5555")
             while self.running:
                 try:
                     # Non-blocking receive
@@ -1004,6 +1006,18 @@ class ZMQListener(QThread):
                 except Exception as e:
                     print(f"Error closing ZMQ socket: {e}")
                 self.socket = None
+
+    def get_ip():
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            # doesn't have to be reachable
+            s.connect(('10.255.255.255', 1))
+            IP = s.getsockname()[0]
+        except Exception:
+            IP = '127.0.0.1'
+        finally:
+            s.close()
+        return IP
 
     def send_reply(self, reply: str):
         if self.socket:

@@ -15,6 +15,7 @@ from bleak import BleakScanner, BleakClient, BLEDevice
 import queue
 import signal
 import time
+import socket
 
 try:
     from gpiozero import Button, OutputDevice
@@ -167,7 +168,9 @@ class HeadlessOptoGridClient:
         # ZMQ setup
         self.zmq_context = zmq.Context()
         self.zmq_socket = self.zmq_context.socket(zmq.REP)
-        self.zmq_socket.bind("tcp://*:5555")
+        ip = self.get_ip()
+        self.zmq_socket.bind(f"tcp://{ip}:5555")
+        self.logger.info(f"ZMQ server listening on tcp://{ip}:5555...")
         
         # IMU processing setup
         self.setup_imu_processing()
@@ -201,6 +204,19 @@ class HeadlessOptoGridClient:
         
         self.running = True
         
+
+    def get_ip():
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            # doesn't have to be reachable
+            s.connect(('10.255.255.255', 1))
+            IP = s.getsockname()[0]
+        except Exception:
+            IP = '127.0.0.1'
+        finally:
+            s.close()
+        return IP
+
     def setup_logging(self):
         """Setup logging configuration"""
         logging.basicConfig(
@@ -282,7 +298,7 @@ class HeadlessOptoGridClient:
     async def run(self):
         """Main run loop"""
         self.logger.info("Starting OptoGrid Headless Client...")
-        self.logger.info("ZMQ server listening on port 5555...")
+        
         
         while self.running:
             try:
