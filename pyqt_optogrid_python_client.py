@@ -982,7 +982,14 @@ class ZMQListener(QThread):
                         reply = self.reply_queue.get()
                         self.socket.send_string(reply)
                         
-
+                    elif "optogrid.toggleStatusLED" in message:
+                        # Parse value (should be 0 or 1)
+                        try:
+                            led_value = int(message.split('=')[1].strip())
+                            return await self.toggle_status_led(led_value)
+                        except Exception as e:
+                            return f"ERROR: Invalid value for toggleStatusLED: {e}"
+                        
                     elif "optogrid.program" in message:
                         self.expecting_program_data = True
                         self.socket.send_string("Ready for program data")
@@ -1007,6 +1014,22 @@ class ZMQListener(QThread):
                     print(f"Error closing ZMQ socket: {e}")
                 self.socket = None
 
+
+
+    async def toggle_status_led(self, value: int) -> str:
+        """Toggle Status LED on the device (0=off, 1=on)"""
+        if not self.client or not self.client.is_connected:
+            return "Not connected to device"
+        try:
+            uuid = "56781507-5678-1234-1234-5678abcdeff0"  # Status LED state
+            encoded_value = encode_value(uuid, str(value))
+            await self.client.write_gatt_char(uuid, encoded_value)
+            state = "on" if value else "off"
+            self.logger.info(f"Status LED turned {state}")
+            return f"Status LED turned {state}"
+        except Exception as e:
+            self.logger.error(f"Failed to toggle Status LED: {e}")
+            return f"Failed to toggle Status LED: {str(e)}"
 
 
     def send_reply(self, reply: str):

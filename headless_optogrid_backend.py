@@ -336,6 +336,14 @@ class HeadlessOptoGridClient:
                 sync_value = int(message.split('=')[1].strip())
                 return self.handle_sync(sync_value)
                 
+            elif "optogrid.toggleStatusLED" in message:
+                # Parse value (should be 0 or 1)
+                try:
+                    led_value = int(message.split('=')[1].strip())
+                    return await self.toggle_status_led(led_value)
+                except Exception as e:
+                    return f"ERROR: Invalid value for toggleStatusLED: {e}"
+                
             elif "optogrid.program" in message:
                 # Expect program data in the next message
                 self.zmq_socket.send_string("Ready for program data")
@@ -347,6 +355,22 @@ class HeadlessOptoGridClient:
         except Exception as e:
             self.logger.error(f"Command error: {e}")
             return f"ERROR: {str(e)}"
+
+    async def toggle_status_led(self, value: int) -> str:
+        """Toggle Status LED on the device (0=off, 1=on)"""
+        if not self.client or not self.client.is_connected:
+            return "Not connected to device"
+        try:
+            uuid = "56781507-5678-1234-1234-5678abcdeff0"  # Status LED state
+            encoded_value = encode_value(uuid, str(value))
+            await self.client.write_gatt_char(uuid, encoded_value)
+            state = "on" if value else "off"
+            self.logger.info(f"Status LED turned {state}")
+            return f"Status LED turned {state}"
+        except Exception as e:
+            self.logger.error(f"Failed to toggle Status LED: {e}")
+            return f"Failed to toggle Status LED: {str(e)}"
+
 
     async def connect_device(self, device_name: str) -> str:
         """Connect to specified BLE device"""

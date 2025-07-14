@@ -30,7 +30,7 @@ classdef optogrid < handle
 
         function success = connect(obj)
             success = 0;
-            for attempt = 1:3
+            for attempt = 1:10
                 obj.socket.send_string(sprintf('optogrid.connect = %s', obj.DeviceName));
                 try
                     reply = char(obj.socket.recv_string());
