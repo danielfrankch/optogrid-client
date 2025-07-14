@@ -71,6 +71,27 @@ classdef optogrid < handle
                 success = 0;
             end
         end
+        
+        function success = toggleStatusLED(obj, state)
+            % Toggle the status LED on the device (state = 1 for ON, 0 for OFF)
+            if nargin < 2
+                error('You must specify state (1=on, 0=off)');
+            end
+            obj.socket.send_string(sprintf('optogrid.toggleStatusLED = %d', state));
+            try
+                reply = char(obj.socket.recv_string());
+            catch
+                reply = '';
+            end
+            if contains(reply, 'Status LED turned on') && state == 1
+                success = 1;
+            elseif contains(reply, 'Status LED turned off') && state == 0
+                success = 1;
+            else
+                success = 0;
+            end
+        end
+
 
         function success = trigger(obj)
             obj.socket.send_string(sprintf('optogrid.trigger'));
