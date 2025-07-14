@@ -1,7 +1,7 @@
 % filepath: /Users/danielmac/repos/OptoGrid/Python Client/matlab-optogrid/optogrid.m
 classdef optogrid < handle
     properties
-        DeviceName = "OptoGrid 1"
+        DeviceName = 'OptoGrid 1'
         OptoSetting = struct(...
             'sequence_length', 1, ...
             'led_selection', uint64(34359738368), ...
@@ -13,7 +13,7 @@ classdef optogrid < handle
             'ramp_up', 0, ...
             'ramp_down', 200)
         BatteryReading = []
-        ZMQSocket = "tcp://localhost:5555"
+        ZMQSocket = 'tcp://localhost:5555'
         context
         socket
         trigger_success_flag = 0 % Defaults to 0, when trigger success, set 1
