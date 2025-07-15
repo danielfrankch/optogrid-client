@@ -280,10 +280,10 @@ class HeadlessOptoGridClient:
                 self.logger.error(f"Failed to send trigger from GPIO: {e}")
 
         # Send 1ms pulse on GPIO 27
-        self.pulse_out.on()
-        time.sleep(0.001)  # 1ms
-        self.pulse_out.off()
-        self.logger.info(f"Sent 1ms pulse on GPIO {self.pulse_pin}")
+        # self.pulse_out.on()
+        # time.sleep(0.001)  # 1ms
+        # self.pulse_out.off()
+        # self.logger.info(f"Sent 1ms pulse on GPIO {self.pulse_pin}")
 
         print(f"[GPIOZERO] Rising edge detected on GPIO {self.gpio_pin}")
         self.logger.info(f"Rising edge detected on GPIO {self.gpio_pin}")

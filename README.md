@@ -71,6 +71,68 @@ pip install zmq
 
 
 
+## Deploy the headless_optogrid_backend on RPi:
+### You can set up using either of the following two pathway
+A -> C
+
+B -> C
+
+#### A. Setup RPi 4 Model B using disk image
+1. You need RPi to be connected to ethernet
+2. Clone the disk image "rpi_clone_V1.img" to a 16GB SD card, and plug in to RPi then boot
+3. ```cd repos/optogrid_client```
+4. ```git pull```
+
+
+B. Setup RPi4 from clean-installed rpi-os
+1. Clone this repo
+```
+cd ~
+mkdir repos
+cd repos
+```
+
+```
+git clone https://github.com/danielfrankch/optogrid_client.git
+```
+2.  Run auto-setup
+```
+chmod +x env_setup_linux.sh
+./env_setup_linux.sh
+```
+
+
+C. Common steps to make sure BLE works
+1. Plug in the BLE USB dongle into RPi's non-blue USB port! Important
+2. check the usb dongle is properly recognized
+```
+lsusb
+hciconfig
+bluetoothctl list
+```
+These command should all show that there is a second ble avaiable 
+
+3. Disable internal BLE, so that the USB BLE dongle can be in use
+
+
+```
+sudo nano /boot/firmware/config.txt
+```
+go to bottom, and add this line:
+```dtoverlay=disable-bt```
+"ctrl+o", then "enter" to save the file
+```sudo reboot```
+
+4. Confirm the BLE in use is USB BLE:
+```hciconfig```
+You should only see a USB BLE
+
+
+D. On NUC computer for Bpod
+1. in .dbconfig, you should have
+[optogrid]
+url = 172.xxx.xx.xxx:5555
+This should match RPi's ipv4 address
 
 ## Windows to make MATLAB support zmq
 1. 
