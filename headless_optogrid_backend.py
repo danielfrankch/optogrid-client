@@ -198,6 +198,10 @@ class HeadlessOptoGridClient:
         # Store the main event loop
         self.loop = asyncio.get_event_loop()
 
+        # Start a new loop just for BLE operations
+        self.ble_loop = asyncio.new_event_loop()  # Dedicated event loop for BLE
+        threading.Thread(target=self.start_ble_loop, daemon=True).start()
+
         # Signal handlers for graceful shutdown
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
@@ -206,6 +210,10 @@ class HeadlessOptoGridClient:
         
 
 
+    def start_ble_loop(self):
+        """Start the dedicated BLE event loop"""
+        asyncio.set_event_loop(self.ble_loop)
+        self.ble_loop.run_forever()
 
     def setup_logging(self):
         """Setup logging configuration"""
@@ -266,12 +274,10 @@ class HeadlessOptoGridClient:
         """Callback function for GPIO interrupt"""
         # Trigger device if connected
         if self.client and self.client.is_connected:
-            def trigger_ble():
-                try:
-                    asyncio.run(self.do_send_trigger())
-                except Exception as e:
-                    self.logger.error(f"Failed to send trigger from GPIO: {e}")
-            threading.Thread(target=trigger_ble, daemon=True).start()
+            try:
+                asyncio.run_coroutine_threadsafe(self.do_send_trigger(), self.ble_loop)
+            except Exception as e:
+                self.logger.error(f"Failed to send trigger from GPIO: {e}")
 
         # Send 1ms pulse on GPIO 27
         self.pulse_out.on()
@@ -281,6 +287,7 @@ class HeadlessOptoGridClient:
 
         print(f"[GPIOZERO] Rising edge detected on GPIO {self.gpio_pin}")
         self.logger.info(f"Rising edge detected on GPIO {self.gpio_pin}")
+
 
     def signal_handler(self, signum, frame):
         """Handle shutdown signals"""
