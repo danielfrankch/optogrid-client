@@ -1,5 +1,5 @@
-% filepath: /Users/danielmac/repos/OptoGrid/Python Client/matlab-optogrid/optogrid.m
-classdef optogrid < handle
+% filepath: /Users/danielmac/repos/OptoGrid/Python Client/matlab-optogrid/OptoGrid.m
+classdef OptoGrid < handle
     properties
         DeviceName = 'OptoGrid 1'
         OptoSetting = struct(...

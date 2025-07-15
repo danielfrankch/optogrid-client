@@ -1,8 +1,8 @@
 % filepath: /Users/danielmac/repos/OptoGrid/Python Client/matlab-optogrid/test_optogrid_class.m
-% Test script for optogrid class
+% Test script for OptoGrid class
 clear;clc;
 %% Test 0: Create and start OptoGrid object
-og = optogrid();
+og = OptoGrid();
 og.start();
 
 og.DeviceName = 'FKY-O-0001'

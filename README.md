@@ -128,11 +128,24 @@ go to bottom, and add this line:
 You should only see a USB BLE
 
 
-D. On NUC computer for Bpod
-1. in .dbconfig, you should have
+
+
+## On Bpod computer
+1. Clone this repo
+```
+cd repos
+git clone https://github.com/danielfrankch/optogrid_client.git
+```
+2. In MATLAB: use system python3 executable for MATLAB's python
+```
+pyenv(Version="/usr/bin/python3")
+```
+3. Add optogrid class to path
+```
+addpath('~/repos/optogrid_client/matlab-optogrid')
+```
+
+4. In .dbconfig, you should add
 [optogrid]
 url = 172.xxx.xx.xxx:5555
 This should match RPi's ipv4 address
-
-## Windows to make MATLAB support zmq
-1. 
