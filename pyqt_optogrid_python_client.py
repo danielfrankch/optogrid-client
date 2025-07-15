@@ -905,6 +905,7 @@ class ZMQListener(QThread):
     read_battery_requested = pyqtSignal() 
     startup_message = pyqtSignal(str)
     reply_ready = pyqtSignal(str)
+    toggle_status_led_requested = pyqtSignal(int)
     
     def __init__(self, context):
         super().__init__()
@@ -920,9 +921,10 @@ class ZMQListener(QThread):
             # Add timeout to prevent blocking
             self.socket.setsockopt(zmq.RCVTIMEO, 100)  # 100ms timeout
             self.socket.setsockopt(zmq.LINGER, 0)      # Don't wait when closing
+            
             ip = get_ip()
-            self.zmq_socket.bind(f"tcp://{ip}:5555")
-            self.startup_message.emit(f"ZMQ server listening on tcp://{ip}:5555")
+            self.socket.bind(f"tcp://localhost:5555")
+            self.startup_message.emit(f"ZMQ server listening on tcp://localhost:5555")
             while self.running:
                 try:
                     # Non-blocking receive
@@ -986,7 +988,9 @@ class ZMQListener(QThread):
                         # Parse value (should be 0 or 1)
                         try:
                             led_value = int(message.split('=')[1].strip())
-                            return await self.toggle_status_led(led_value)
+                            self.toggle_status_led_requested.emit(led_value)
+                            reply = self.reply_queue.get()
+                            self.socket.send_string(reply)
                         except Exception as e:
                             return f"ERROR: Invalid value for toggleStatusLED: {e}"
                         
@@ -1134,7 +1138,8 @@ class OptoGridBLEClient(QMainWindow):
         self.zmq_listener.read_battery_requested.connect(self.handle_read_battery_request)
         self.imu_enable_state = False
         self.zmq_listener.reply_ready.connect(self.zmq_listener.send_reply)
-
+        self.zmq_listener.toggle_status_led_requested.connect(self.handle_toggle_status_led_request)
+        
         # Initialize magnetometer calibration parameters
         self.mag_offset = np.array([0.0, 0.0, 0.0])  # Hard-iron offsets
         self.mag_scale = np.array([1.0, 1.0, 1.0])   # Soft-iron scale factors
@@ -1178,6 +1183,21 @@ class OptoGridBLEClient(QMainWindow):
     
         self.log(f"Rising edge detected on GPIO pin {channel}. Sending trigger...")
         self.send_trigger()
+
+    def handle_toggle_status_led_request(self, led_value):
+        async def do_toggle():
+            try:
+                status_led_uuid = "56781507-5678-1234-1234-5678abcdeff0"
+                encoded_value = encode_value(status_led_uuid, str(led_value))
+                await self.client.write_gatt_char(status_led_uuid, encoded_value)
+                state = "on" if led_value else "off"
+                self.zmq_listener.reply_queue.put(f"Status LED turned {state}")
+            except Exception as e:
+                self.zmq_listener.reply_queue.put(f"Failed to toggle Status LED: {str(e)}")
+        self.current_worker = AsyncWorker(do_toggle())
+        self.current_worker.finished.connect(lambda _: None)
+        self.current_worker.error.connect(lambda error: self.log(f"Error: {error}"))
+        self.current_worker.start()
 
     def process_imu_orientation(self, imu_values):
         """Process IMU data and calculate orientation with magnetometer as compass"""
@@ -1822,7 +1842,7 @@ class OptoGridBLEClient(QMainWindow):
             self.current_worker.wait()
             self.current_worker = None
         
-        self.log("Scanning for BLE devices containing 'OptoGrid'...")
+        self.log("Scanning for BLE devices containing '-O-'...")
         self.scan_button.setText("Scanning...")
         self.scan_button.setEnabled(False)
         
@@ -1836,7 +1856,7 @@ class OptoGridBLEClient(QMainWindow):
         try:
             # Reduced scan time from default 10s to 3s for faster operation
             all_devices = await BleakScanner.discover(timeout=4, return_adv=False)
-            return [d for d in all_devices if d.name and "OptoGrid" in d.name]
+            return [d for d in all_devices if d.name and "-O-" in d.name]
         except Exception as e:
             # Re-raise with more context
             raise Exception(f"BLE scan failed: {str(e)}")

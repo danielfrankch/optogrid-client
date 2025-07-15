@@ -5,6 +5,7 @@ clear;clc;
 og = optogrid();
 og.start();
 
+og.DeviceName = 'FKY-O-0001'
 %% Test 1: Connect to OptoGrid
 result = og.connect();
 if result
