@@ -266,10 +266,12 @@ class HeadlessOptoGridClient:
         """Callback function for GPIO interrupt"""
         # Trigger device if connected
         if self.client and self.client.is_connected:
-            try:
-                asyncio.run_coroutine_threadsafe(self.do_send_trigger(), self.loop)
-            except Exception as e:
-                self.logger.error(f"Failed to send trigger from GPIO: {e}")
+            def trigger_ble():
+                try:
+                    asyncio.run(self.do_send_trigger())
+                except Exception as e:
+                    self.logger.error(f"Failed to send trigger from GPIO: {e}")
+            threading.Thread(target=trigger_ble, daemon=True).start()
 
         # Send 1ms pulse on GPIO 27
         self.pulse_out.on()
