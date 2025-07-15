@@ -25,7 +25,7 @@ classdef optogrid < handle
             obj.context = py.zmq.Context();
             obj.socket = obj.context.socket(py.zmq.REQ);
             obj.socket.connect(char(obj.ZMQSocket));
-            obj.socket.setsockopt(py.zmq.RCVTIMEO, int32(10000)); % 10s timeout in ms
+            obj.socket.setsockopt(py.zmq.RCVTIMEO, int32(20000)); % 20s timeout in ms
         end
 
         function success = connect(obj)
