@@ -149,7 +149,7 @@ classdef OptoGrid < handle
             % Default values
             success = 0;
             DeviceName = obj.DeviceName; % Use the DeviceName property
-            uLED_status = '';
+            uLED_check = '';
 
             if contains(reply, 'uLED Check')
                 success = 1;
@@ -165,7 +165,7 @@ classdef OptoGrid < handle
                 end
                 
                 if ~isempty(status_tokens)
-                    uLED_status = status_tokens{1}{1};
+                    uLED_check = status_tokens{1}{1};
                 end
             end
         end
