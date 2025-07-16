@@ -433,8 +433,8 @@ class HeadlessOptoGridClient:
             await self.client.start_notify(imu_data_uuid, self.handle_imu_data_notification)
             
             # LED check notifications
-            led_check_uuid = "56781504-5678-1234-1234-5678abcdeff0"
-            await self.client.start_notify(led_check_uuid, self.handle_led_check_notification)
+            # led_check_uuid = "56781504-5678-1234-1234-5678abcdeff0"
+            # await self.client.start_notify(led_check_uuid, self.handle_led_check_notification)
             
             self.logger.info("BLE notifications enabled")
             

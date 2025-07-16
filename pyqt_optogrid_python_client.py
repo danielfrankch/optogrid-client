@@ -1994,15 +1994,15 @@ class OptoGridBLEClient(QMainWindow):
                         break
 
             # Enable LED check notifications
-            for service in self.client.services:
-                for char in service.characteristics:
-                    if str(char.uuid).lower() == led_check_uuid.lower():
-                        if "notify" in char.properties:
-                            await self.client.start_notify(char.uuid, self.handle_led_check_notification)
-                            self.log("LED check notifications enabled")
-                        else:
-                            self.log("LED check characteristic does not support notifications")
-                        break
+            # for service in self.client.services:
+            #     for char in service.characteristics:
+            #         if str(char.uuid).lower() == led_check_uuid.lower():
+            #             if "notify" in char.properties:
+            #                 await self.client.start_notify(char.uuid, self.handle_led_check_notification)
+            #                 self.log("LED check notifications enabled")
+            #             else:
+            #                 self.log("LED check characteristic does not support notifications")
+            #             break
 
             # Enable IMU data notifications
             for service in self.client.services:
