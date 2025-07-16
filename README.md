@@ -151,3 +151,11 @@ addpath('~/repos/optogrid_client/matlab-optogrid')
 [optogrid]
 url = 172.xxx.xx.xxx:5555
 This should match RPi's ipv4 address
+
+5. Add .opto file with 1 inside, to home directory
+
+6. Connect BNC1 Output to BNC1 Input to pass that weird Opto data saving check
+
+7. For now, Caution that rigtest_fm will give error, as there will not be PulsePal connected for this opto rig
+
+8. For now, caution start_bpod will give error for PulsePal not connected.
