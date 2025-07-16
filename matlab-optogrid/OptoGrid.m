@@ -12,7 +12,6 @@ classdef OptoGrid < handle
             'pwm_frequency', 50000, ...
             'ramp_up', 0, ...
             'ramp_down', 200)
-        BatteryReading = []
         ZMQSocket = 'tcp://localhost:5555'
         context
         socket
@@ -107,37 +106,101 @@ classdef OptoGrid < handle
             end
         end
 
-    function [success, DeviceName, battery_voltage_mV] = readbattery(obj)
-        obj.socket.send_string(sprintf('optogrid.readbattery'));
-        try
-            reply = char(obj.socket.recv_string());
-        catch
-            reply = '';
-        end
-        
-        % Default values
-        success = 0;
-        DeviceName = obj.DeviceName; % Use the DeviceName property
-        battery_voltage_mV = 0;
+        function [success, DeviceName, battery_voltage_mV] = readbattery(obj)
+            obj.socket.send_string(sprintf('optogrid.readbattery'));
+            try
+                reply = char(obj.socket.recv_string());
+            catch
+                reply = '';
+            end
+            
+            % Default values
+            success = 0;
+            DeviceName = obj.DeviceName; % Use the DeviceName property
+            battery_voltage_mV = 0;
 
-        if contains(reply, 'Battery Voltage')
-            success = 1;
-            % Extract device name and voltage using regular expressions
-            device_pattern = '^(.*?) Battery Voltage';
-            voltage_pattern = 'Battery Voltage = (\d+) mV';
-            
-            device_tokens = regexp(reply, device_pattern, 'tokens');
-            voltage_tokens = regexp(reply, voltage_pattern, 'tokens');
-            
-            if ~isempty(device_tokens)
-                DeviceName = device_tokens{1}{1};
-            end
-            
-            if ~isempty(voltage_tokens)
-                battery_voltage_mV = str2double(voltage_tokens{1}{1});
+            if contains(reply, 'Battery Voltage')
+                success = 1;
+                % Extract device name and voltage using regular expressions
+                device_pattern = '^(.*?) Battery Voltage';
+                voltage_pattern = 'Battery Voltage = (\d+) mV';
+                
+                device_tokens = regexp(reply, device_pattern, 'tokens');
+                voltage_tokens = regexp(reply, voltage_pattern, 'tokens');
+                
+                if ~isempty(device_tokens)
+                    DeviceName = device_tokens{1}{1};
+                end
+                
+                if ~isempty(voltage_tokens)
+                    battery_voltage_mV = str2double(voltage_tokens{1}{1});
+                end
             end
         end
-    end
+
+        function [success, DeviceName, uLED_check] = readuLEDCheck(obj)
+            obj.socket.send_string(sprintf('optogrid.readuLEDCheck'));
+            try
+                reply = char(obj.socket.recv_string());
+            catch
+                reply = '';
+            end
+            
+            % Default values
+            success = 0;
+            DeviceName = obj.DeviceName; % Use the DeviceName property
+            uLED_status = '';
+
+            if contains(reply, 'uLED Check')
+                success = 1;
+                % Extract device name and status using regular expressions
+                device_pattern = '^(.*?) uLED Check';
+                status_pattern = 'uLED Check = (.*)';
+                
+                device_tokens = regexp(reply, device_pattern, 'tokens');
+                status_tokens = regexp(reply, status_pattern, 'tokens');
+                
+                if ~isempty(device_tokens)
+                    DeviceName = device_tokens{1}{1};
+                end
+                
+                if ~isempty(status_tokens)
+                    uLED_status = status_tokens{1}{1};
+                end
+            end
+        end
+
+        function [success, DeviceName, last_stim_time_ms] = readlastStim(obj)
+            obj.socket.send_string(sprintf('optogrid.readlastStim'));
+            try
+                reply = char(obj.socket.recv_string());
+            catch
+                reply = '';
+            end
+            
+            % Default values
+            success = 0;
+            DeviceName = obj.DeviceName; % Use the DeviceName property
+            last_stim_time_ms = 0;
+
+            if contains(reply, 'Last Stim Time')
+                success = 1;
+                % Extract device name and last stim time using regular expressions
+                device_pattern = '^(.*?) Last Stim Time';
+                stim_time_pattern = 'Last Stim Time = (\d+) ms';
+                
+                device_tokens = regexp(reply, device_pattern, 'tokens');
+                stim_time_tokens = regexp(reply, stim_time_pattern, 'tokens');
+                
+                if ~isempty(device_tokens)
+                    DeviceName = device_tokens{1}{1};
+                end
+                
+                if ~isempty(stim_time_tokens)
+                    last_stim_time_ms = str2double(stim_time_tokens{1}{1});
+                end
+            end
+        end
 
         function success = program(obj)
             obj.socket.send_string(sprintf('optogrid.program'));

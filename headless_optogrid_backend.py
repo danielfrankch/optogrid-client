@@ -23,7 +23,7 @@ try:
 except ImportError:
     GPIO_AVAILABLE = False
 
-# Constants and mappings (same as original)
+# Constants and mappings
 UUID_NAME_MAP = {
     # Services
     "56781400-5678-1234-1234-5678abcdeff0": "Device Info Service",
@@ -34,14 +34,13 @@ UUID_NAME_MAP = {
     # Device Info Characteristics
     "56781500-5678-1234-1234-5678abcdeff0": "Device ID",
     "56781501-5678-1234-1234-5678abcdeff0": "Firmware Version",
-    "56781502-5678-1234-1234-5678abcdeff0": "Implanted Animal",
     "56781503-5678-1234-1234-5678abcdeff0": "uLED Color",
     "56781504-5678-1234-1234-5678abcdeff0": "uLED Check",
-    "56781505-5678-1234-1234-5678abcdeff0": "Battery Percentage",
     "56781506-5678-1234-1234-5678abcdeff0": "Battery Voltage",
     "56781507-5678-1234-1234-5678abcdeff0": "Status LED state",
     "56781508-5678-1234-1234-5678abcdeff0": "Sham LED state",
     "56781509-5678-1234-1234-5678abcdeff0": "Device Log",
+    "5678150A-5678-1234-1234-5678abcdeff0": "Last Stim Time",
 
     # Opto Control Characteristics
     "56781600-5678-1234-1234-5678abcdeff0": "Sequence Length",
@@ -69,14 +68,13 @@ uuid_to_type = {
     # Device Info
     "56781500-5678-1234-1234-5678abcdeff0": "string",
     "56781501-5678-1234-1234-5678abcdeff0": "string",
-    "56781502-5678-1234-1234-5678abcdeff0": "string",
     "56781503-5678-1234-1234-5678abcdeff0": "string",
     "56781504-5678-1234-1234-5678abcdeff0": "uint64",
-    "56781505-5678-1234-1234-5678abcdeff0": "uint16",
     "56781506-5678-1234-1234-5678abcdeff0": "uint16",
     "56781507-5678-1234-1234-5678abcdeff0": "bool",
     "56781508-5678-1234-1234-5678abcdeff0": "bool",
     "56781509-5678-1234-1234-5678abcdeff0": "string",
+    "5678150A-5678-1234-1234-5678abcdeff0": "uint32",
 
     # Opto Control
     "56781600-5678-1234-1234-5678abcdeff0": "uint8",
@@ -340,6 +338,12 @@ class HeadlessOptoGridClient:
                 
             elif "optogrid.readbattery" in message:
                 return await self.read_battery()
+            
+            elif "optogrid.readuLEDCheck" in message:
+                return await self.read_uled_check()
+            
+            elif "optogrid.readlastStim" in message:
+                return await self.read_last_stim_time()
                 
             elif "optogrid.sync" in message:
                 sync_value = int(message.split('=')[1].strip())
@@ -778,6 +782,44 @@ class HeadlessOptoGridClient:
         except Exception as e:
             return f"Battery read failed: {str(e)}"
 
+    async def read_uled_check(self) -> str:
+        """Read uLED Check value"""
+        if not self.client or not self.client.is_connected:
+            return "Not connected to device"
+        
+        try:
+            # UUID for uLED Check characteristic
+            uled_check_uuid = "56781504-5678-1234-1234-5678abcdeff0"
+            
+            # Read the characteristic value
+            uled_check_value = await self.read_characteristic(uled_check_uuid)
+            
+            # Log and return the value
+            self.logger.info(f"uLED Check: {uled_check_value}")
+            return f"uLED Check = {uled_check_value}"
+        except Exception as e:
+            self.logger.error(f"Failed to read uLED Check: {e}")
+            return f"uLED Check read failed: {str(e)}"
+        
+    async def read_last_stim_time(self) -> str:
+        """Read the last stimulation time"""
+        if not self.client or not self.client.is_connected:
+            return "Not connected to device"
+        
+        try:
+            # UUID for Last Stim Time characteristic
+            last_stim_uuid = "5678150A-5678-1234-1234-5678abcdeff0"
+            
+            # Read the characteristic value
+            last_stim_value = await self.read_characteristic(last_stim_uuid)
+            
+            # Log and return the value
+            self.logger.info(f"Last Stim Time: {last_stim_value} ms")
+            return f"Last Stim Time = {last_stim_value} ms"
+        except Exception as e:
+            self.logger.error(f"Failed to read Last Stim Time: {e}")
+            return f"Last Stim Time read failed: {str(e)}"
+        
     async def read_characteristic(self, uuid: str) -> str:
         """Read a characteristic value and decode it"""
         val = await self.client.read_gatt_char(uuid)

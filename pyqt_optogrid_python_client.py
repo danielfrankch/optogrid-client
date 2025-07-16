@@ -65,14 +65,13 @@ UUID_NAME_MAP = {
     # Device Info Characteristics
     "56781500-5678-1234-1234-5678abcdeff0": "Device ID",
     "56781501-5678-1234-1234-5678abcdeff0": "Firmware Version",
-    "56781502-5678-1234-1234-5678abcdeff0": "Implanted Animal",
     "56781503-5678-1234-1234-5678abcdeff0": "uLED Color",
     "56781504-5678-1234-1234-5678abcdeff0": "uLED Check",
-    "56781505-5678-1234-1234-5678abcdeff0": "Battery Percentage",
     "56781506-5678-1234-1234-5678abcdeff0": "Battery Voltage",
     "56781507-5678-1234-1234-5678abcdeff0": "Status LED state",
     "56781508-5678-1234-1234-5678abcdeff0": "Sham LED state",
     "56781509-5678-1234-1234-5678abcdeff0": "Device Log",
+    "5678150A-5678-1234-1234-5678abcdeff0": "Last Stim Time",
 
     # Opto Control Characteristics
     "56781600-5678-1234-1234-5678abcdeff0": "Sequence Length",
@@ -100,13 +99,12 @@ uuid_to_unit = {
     # Device Info Characteristics
     "56781500-5678-1234-1234-5678abcdeff0": "",
     "56781501-5678-1234-1234-5678abcdeff0": "",
-    "56781502-5678-1234-1234-5678abcdeff0": "",
     "56781503-5678-1234-1234-5678abcdeff0": "",
     "56781504-5678-1234-1234-5678abcdeff0": "",
-    "56781505-5678-1234-1234-5678abcdeff0": "percent",
     "56781506-5678-1234-1234-5678abcdeff0": "mV",
     "56781507-5678-1234-1234-5678abcdeff0": "",
     "56781508-5678-1234-1234-5678abcdeff0": "",
+    "5678150A-5678-1234-1234-5678abcdeff0": "ms",
 
     # Opto Control Characteristics
     "56781600-5678-1234-1234-5678abcdeff0": "units",
@@ -134,14 +132,13 @@ uuid_to_type = {
     # Device Info
     "56781500-5678-1234-1234-5678abcdeff0": "string",
     "56781501-5678-1234-1234-5678abcdeff0": "string",
-    "56781502-5678-1234-1234-5678abcdeff0": "string",
     "56781503-5678-1234-1234-5678abcdeff0": "string",
     "56781504-5678-1234-1234-5678abcdeff0": "uint64",
-    "56781505-5678-1234-1234-5678abcdeff0": "uint16",
     "56781506-5678-1234-1234-5678abcdeff0": "uint16",
     "56781507-5678-1234-1234-5678abcdeff0": "bool",
     "56781508-5678-1234-1234-5678abcdeff0": "bool",
     "56781509-5678-1234-1234-5678abcdeff0": "string",
+    "5678150A-5678-1234-1234-5678abcdeff0": "uint32",
 
     # Opto Control
     "56781600-5678-1234-1234-5678abcdeff0": "uint8",
@@ -903,6 +900,8 @@ class ZMQListener(QThread):
     enable_imu_requested = pyqtSignal()  
     disable_imu_requested = pyqtSignal() 
     read_battery_requested = pyqtSignal() 
+    read_uLEDCheck_requested = pyqtSignal()
+    read_last_stim_requested = pyqtSignal()
     startup_message = pyqtSignal(str)
     reply_ready = pyqtSignal(str)
     toggle_status_led_requested = pyqtSignal(int)
@@ -955,6 +954,16 @@ class ZMQListener(QThread):
                         
                     elif "optogrid.readbattery" in message:
                         self.read_battery_requested.emit()
+                        reply = self.reply_queue.get()
+                        self.socket.send_string(reply)
+
+                    elif "optogrid.readuLEDCheck" in message:
+                        self.read_uLEDCheck_requested.emit()
+                        reply = self.reply_queue.get()
+                        self.socket.send_string(reply)
+
+                    elif "optogrid.readlastStim" in message:
+                        self.read_last_stim_requested.emit()
                         reply = self.reply_queue.get()
                         self.socket.send_string(reply)
 
@@ -1136,6 +1145,8 @@ class OptoGridBLEClient(QMainWindow):
         self.zmq_listener.enable_imu_requested.connect(self.handle_enable_imu_request)
         self.zmq_listener.disable_imu_requested.connect(self.handle_disable_imu_request)
         self.zmq_listener.read_battery_requested.connect(self.handle_read_battery_request)
+        self.zmq_listener.read_uLEDCheck_requested.connect(self.handle_read_uLEDCheck_request)
+        self.zmq_listener.read_last_stim_requested.connect(self.handle_read_last_stim_request)
         self.imu_enable_state = False
         self.zmq_listener.reply_ready.connect(self.zmq_listener.send_reply)
         self.zmq_listener.toggle_status_led_requested.connect(self.handle_toggle_status_led_request)
@@ -1556,6 +1567,50 @@ class OptoGridBLEClient(QMainWindow):
         self.battery_voltage_read.connect(battery_read_handler)
         self.read_battery_voltage()  # Trigger the existing read function
 
+    def handle_read_uLEDCheck_request(self):
+        """Handle ZMQ uLED Check read request"""
+        if not self.client or not self.client.is_connected:
+            self.zmq_listener.reply_queue.put("Error: Not connected to device")
+            return
+    
+        # Use existing read_uLEDCheck method but capture the result
+        uLEDCheck_uuid = "56781504-5678-1234-1234-5678abcdeff0"
+    
+        async def do_read_uLEDCheck():
+            try:
+                val = await self.client.read_gatt_char(uLEDCheck_uuid)
+                uLEDCheck_value = decode_value(uLEDCheck_uuid, val)
+                self.zmq_listener.reply_queue.put(f"uLED Check = {uLEDCheck_value}")
+            except Exception as e:
+                self.zmq_listener.reply_queue.put(f"Failed to read uLED Check: {str(e)}")
+    
+        self.current_worker = AsyncWorker(do_read_uLEDCheck())
+        self.current_worker.finished.connect(lambda _: None)
+        self.current_worker.error.connect(lambda error: self.log(f"Error: {error}"))
+        self.current_worker.start()
+
+    def handle_read_last_stim_request(self):
+        """Handle ZMQ Last Stim Time read request"""
+        if not self.client or not self.client.is_connected:
+            self.zmq_listener.reply_queue.put("Error: Not connected to device")
+            return
+    
+        # UUID for Last Stim Time characteristic
+        last_stim_uuid = "5678150A-5678-1234-1234-5678abcdeff0"
+    
+        async def do_read_last_stim():
+            try:
+                val = await self.client.read_gatt_char(last_stim_uuid)
+                last_stim_value = decode_value(last_stim_uuid, val)
+                self.zmq_listener.reply_queue.put(f"Last Stim Time = {last_stim_value} ms")
+            except Exception as e:
+                self.zmq_listener.reply_queue.put(f"Failed to read Last Stim Time: {str(e)}")
+    
+        self.current_worker = AsyncWorker(do_read_last_stim())
+        self.current_worker.finished.connect(lambda _: None)
+        self.current_worker.error.connect(lambda error: self.log(f"Error: {error}"))
+        self.current_worker.start()
+        
     def setup_ui(self):
         """Setup the user interface"""
         central_widget = QWidget()
