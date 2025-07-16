@@ -127,6 +127,8 @@ go to bottom, and add this line:
 ```hciconfig```
 You should only see a USB BLE
 
+5. Remember to turn on Bluetooth on RPi's upper-right before starting
+
 
 
 

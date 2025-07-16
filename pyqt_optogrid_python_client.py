@@ -71,7 +71,7 @@ UUID_NAME_MAP = {
     "56781507-5678-1234-1234-5678abcdeff0": "Status LED state",
     "56781508-5678-1234-1234-5678abcdeff0": "Sham LED state",
     "56781509-5678-1234-1234-5678abcdeff0": "Device Log",
-    "5678150A-5678-1234-1234-5678abcdeff0": "Last Stim Time",
+    "5678150a-5678-1234-1234-5678abcdeff0": "Last Stim Time",
 
     # Opto Control Characteristics
     "56781600-5678-1234-1234-5678abcdeff0": "Sequence Length",
@@ -104,7 +104,7 @@ uuid_to_unit = {
     "56781506-5678-1234-1234-5678abcdeff0": "mV",
     "56781507-5678-1234-1234-5678abcdeff0": "",
     "56781508-5678-1234-1234-5678abcdeff0": "",
-    "5678150A-5678-1234-1234-5678abcdeff0": "ms",
+    "5678150a-5678-1234-1234-5678abcdeff0": "ms",
 
     # Opto Control Characteristics
     "56781600-5678-1234-1234-5678abcdeff0": "units",
@@ -138,7 +138,7 @@ uuid_to_type = {
     "56781507-5678-1234-1234-5678abcdeff0": "bool",
     "56781508-5678-1234-1234-5678abcdeff0": "bool",
     "56781509-5678-1234-1234-5678abcdeff0": "string",
-    "5678150A-5678-1234-1234-5678abcdeff0": "uint32",
+    "5678150a-5678-1234-1234-5678abcdeff0": "uint32",
 
     # Opto Control
     "56781600-5678-1234-1234-5678abcdeff0": "uint8",
@@ -1596,7 +1596,7 @@ class OptoGridBLEClient(QMainWindow):
             return
     
         # UUID for Last Stim Time characteristic
-        last_stim_uuid = "5678150A-5678-1234-1234-5678abcdeff0"
+        last_stim_uuid = "5678150a-5678-1234-1234-5678abcdeff0"
     
         async def do_read_last_stim():
             try:
@@ -1610,7 +1610,7 @@ class OptoGridBLEClient(QMainWindow):
         self.current_worker.finished.connect(lambda _: None)
         self.current_worker.error.connect(lambda error: self.log(f"Error: {error}"))
         self.current_worker.start()
-        
+
     def setup_ui(self):
         """Setup the user interface"""
         central_widget = QWidget()
@@ -1897,7 +1897,7 @@ class OptoGridBLEClient(QMainWindow):
             self.current_worker.wait()
             self.current_worker = None
         
-        self.log("Scanning for BLE devices containing '-O-'...")
+        self.log("Scanning for BLE devices containing 'O'...")
         self.scan_button.setText("Scanning...")
         self.scan_button.setEnabled(False)
         

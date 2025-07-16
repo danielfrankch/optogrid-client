@@ -40,7 +40,7 @@ UUID_NAME_MAP = {
     "56781507-5678-1234-1234-5678abcdeff0": "Status LED state",
     "56781508-5678-1234-1234-5678abcdeff0": "Sham LED state",
     "56781509-5678-1234-1234-5678abcdeff0": "Device Log",
-    "5678150A-5678-1234-1234-5678abcdeff0": "Last Stim Time",
+    "5678150a-5678-1234-1234-5678abcdeff0": "Last Stim Time",
 
     # Opto Control Characteristics
     "56781600-5678-1234-1234-5678abcdeff0": "Sequence Length",
@@ -74,7 +74,7 @@ uuid_to_type = {
     "56781507-5678-1234-1234-5678abcdeff0": "bool",
     "56781508-5678-1234-1234-5678abcdeff0": "bool",
     "56781509-5678-1234-1234-5678abcdeff0": "string",
-    "5678150A-5678-1234-1234-5678abcdeff0": "uint32",
+    "5678150a-5678-1234-1234-5678abcdeff0": "uint32",
 
     # Opto Control
     "56781600-5678-1234-1234-5678abcdeff0": "uint8",
@@ -808,7 +808,7 @@ class HeadlessOptoGridClient:
         
         try:
             # UUID for Last Stim Time characteristic
-            last_stim_uuid = "5678150A-5678-1234-1234-5678abcdeff0"
+            last_stim_uuid = "5678150a-5678-1234-1234-5678abcdeff0"
             
             # Read the characteristic value
             last_stim_value = await self.read_characteristic(last_stim_uuid)
