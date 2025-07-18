@@ -137,6 +137,7 @@ You should only see a USB BLE
 ```
 cd repos
 git clone https://github.com/danielfrankch/optogrid_client.git
+pip install zmq
 ```
 2. In MATLAB: use system python3 executable for MATLAB's python
 ```

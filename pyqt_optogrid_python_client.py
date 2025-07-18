@@ -1752,14 +1752,14 @@ class OptoGridBLEClient(QMainWindow):
         battery_row_layout.setSpacing(8)
 
         # Left label
-        self.battery_voltage_min_label = QLabel("3.5V")
-        self.battery_voltage_min_label.setFixedWidth(36)
-        self.battery_voltage_min_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        battery_row_layout.addWidget(self.battery_voltage_min_label)
+        # self.battery_voltage_min_label = QLabel("3.5V")
+        # self.battery_voltage_min_label.setFixedWidth(36)
+        # self.battery_voltage_min_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        # battery_row_layout.addWidget(self.battery_voltage_min_label)
 
         # Progress bar
         self.battery_voltage_bar = QProgressBar()
-        self.battery_voltage_bar.setFixedSize(110, 30)
+        self.battery_voltage_bar.setFixedSize(100, 30)
         self.battery_voltage_bar.setRange(3500, 4200)  # mV range
         self.battery_voltage_bar.setValue(4000)
         self.battery_voltage_bar.setAlignment(Qt.AlignCenter)
@@ -1779,18 +1779,30 @@ class OptoGridBLEClient(QMainWindow):
         battery_row_layout.addWidget(self.battery_voltage_bar)
 
         # Right label
-        self.battery_voltage_max_label = QLabel("4.2V")
-        self.battery_voltage_max_label.setFixedWidth(36)
-        self.battery_voltage_max_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        battery_row_layout.addWidget(self.battery_voltage_max_label)
+        # self.battery_voltage_max_label = QLabel("4.2V")
+        # self.battery_voltage_max_label.setFixedWidth(36)
+        # self.battery_voltage_max_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        # battery_row_layout.addWidget(self.battery_voltage_max_label)
 
-        # Read button (left aligned)
-        self.battery_voltage_button = QPushButton("Read Battery Voltage")
+        # Read battery button (left aligned)
+        self.battery_voltage_button = QPushButton("Read Battery")
         self.battery_voltage_button.setEnabled(False)
-        self.battery_voltage_button.setFixedSize(160, 30)
+        self.battery_voltage_button.setFixedSize(100, 30)
+
+        # Read uLEDCheck button
+        self.read_uLEDCheck_button = QPushButton("uLED Scan")
+        self.read_uLEDCheck_button.setEnabled(False)
+        self.read_uLEDCheck_button.setFixedSize(90, 30)
+
+        # Read lastStim button
+        self.read_lastStim_button = QPushButton("Last Stim")
+        self.read_lastStim_button.setEnabled(False)
+        self.read_lastStim_button.setFixedSize(80, 30)
 
         # Add the button and the battery row to your led_state_layout2
         led_state_layout2.addWidget(self.battery_voltage_button, alignment=Qt.AlignLeft)
+        led_state_layout2.addWidget(self.read_uLEDCheck_button, alignment=Qt.AlignLeft)
+        led_state_layout2.addWidget(self.read_lastStim_button, alignment=Qt.AlignLeft)
         led_state_layout2.addLayout(battery_row_layout)
         
         right_layout.addLayout(led_state_layout2)
@@ -1849,7 +1861,65 @@ class OptoGridBLEClient(QMainWindow):
         self.imu_enable_button.clicked.connect(self.toggle_imu_enable)
         self.status_led_button.clicked.connect(self.toggle_status_led)
         self.battery_voltage_button.clicked.connect(self.read_battery_voltage)
+        self.read_uLEDCheck_button.clicked.connect(self.read_uLEDCheck)
+        self.read_lastStim_button.clicked.connect(self.read_lastStim)
     
+    def read_uLEDCheck(self):
+        """Read the uLED Check characteristic and update the brain map"""
+        if not self.client or not self.client.is_connected:
+            self.log("uLED Check read skipped: not connected")
+            return
+
+        uLEDCheck_uuid = "56781504-5678-1234-1234-5678abcdeff0"
+        self.log("Reading uLED Check...")
+        self.read_uLEDCheck_button.setText("Reading...")
+        self.read_uLEDCheck_button.setEnabled(False)
+
+        async def do_read():
+            try:
+                val = await self.client.read_gatt_char(uLEDCheck_uuid)
+                uLEDCheck_value = decode_value(uLEDCheck_uuid, val)
+                self.log(f"uLED Check: {uLEDCheck_value}")
+                self.brain_map.update_led_check_overlay(int(uLEDCheck_value))
+            except Exception as e:
+                self.log(f"Error reading uLED Check: {e}")
+            finally:
+                self.read_uLEDCheck_button.setText("Read uLED Check")
+                self.read_uLEDCheck_button.setEnabled(True)
+
+        self.current_worker = AsyncWorker(do_read())
+        self.current_worker.finished.connect(lambda _: None)
+        self.current_worker.error.connect(lambda error: self.log(f"Error: {error}"))
+        self.current_worker.start()
+
+
+    def read_lastStim(self):
+        """Read the Last Stim characteristic and log the value"""
+        if not self.client or not self.client.is_connected:
+            self.log("Last Stim read skipped: not connected")
+            return
+
+        lastStim_uuid = "5678150a-5678-1234-1234-5678abcdeff0"
+        self.log("Reading Last Stim...")
+        self.read_lastStim_button.setText("Reading...")
+        self.read_lastStim_button.setEnabled(False)
+
+        async def do_read():
+            try:
+                val = await self.client.read_gatt_char(lastStim_uuid)
+                lastStim_value = decode_value(lastStim_uuid, val)
+                self.log(f"Last Stim: {lastStim_value} ms")
+            except Exception as e:
+                self.log(f"Error reading Last Stim: {e}")
+            finally:
+                self.read_lastStim_button.setText("Read Last Stim")
+                self.read_lastStim_button.setEnabled(True)
+
+        self.current_worker = AsyncWorker(do_read())
+        self.current_worker.finished.connect(lambda _: None)
+        self.current_worker.error.connect(lambda error: self.log(f"Error: {error}"))
+        self.current_worker.start()
+
     def toggle_debug_mode(self, enabled: bool):
         """Toggle debug mode"""
         # List of all buttons to control
@@ -1860,7 +1930,10 @@ class OptoGridBLEClient(QMainWindow):
             self.write_button,
             self.trigger_button,
             self.sham_led_button,
-            self.status_led_button
+            self.status_led_button,
+            self.battery_voltage_button,
+            self.read_uLEDCheck_button,
+            self.read_lastStim_button
         ]
         
         # Enable/disable all buttons
@@ -1911,7 +1984,7 @@ class OptoGridBLEClient(QMainWindow):
         try:
             # Reduced scan time from default 10s to 3s for faster operation
             all_devices = await BleakScanner.discover(timeout=4, return_adv=False)
-            return [d for d in all_devices if d.name and "-O-" in d.name]
+            return [d for d in all_devices if d.name and "O" in d.name]
         except Exception as e:
             # Re-raise with more context
             raise Exception(f"BLE scan failed: {str(e)}")
