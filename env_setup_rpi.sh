@@ -5,17 +5,17 @@ echo "=========================================="
 echo "  OptoGrid Client Environment Setup"
 echo "=========================================="
 
-echo "[0/6] Installing pyenv build dependencies..."
+echo "[0/7] Installing pyenv build dependencies..."
 sudo apt update && sudo apt install -y \
   make build-essential libssl-dev zlib1g-dev \
   libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
   libncursesw5-dev xz-utils tk-dev libxml2-dev \
   libxmlsec1-dev libffi-dev liblzma-dev
 
-echo "[1/6] Installing pyenv..."
+echo "[1/7] Installing pyenv..."
 curl https://pyenv.run | bash
 
-echo "[2/6] Adding pyenv to ~/.zshrc..."
+echo "[2/7] Adding pyenv to ~/.zshrc..."
 cat << 'EOF' >> ~/.zshrc
 
 # Pyenv configuration for OptoGrid
@@ -26,16 +26,16 @@ eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 EOF
 
-echo "[3/6] Restarting shell to activate pyenv..."
+echo "[3/7] Restarting shell to activate pyenv..."
 source ~/.zshrc
 
-echo "[4/6] Installing Python 3.12.4 with pyenv..."
+echo "[4/7] Installing Python 3.12.4 with pyenv..."
 pyenv install 3.12.4
 
-echo "[5/6] Setting local Python version to 3.12.4 in this folder..."
+echo "[5/7] Setting local Python version to 3.12.4 in this folder..."
 pyenv local 3.12.4
 
-echo "[6/6] Creating Python virtual environment..."
+echo "[6/7] Creating Python virtual environment..."
 python3 -m venv optogrid-client-env
 
 if [ ! -d "optogrid-client-env" ]; then
@@ -66,6 +66,30 @@ else
     echo "ERROR: requirements-headless.txt not found in the current directory."
     exit 1
 fi
+
+echo "[7/7] Setting up systemd service to run OptoGrid backend on boot..."
+SERVICE_FILE="/etc/systemd/system/optogrid.service"
+
+sudo bash -c "cat > $SERVICE_FILE" << EOF
+[Unit]
+Description=OptoGrid Headless Backend
+After=network.target
+
+[Service]
+Type=simple
+User=$USER
+WorkingDirectory=/home/$USER/repos/optogrid-client
+ExecStart=/bin/bash -c 'source /home/$USER/repos/optogrid-client/optogrid-client-env/bin/activate && python3 /home/$USER/repos/optogrid-client/headless_optogrid_backend.py'
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable optogrid.service
+
+echo "Systemd service created and enabled. The backend will now run on boot."
 
 echo ""
 echo "=========================================="
