@@ -2676,7 +2676,7 @@ class OptoGridBLEClient(QMainWindow):
                     self.log("Battery auto-read stopped due to error")
                 self.log(f"Error reading battery voltage: {e}")
             finally:
-                self.battery_voltage_button.setText("Read Battery Voltage")
+                self.battery_voltage_button.setText("Read Battery")
                 self.battery_voltage_button.setEnabled(True)
 
         self.current_worker = AsyncWorker(do_read())
