@@ -1,3 +1,4 @@
 /optogrid-client-env/
 /data/
 *.img
+.DS_Store
