@@ -1119,7 +1119,7 @@ class OptoGridBLEClient(QMainWindow):
         self.last_yaw = None
         
         # Configure window position and sizef
-        self.setGeometry(0, 0, 950, 1000)  # x, y, width, height
+        self.setGeometry(0, 0, 950, 800)  # x, y, width, height
         
         # BLE client state
         self.device_list: List[BLEDevice] = []
@@ -1632,23 +1632,26 @@ class OptoGridBLEClient(QMainWindow):
         controls_container.setSpacing(4)
         controls_container.setContentsMargins(0, 0, 0, 0)
         self.scan_button = QPushButton("Scan")
+        self.scan_button.setStyleSheet("font-size: 16px;")
         self.scan_button.setFixedWidth(240)
         controls_container.addWidget(self.scan_button)
         controls_container.addSpacing(10)  # Add vertical space
 
         self.devices_combo = QComboBox()
         self.devices_combo.setFixedWidth(230)
+        self.devices_combo.setStyleSheet("font-size: 16px;")
         controls_container.addWidget(self.devices_combo)
         controls_container.addSpacing(10)  # Add vertical space
 
         self.connect_button = QPushButton("Connect")
+        self.connect_button.setStyleSheet("font-size: 16px;")
         self.connect_button.setFixedWidth(240)
         controls_container.addWidget(self.connect_button)
         controls_container.addSpacing(15)  # Add vertical space
 
         self.debug_button = QCheckBox("Debug Mode")
         self.debug_button.setStyleSheet("""
-            QCheckBox { spacing: 5px; font-weight: bold; }
+            QCheckBox { spacing: 16px; font-weight: bold; font-size: 16px;}
             QCheckBox::indicator { width: 60px; height: 15px; border: 2px solid #8f8f91; border-radius: 8px; }
             QCheckBox::indicator:unchecked { background-color: #f0f0f0; }
             QCheckBox::indicator:checked { background-color: #90EE90; border-color: #4CAF50; }
@@ -1668,9 +1671,9 @@ class OptoGridBLEClient(QMainWindow):
         self.log_text = QTextEdit()
         self.log_text.setFixedSize(600, 200) 
         # Set a monospace font for consistent spacing
-        log_font = QFont("Consolas", 9)  # or "Courier New", "Monaco"
+        log_font = QFont("Consolas", 16)  # or "Courier New", "Monaco"
         if not log_font.exactMatch():
-            log_font = QFont("Courier New", 9)
+            log_font = QFont("Courier New", 16)
         self.log_text.setFont(log_font)
         
         # Set consistent line spacing
@@ -1678,7 +1681,7 @@ class OptoGridBLEClient(QMainWindow):
             QTextEdit {
                 line-height: 1.2;
                 font-family: "Consolas", "Courier New", monospace;
-                font-size: 9pt;
+                font-size: 16pt;
                 border: 1px solid #ccc;
             }
         """)
@@ -1691,19 +1694,23 @@ class OptoGridBLEClient(QMainWindow):
         control_layout.setSpacing(0)
         control_layout.setContentsMargins(0, 0, 0, 0)
         self.read_button = QPushButton("Read All Values")
+        self.read_button.setStyleSheet("font-size: 16px; font-weight: bold;")
+        self.read_button.setFixedSize(180, 40)
         self.read_button.setEnabled(False)
         control_layout.addWidget(self.read_button)
         control_layout.addSpacing(20)  # Add spacing
         
         self.write_button = QPushButton("Write Values")
+        self.write_button.setStyleSheet("font-size: 16px; font-weight: bold;")
+        self.write_button.setFixedSize(180, 40) 
         self.write_button.setEnabled(False)
         control_layout.addWidget(self.write_button)
         control_layout.addSpacing(20)  # Add spacing
 
         self.trigger_button = QPushButton("TRIGGER")
         self.trigger_button.setEnabled(False)
-        self.trigger_button.setStyleSheet("background-color: #ff4444; font-weight: bold;")
-        self.trigger_button.setFixedSize(180, 36) 
+        self.trigger_button.setStyleSheet("background-color: #ff4444; font-weight: bold;font-size: 16px;")
+        self.trigger_button.setFixedSize(180, 30) 
         control_layout.addWidget(self.trigger_button)
         left_layout.addWidget(control_frame)
         top_section.addWidget(left_panel, 2)
@@ -1713,7 +1720,9 @@ class OptoGridBLEClient(QMainWindow):
         right_layout = QVBoxLayout(right_panel)
         right_layout.setSpacing(4)
         right_layout.setContentsMargins(4, 4, 4, 4)
-        right_layout.addWidget(QLabel("LED selection GUI:"))
+        label = QLabel("LED selection GUI:")
+        label.setStyleSheet("font-size: 16px;font-weight: bold;")  # Set font size to 16
+        right_layout.addWidget(label)
         self.brain_map = BrainMapWidget()
         right_layout.addWidget(self.brain_map)
         led_state_frame = QFrame()
@@ -1724,21 +1733,21 @@ class OptoGridBLEClient(QMainWindow):
         self.sham_led_button = QPushButton("SHAM LED")
         self.sham_led_button.setEnabled(False)
         self.sham_led_button.setFixedSize(100, 30)
-        self.sham_led_button.setStyleSheet("background-color: #888888; font-weight: bold;")
+        self.sham_led_button.setStyleSheet("background-color: #888888; font-weight: bold; font-size: 16px;")
         led_state_layout.addWidget(self.sham_led_button)
         led_state_layout.addSpacing(22)  # Add spacing 
 
         self.imu_enable_button = QPushButton("IMU ENABLE")
         self.imu_enable_button.setEnabled(False)
         self.imu_enable_button.setFixedSize(100, 30)
-        self.imu_enable_button.setStyleSheet("background-color: #888888; font-weight: bold;")
+        self.imu_enable_button.setStyleSheet("background-color: #888888; font-weight: bold; font-size: 16px;")
         led_state_layout.addWidget(self.imu_enable_button)
         led_state_layout.addSpacing(22)  # Add spacing
 
         self.status_led_button = QPushButton("STATUS LED")
         self.status_led_button.setEnabled(False)
         self.status_led_button.setFixedSize(100, 30)
-        self.status_led_button.setStyleSheet("background-color: #888888; font-weight: bold;")
+        self.status_led_button.setStyleSheet("background-color: #888888; font-weight: bold; font-size: 16px;")
         led_state_layout.addWidget(self.status_led_button)
         led_state_layout.addStretch()
         right_layout.addWidget(led_state_frame)
@@ -1786,16 +1795,19 @@ class OptoGridBLEClient(QMainWindow):
 
         # Read battery button (left aligned)
         self.battery_voltage_button = QPushButton("Read Battery")
+        self.battery_voltage_button.setStyleSheet("font-size: 12px;")
         self.battery_voltage_button.setEnabled(False)
         self.battery_voltage_button.setFixedSize(100, 30)
 
         # Read uLEDCheck button
         self.read_uLEDCheck_button = QPushButton("uLED Scan")
+        self.read_uLEDCheck_button.setStyleSheet("font-size: 12px;")
         self.read_uLEDCheck_button.setEnabled(False)
         self.read_uLEDCheck_button.setFixedSize(90, 30)
 
         # Read lastStim button
         self.read_lastStim_button = QPushButton("Last Stim")
+        self.read_lastStim_button.setStyleSheet("font-size: 12px;")
         self.read_lastStim_button.setEnabled(False)
         self.read_lastStim_button.setFixedSize(80, 30)
 
@@ -1818,9 +1830,17 @@ class OptoGridBLEClient(QMainWindow):
         gatt_layout = QVBoxLayout(gatt_panel)
         gatt_layout.setSpacing(4)
         gatt_layout.setContentsMargins(4, 4, 4, 4)
-        gatt_layout.addWidget(QLabel("GATT Table:"))
+        label = QLabel("GATT Table:")
+        label.setStyleSheet("font-size: 16px; font-weight: bold;")  # Set font size to 16
+        gatt_layout.addWidget(label)
         self.gatt_tree = QTreeWidget()
         self.gatt_tree.setHeaderLabels(["Service", "Characteristic", "Value", "Write Value", "Unit"])
+        self.gatt_tree.setStyleSheet("""
+            QHeaderView::section {
+                font-size: 14px;
+                font-weight: bold;
+            }
+        """)
         self.gatt_tree.setMaximumWidth(500)
         header = self.gatt_tree.header()
         self.gatt_tree.setColumnWidth(0, 80)
@@ -1837,7 +1857,9 @@ class OptoGridBLEClient(QMainWindow):
         imu_layout = QVBoxLayout(imu_panel)
         imu_layout.setSpacing(4)
         imu_layout.setContentsMargins(4, 4, 4, 4)
-        imu_layout.addWidget(QLabel("IMU Data (last 200 samples):"))
+        label = QLabel("IMU Data (last 200 samples):")
+        label.setStyleSheet("font-size: 16px; font-weight: bold;")  # Set font size to 16 and bold
+        imu_layout.addWidget(label)
         self.imu_plot_widget = IMUPlotWidget()
         self.imu_plot_widget.setFixedSize(450, 350) 
         imu_layout.addWidget(self.imu_plot_widget, stretch=1)
@@ -2711,12 +2733,10 @@ class OptoGridBLEClient(QMainWindow):
                 # Ensure data directory exists
                 os.makedirs("data", exist_ok=True)
                 # Read values for file naming
-                animal_uuid = "56781502-5678-1234-1234-5678abcdeff0"
                 device_id_uuid = "56781500-5678-1234-1234-5678abcdeff0"
-                animal_val = self.read_gatt_value_sync(animal_uuid)
                 device_id_val = self.read_gatt_value_sync(device_id_uuid)
                 now_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                filename = f"data/{animal_val}_{device_id_val}_{now_str}.csv"
+                filename = f"data/{device_id_val}_{now_str}.csv"
                 self.imu_csv_file = open(filename, "w", newline="")
                 self.imu_csv_writer = csv.writer(self.imu_csv_file)
                 # Write header

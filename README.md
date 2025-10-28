@@ -160,3 +160,6 @@ This should match RPi's ipv4 address
 7. For now, Caution that rigtest_fm will give error, as there will not be PulsePal connected for this opto rig
 
 8. For now, caution start_bpod will give error for PulsePal not connected.
+
+
+## Appendix Cloning and Loading RPi disk image on MacOS

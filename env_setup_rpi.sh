@@ -80,14 +80,16 @@ SERVICE_FILE="/etc/systemd/system/optogrid.service"
 sudo bash -c "cat > $SERVICE_FILE" << EOF
 [Unit]
 Description=OptoGrid Headless Backend
-After=network.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
 User=$USER
 WorkingDirectory=/home/$USER/repos/optogrid-client
-ExecStart=/bin/bash -c 'source /home/$USER/repos/optogrid-client/optogrid-client-env/bin/activate && python3 /home/$USER/repos/optogrid-client/headless_optogrid_backend.py'
+ExecStart=/usr/bin/xterm -hold -e /bin/bash -c 'source /home/$USER/repos/optogrid-client/optogrid-client-env/bin/activate && python3 /home/$USER/repos/optogrid-client/headless_optogrid_backend.py'
 Restart=always
+Environment=DISPLAY=:0
 
 [Install]
 WantedBy=multi-user.target
