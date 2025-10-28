@@ -504,8 +504,18 @@ class BrainMapWidget(QWidget):
     def setup_brain_map(self):
         """Load brain map image and calculate LED positions"""
         try:
+            import os
+            import sys
             # Try to load brain map image
-            brain_image = Image.open("brainmap.png")
+            if getattr(sys, 'frozen', False):
+                # For PyInstaller .app bundle on Mac
+                bundle_dir = sys._MEIPASS if hasattr(sys, '_MEIPASS') else os.path.dirname(sys.executable)
+            else:
+                bundle_dir = os.path.dirname(os.path.abspath(__file__))
+
+            brainmap_path = os.path.join(bundle_dir, "brainmap.png")
+            brain_image = Image.open(brainmap_path)
+            
             max_width = 358
             w, h = brain_image.size
             scale = min(max_width / w, 1)
@@ -541,6 +551,8 @@ class BrainMapWidget(QWidget):
             painter.setFont(QFont('Arial', 12))
             painter.drawText(50, 150, "Brain Map Placeholder")
             painter.drawText(50, 170, "Place 'brainmap.png' in working directory")
+            painter.drawText(10, 190, f"Attempted path:")
+            painter.drawText(10, 210, brainmap_path)
             painter.end()
             
             self.setFixedSize(358, 300)
