@@ -366,8 +366,8 @@ class IMU3DWidget(QOpenGLWidget):
         glTranslatef(0.0, 0.0, -6.0)
         
         # Apply rotations
-        glRotatef(-self.roll, 0, 0, 1)
         glRotatef(self.pitch, 1, 0, 0)
+        glRotatef(-self.roll, 0, 0, 1)
         glRotatef(self.yaw, 0, 1, 0)
         
         # glRotatef(0, 0, 0, 1)
@@ -426,6 +426,28 @@ class IMU3DWidget(QOpenGLWidget):
         glScalef(0.2, 0.2, 0.2)      # Small eye
         self.draw_sphere(1.0)
         glPopMatrix()
+
+        # Draw coordinate axes (thicker lines)
+        glLineWidth(3.0)
+        glBegin(GL_LINES)
+
+        # X axis (red) - pointing right
+        glColor3f(1, 0, 0)
+        glVertex3f(0, 0, 0)
+        glVertex3f(2, 0, 0)
+
+        # Y axis (green) - pointing up
+        glColor3f(0, 1, 0)
+        glVertex3f(0, 0, 0)
+        glVertex3f(0, 2, 0)
+
+        # Z axis (blue) - pointing forward
+        glColor3f(0, 0, 1)
+        glVertex3f(0, 0, 0)
+        glVertex3f(0, 0, 3)
+
+        glEnd()
+
 
         # # Draw coordinate axes (thinner lines)
         # from OpenGL.GL import glLineWidth
@@ -515,7 +537,7 @@ class BrainMapWidget(QWidget):
 
             brainmap_path = os.path.join(bundle_dir, "brainmap.png")
             brain_image = Image.open(brainmap_path)
-            
+
             max_width = 358
             w, h = brain_image.size
             scale = min(max_width / w, 1)
@@ -849,26 +871,39 @@ class IMUPlotWidget(QWidget):
             "Accel Y", "Gyro Y", "Mag Y",
             "Accel Z", "Gyro Z", "Mag Z"
         ]
-
+            
         # Layout: columns = Accel, Gyro, Mag; rows = X, Y, Z
         for axis in range(3):  # rows: 0=X, 1=Y, 2=Z
             self.plot_widget.nextRow()
             for sensor in range(3):  # columns: 0=Accel, 1=Gyro, 2=Mag
                 idx = axis * 3 + sensor  # 0: Accel X, 1: Gyro X, 2: Mag X, 3: Accel Y, ...
                 p = self.plot_widget.addPlot()
-                if sensor == 2:  # Magnetometer
-                    p.setYRange(-500, 500)
-                    p.setXRange(0, 200)
-                    yticks = [(-500, '-500'), (500, '500')]
-                    p.getAxis('left').setTicks([yticks])
-                else:
-                    p.setYRange(-3000, 3000)
-                    p.setXRange(0, self.max_points)
-                    yticks = [(-3000, '-3000'), (0, '0'), (3000, '3000')]
-                    p.getAxis('left').setTicks([yticks])
+                
+                # AutoRange
+                p.enableAutoRange(axis='y')
+                p.setXRange(0, self.max_points)
+                    
                 # Set title with color
                 title_style = f"<span style='color: rgb{title_colors[idx]}; font-size:14pt'><b>{titles[idx]}</b></span>"
                 p.setTitle(title_style)
+
+                # Update yticks to show only min/max when y-range changes
+                def make_updater(plot):
+                    def update_ticks():
+                        try:
+                            ymin, ymax = plot.viewRange()[1]
+                            if ymax > ymin:
+                                ticks = [(ymin, f"{int(ymin)}"), (ymax, f"{int(ymax)}")]
+                                plot.getAxis('left').setTicks([ticks])
+                        except:
+                            pass
+                    return update_ticks
+                
+                p.vb.sigYRangeChanged.connect(make_updater(p))
+
+                # Reduce x-axis ticks (show only start, middle, end)
+                p.getAxis('bottom').setTicks([[(0, '0'), (self.max_points//2, str(self.max_points//2)), (self.max_points, str(self.max_points))]])
+                
                 curve = p.plot(self.data[idx], pen=pg.mkPen(line_colors[idx], width=2))
                 self.curves.append(curve)
                 self.plots.append(p)
@@ -1130,7 +1165,7 @@ class OptoGridBLEClient(QMainWindow):
         self.last_pitch = None
         self.last_yaw = None
         
-        # Configure window position and sizef
+        # Configure window position and size
         self.setGeometry(0, 0, 950, 800)  # x, y, width, height
         
         # BLE client state
@@ -1283,9 +1318,14 @@ class OptoGridBLEClient(QMainWindow):
         # IMU_X_Local_Frame = IMU_X
         # IMU_Y_Local_Frame = IMU_Y
         # IMU_Z_Local_Frame = IMU_Z
-        acc_world = np.array([-acc_device[2], -acc_device[0], acc_device[1]])  
-        gyr_world = np.array([-gyr_device[2], -gyr_device[0], gyr_device[1]])
-        mag_world = np.array([-mag_device[2], -mag_device[1], mag_device[0]])  
+        # Battery-cap IMU coordinate frame mapping
+        acc_world = np.array([acc_device[0], -acc_device[1], -acc_device[2]])  
+        gyr_world = np.array([gyr_device[0], -gyr_device[1], -gyr_device[2]])
+        mag_world = np.array([mag_device[1], -mag_device[0], -mag_device[2]])  
+        # IMUOnly Hardwar version mapping
+        # acc_world = np.array([-acc_device[2], -acc_device[0], acc_device[1]])  
+        # gyr_world = np.array([-gyr_device[2], -gyr_device[0], gyr_device[1]])
+        # mag_world = np.array([-mag_device[2], -mag_device[1], mag_device[0]])  
 
         # acc_local_frame = acc.copy()  # Already in local frame
         # gyr_local_frame = gyr.copy()  # Already in local frame
@@ -1739,19 +1779,19 @@ class OptoGridBLEClient(QMainWindow):
         right_layout.addWidget(self.brain_map)
         led_state_frame = QFrame()
         led_state_layout = QHBoxLayout(led_state_frame)
-        right_layout.addSpacing(10)  # Add spacing 
+        right_layout.addSpacing(1)  # Add spacing 
 
 
         self.sham_led_button = QPushButton("SHAM LED")
         self.sham_led_button.setEnabled(False)
-        self.sham_led_button.setFixedSize(100, 30)
+        self.sham_led_button.setFixedSize(90, 30)
         self.sham_led_button.setStyleSheet("background-color: #888888; font-weight: bold; font-size: 16px;")
         led_state_layout.addWidget(self.sham_led_button)
         led_state_layout.addSpacing(22)  # Add spacing 
 
         self.imu_enable_button = QPushButton("IMU ENABLE")
         self.imu_enable_button.setEnabled(False)
-        self.imu_enable_button.setFixedSize(100, 30)
+        self.imu_enable_button.setFixedSize(110, 30)
         self.imu_enable_button.setStyleSheet("background-color: #888888; font-weight: bold; font-size: 16px;")
         led_state_layout.addWidget(self.imu_enable_button)
         led_state_layout.addSpacing(22)  # Add spacing
@@ -1764,7 +1804,7 @@ class OptoGridBLEClient(QMainWindow):
         led_state_layout.addStretch()
         right_layout.addWidget(led_state_frame)
         led_state_layout2 = QHBoxLayout()
-        right_layout.addSpacing(15)  # Add vertical space
+        right_layout.addSpacing(1)  # Add vertical space
         
         # Add read battery voltage button and progress bar
 
@@ -1782,7 +1822,7 @@ class OptoGridBLEClient(QMainWindow):
         self.battery_voltage_bar = QProgressBar()
         self.battery_voltage_bar.setFixedSize(100, 30)
         self.battery_voltage_bar.setRange(3500, 4200)  # mV range
-        self.battery_voltage_bar.setValue(4000)
+        self.battery_voltage_bar.setValue(4200)
         self.battery_voltage_bar.setAlignment(Qt.AlignCenter)
         self.battery_voltage_bar.setFormat("")
         # Set green color for progress bar
@@ -1853,7 +1893,10 @@ class OptoGridBLEClient(QMainWindow):
                 font-weight: bold;
             }
         """)
+        # Set the width:
         self.gatt_tree.setMaximumWidth(500)
+        # Set the height:
+        # self.gatt_tree.setFixedHeight(380) 
         header = self.gatt_tree.header()
         self.gatt_tree.setColumnWidth(0, 80)
         self.gatt_tree.setColumnWidth(1, 140)
@@ -1873,7 +1916,7 @@ class OptoGridBLEClient(QMainWindow):
         label.setStyleSheet("font-size: 16px; font-weight: bold;")  # Set font size to 16 and bold
         imu_layout.addWidget(label)
         self.imu_plot_widget = IMUPlotWidget()
-        self.imu_plot_widget.setFixedSize(450, 350) 
+        self.imu_plot_widget.setFixedSize(450, 325) 
         imu_layout.addWidget(self.imu_plot_widget, stretch=1)
         bottom_section.addWidget(imu_panel, 1)
 
@@ -1918,7 +1961,7 @@ class OptoGridBLEClient(QMainWindow):
             except Exception as e:
                 self.log(f"Error reading uLED Check: {e}")
             finally:
-                self.read_uLEDCheck_button.setText("Read uLED Check")
+                self.read_uLEDCheck_button.setText("uLED Check")
                 self.read_uLEDCheck_button.setEnabled(True)
 
         self.current_worker = AsyncWorker(do_read())
@@ -1986,6 +2029,10 @@ class OptoGridBLEClient(QMainWindow):
     def log(self, message: str, max_lines=100):
         """Add message to log output, keeping only the last max_lines lines."""
         self.log_text.append(message)
+        # Move cursor to end and ensure it's visible
+        cursor = self.log_text.textCursor()
+        cursor.movePosition(cursor.End)
+        self.log_text.setTextCursor(cursor)
         self.log_text.ensureCursorVisible()
         # Limit the number of lines
         if self.log_text.document().blockCount() > max_lines:
