@@ -2194,7 +2194,21 @@ class OptoGridBLEClient(QMainWindow):
     
     def on_disconnect_callback(self, client):
         """Handle unexpected disconnections"""
+        import platform
         self.log(f"BLE device disconnected unexpectedly at sample {self.imu_counter}")
+        
+        platform_info = platform.system()
+        self.log(f"[DISCONNECT] Platform: {platform_info}")
+        self.log(f"[DISCONNECT] Client address: {client.address if hasattr(client, 'address') else 'Unknown'}")
+
+        # Additional Bleak client state info
+        try:
+            if hasattr(client, '_backend'):
+                self.log(f"[DISCONNECT] Backend type: {type(client._backend).__name__}")
+            if hasattr(client, '_device_info'):
+                self.log(f"[DISCONNECT] Device info available: True")
+        except Exception as e:
+            self.log(f"[DISCONNECT] Error getting client details: {e}")
         
         # Stop battery timer on disconnect
         self.battery_timer.stop()
@@ -2240,6 +2254,7 @@ class OptoGridBLEClient(QMainWindow):
         
         # self.battery_timer.start(60000)  # Read every 60 seconds
         self.read_battery_voltage()
+        
     
     def on_connect_error(self, error: str):
         """Handle connection error"""
