@@ -5,14 +5,14 @@ classdef OptoGrid < handle
         DeviceName = 'OptoGrid 1'
         OptoSetting = struct(...
             'sequence_length', 1, ...
-            'led_selection', uint64(34359738368), ...
-            'duration', 550, ...
-            'period', 25, ...
-            'pulse_width', 10, ...
+            'led_selection', uint64(1729382256910270464), ...
+            'duration', 500, ...
+            'period', 2, ...
+            'pulse_width', 1, ...
             'amplitude', 100, ...
             'pwm_frequency', 50000, ...
             'ramp_up', 0, ...
-            'ramp_down', 200)
+            'ramp_down', 500)
         ZMQSocket = 'tcp://localhost:5555'
         socket
         trigger_success_flag = 0
@@ -21,8 +21,14 @@ classdef OptoGrid < handle
 
     methods
         function start(obj)
+
+            % Add JeroMQ to Java class path
+            [classDir, ~, ~] = fileparts(which('OptoGrid'));
+            javaaddpath(fullfile(classDir, 'jeromq-0.5.2.jar'));
+
             % Initialize ZMQ socket using zmqhelper
             obj.socket = net.zmqhelper('type', 'req', 'url', obj.ZMQSocket);
+
             % Set receive timeout on the underlying socket
             obj.socket.socket.setReceiveTimeOut(obj.timeout);
         end
@@ -105,7 +111,7 @@ classdef OptoGrid < handle
             end
         end
 
-        function [success, DeviceName, battery_voltage_mV] = readbattery(obj)
+        function [battery_voltage_mV, success, DeviceName] = readbattery(obj)
             obj.socket.sendmsg('optogrid.readbattery');
             
             % Default values
@@ -136,7 +142,7 @@ classdef OptoGrid < handle
             end
         end
 
-        function [success, DeviceName, uLED_check] = readuLEDCheck(obj)
+        function [uLED_check,success, DeviceName] = readuLEDCheck(obj)
             obj.socket.sendmsg('optogrid.readuLEDCheck');
             
             % Default values
@@ -168,7 +174,7 @@ classdef OptoGrid < handle
             end
         end
 
-        function [success, DeviceName, last_stim_time_ms] = readlastStim(obj)
+        function [last_stim_time_ms, success, DeviceName] = readlastStim(obj)
             obj.socket.sendmsg('optogrid.readlastStim');
             
             % Default values

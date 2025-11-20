@@ -1,11 +1,13 @@
 % filepath: /Users/danielmac/repos/OptoGrid/Python Client/matlab-optogrid/test_optogrid_class.m
 % Test script for OptoGrid class
 clear;clc;
+
+% javaaddpath('/Users/danielmac/repos/optogrid-client/matlab-optogrid/jeromq-0.5.2.jar')
 %% Test 0: Create and start OptoGrid object
 og = OptoGrid();
 og.start();
 
-og.DeviceName = 'FKY-O-0001'
+og.DeviceName = 'JON-O-0001'
 %% Test 1: Connect to OptoGrid
 result = og.connect();
 if result

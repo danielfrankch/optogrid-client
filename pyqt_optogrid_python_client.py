@@ -1949,7 +1949,7 @@ class OptoGridBLEClient(QMainWindow):
 
         uLEDCheck_uuid = "56781504-5678-1234-1234-5678abcdeff0"
         self.log("Reading uLED Check...")
-        self.read_uLEDCheck_button.setText("Reading...")
+        
         self.read_uLEDCheck_button.setEnabled(False)
 
         async def do_read():
@@ -1961,7 +1961,7 @@ class OptoGridBLEClient(QMainWindow):
             except Exception as e:
                 self.log(f"Error reading uLED Check: {e}")
             finally:
-                self.read_uLEDCheck_button.setText("uLED Check")
+                
                 self.read_uLEDCheck_button.setEnabled(True)
 
         self.current_worker = AsyncWorker(do_read())
@@ -2045,6 +2045,11 @@ class OptoGridBLEClient(QMainWindow):
     
     def start_scan(self):
         """Start BLE device scanning"""
+
+        """Start BLE device scanning and clear previous device list"""
+        self.device_list = []
+        self.devices_combo.clear()
+        
         # Stop any existing worker
         if self.current_worker and self.current_worker.isRunning():
             self.current_worker.terminate()
