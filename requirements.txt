@@ -1,16 +1,9 @@
 bleak==0.21.1
-Pillow
-PyQt5 
-bleak 
-pillow 
-asyncio
-zmq
-tornado
-matplotlib
-numpy
-PyOpenGL
-ahrs
-pyqtgraph
-pandas
-gpiozero
+asyncio==3.4.3
+zmq==0.0.0
+numpy==2.3.1
+ahrs==0.3.1
+pandas==2.3.1
+gpiozero==2.0.1
+lgpio==0.2.2.0
 

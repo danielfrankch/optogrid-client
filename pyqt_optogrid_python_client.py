@@ -6,8 +6,7 @@ from typing import Dict, List, Optional, Tuple
 
 import os
 import zmq
-import matplotlib
-matplotlib.use('Qt5Agg')
+
 
 import numpy as np
 import csv
@@ -494,7 +493,6 @@ class IMU3DWidget(QOpenGLWidget):
         
         # glPopMatrix()
 
-
 class LEDPosition:
     """Data class for LED position information"""
     def __init__(self, x: int, y: int, bit: int, coords: Tuple[int, int, int, int]):
@@ -835,8 +833,6 @@ class EditValueDialog(QDialog):
     def get_value(self) -> str:
         return self.value_edit.text()
     
-
-
 class IMUPlotWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -933,10 +929,6 @@ class IMUPlotWidget(QWidget):
                     self.curves[idx].setData(self.data[idx])
         self.pending_data = None
 
-
-
-
-
 class ZMQListener(QThread):
     """Dedicated thread for ZMQ message handling"""
     message_received = pyqtSignal(str)
@@ -969,8 +961,9 @@ class ZMQListener(QThread):
             self.socket.setsockopt(zmq.LINGER, 0)      # Don't wait when closing
             
             ip = get_ip()
-            self.socket.bind(f"tcp://localhost:5555")
-            self.startup_message.emit(f"ZMQ server listening on tcp://localhost:5555")
+            self.socket.bind(f"tcp://0.0.0.0:5555")
+            self.startup_message.emit(f"ZMQ on tcp://{ip}:5555")
+            self.startup_message.emit(f"ZMQ on tcp://localhost:5555")
             while self.running:
                 try:
                     # Non-blocking receive
@@ -1109,8 +1102,6 @@ class ZMQListener(QThread):
         #         self.socket = None
         #     except Exception as e:
         #         print(f"Error closing ZMQ socket: {e}")
-
-
 
 class OptoGridBLEClient(QMainWindow):
     """Main application window"""
