@@ -69,6 +69,11 @@ class OptoGridGUI(QMainWindow):
         self.window_width = int(size.width() * 0.5)   # 50% of screen width
         self.window_height = int(size.height() * 0.9)  # 90% of screen height
         self.setGeometry(0, 0, self.window_width, self.window_height)
+        
+        # Proportional font sizes (based on window height)
+        self.font_large = int(self.window_height * 0.0165)   # ~16px at 972px height
+        self.font_medium = int(self.window_height * 0.0144)  # ~14px at 972px height
+        self.font_small = int(self.window_height * 0.0123)   # ~12px at 972px height
 
         # GUI state
         self.device_list: List[BLEDevice] = []
@@ -185,29 +190,29 @@ class OptoGridGUI(QMainWindow):
         controls_container.setContentsMargins(0, 0, 0, 0)
         
         self.scan_button = QPushButton("Scan")
-        self.scan_button.setStyleSheet("font-size: 16px;")
+        self.scan_button.setStyleSheet(f"font-size: {self.font_large}px;")
         self.scan_button.setFixedWidth(int(self.window_width * 0.24))
         controls_container.addWidget(self.scan_button)
-        controls_container.addSpacing(10)
+        controls_container.addSpacing(int(self.window_width * 0.01))
 
         self.devices_combo = QComboBox()
         self.devices_combo.setFixedWidth(int(self.window_width * 0.24))
-        self.devices_combo.setStyleSheet("font-size: 16px;")
+        self.devices_combo.setStyleSheet(f"font-size: {self.font_large}px;")
         controls_container.addWidget(self.devices_combo)
-        controls_container.addSpacing(10)
+        controls_container.addSpacing(int(self.window_width * 0.01))
 
         self.connect_button = QPushButton("Connect")
-        self.connect_button.setStyleSheet("font-size: 16px;")
+        self.connect_button.setStyleSheet(f"font-size: {self.font_large}px;")
         self.connect_button.setFixedWidth(int(self.window_width * 0.24))
         controls_container.addWidget(self.connect_button)
-        controls_container.addSpacing(15)
+        controls_container.addSpacing(int(self.window_width * 0.015))
 
         self.debug_button = QCheckBox("Debug Mode")
-        self.debug_button.setStyleSheet("""
-            QCheckBox { spacing: 16px; font-weight: bold; font-size: 16px;}
-            QCheckBox::indicator { width: 60px; height: 15px; border: 2px solid #8f8f91; border-radius: 8px; }
-            QCheckBox::indicator:unchecked { background-color: #f0f0f0; }
-            QCheckBox::indicator:checked { background-color: #90EE90; border-color: #4CAF50; }
+        self.debug_button.setStyleSheet(f"""
+            QCheckBox {{ spacing: 16px; font-weight: bold; font-size: {self.font_large}px;}}
+            QCheckBox::indicator {{ width: 60px; height: 15px; border: 2px solid #8f8f91; border-radius: 8px; }}
+            QCheckBox::indicator:unchecked {{ background-color: #f0f0f0; }}
+            QCheckBox::indicator:checked {{ background-color: #90EE90; border-color: #4CAF50; }}
         """)
         controls_container.addWidget(self.debug_button)
 
@@ -222,17 +227,17 @@ class OptoGridGUI(QMainWindow):
         # Log output
         self.log_text = QTextEdit()
         self.log_text.setFixedSize(int(self.window_width * 0.6), int(self.window_height * 0.22)) 
-        log_font = QFont("Consolas", 16)
+        log_font = QFont("Consolas", self.font_large)
         if not log_font.exactMatch():
-            log_font = QFont("Courier New", 16)
+            log_font = QFont("Courier New", self.font_large)
         self.log_text.setFont(log_font)
-        self.log_text.setStyleSheet("""
-            QTextEdit {
+        self.log_text.setStyleSheet(f"""
+            QTextEdit {{
                 line-height: 1.2;
                 font-family: "Consolas", "Courier New", monospace;
-                font-size: 16pt;
+                font-size: {self.font_large}pt;
                 border: 1px solid #ccc;
-            }
+            }}
         """)
         left_layout.addWidget(self.log_text)
         left_layout.addSpacing(2)
@@ -244,14 +249,14 @@ class OptoGridGUI(QMainWindow):
         control_layout.setContentsMargins(0, 0, 0, 0)
         
         self.read_button = QPushButton("Read All Values")
-        self.read_button.setStyleSheet("font-size: 16px; font-weight: bold;")
+        self.read_button.setStyleSheet(f"font-size: {self.font_large}px; font-weight: bold;")
         self.read_button.setFixedSize(int(self.window_width * 0.18), int(self.window_height * 0.044))
         self.read_button.setEnabled(False)
         control_layout.addWidget(self.read_button)
         control_layout.addSpacing(20)
         
         self.write_button = QPushButton("Write Values")
-        self.write_button.setStyleSheet("font-size: 16px; font-weight: bold;")
+        self.write_button.setStyleSheet(f"font-size: {self.font_large}px; font-weight: bold;")
         self.write_button.setFixedSize(int(self.window_width * 0.18), int(self.window_height * 0.044))
         self.write_button.setEnabled(False)
         control_layout.addWidget(self.write_button)
@@ -259,7 +264,7 @@ class OptoGridGUI(QMainWindow):
 
         self.trigger_button = QPushButton("TRIGGER")
         self.trigger_button.setEnabled(False)
-        self.trigger_button.setStyleSheet("background-color: #ff4444; font-weight: bold;font-size: 16px;")
+        self.trigger_button.setStyleSheet(f"background-color: #ff4444; font-weight: bold;font-size: {self.font_large}px;")
         self.trigger_button.setFixedSize(int(self.window_width * 0.18), int(self.window_height * 0.034)) 
         control_layout.addWidget(self.trigger_button)
         left_layout.addWidget(control_frame)
@@ -272,7 +277,7 @@ class OptoGridGUI(QMainWindow):
         right_layout.setContentsMargins(4, 4, 4, 4)
         
         label = QLabel("LED selection GUI:")
-        label.setStyleSheet("font-size: 16px;font-weight: bold;")
+        label.setStyleSheet(f"font-size: {self.font_large}px;font-weight: bold;")
         right_layout.addWidget(label)
         
         self.brain_map = BrainMapWidget()
@@ -285,21 +290,21 @@ class OptoGridGUI(QMainWindow):
         self.sham_led_button = QPushButton("SHAM LED")
         self.sham_led_button.setEnabled(False)
         self.sham_led_button.setFixedSize(int(self.window_width * 0.1), int(self.window_height * 0.034))
-        self.sham_led_button.setStyleSheet("background-color: #888888; font-weight: bold; font-size: 16px;")
+        self.sham_led_button.setStyleSheet(f"background-color: #888888; font-weight: bold; font-size: {self.font_large}px;")
         led_state_layout.addWidget(self.sham_led_button)
         led_state_layout.addSpacing(int(self.window_width * 0.02))
 
         self.imu_enable_button = QPushButton("IMU ENABLE")
         self.imu_enable_button.setEnabled(False)
         self.imu_enable_button.setFixedSize(int(self.window_width * 0.11), int(self.window_height * 0.034))
-        self.imu_enable_button.setStyleSheet("background-color: #888888; font-weight: bold; font-size: 16px;")
+        self.imu_enable_button.setStyleSheet(f"background-color: #888888; font-weight: bold; font-size: {self.font_large}px;")
         led_state_layout.addWidget(self.imu_enable_button)
         led_state_layout.addSpacing(int(self.window_width * 0.02))
 
         self.status_led_button = QPushButton("STATUS LED")
         self.status_led_button.setEnabled(False)
         self.status_led_button.setFixedSize(int(self.window_width * 0.11), int(self.window_height * 0.034))
-        self.status_led_button.setStyleSheet("background-color: #888888; font-weight: bold; font-size: 16px;")
+        self.status_led_button.setStyleSheet(f"background-color: #888888; font-weight: bold; font-size: {self.font_large}px;")
         led_state_layout.addWidget(self.status_led_button)
         led_state_layout.addStretch()
         right_layout.addWidget(led_state_frame)
@@ -331,17 +336,17 @@ class OptoGridGUI(QMainWindow):
         battery_row_layout.addWidget(self.battery_voltage_bar)
 
         self.battery_voltage_button = QPushButton("Read Battery")
-        self.battery_voltage_button.setStyleSheet("font-size: 12px;")
+        self.battery_voltage_button.setStyleSheet(f"font-size: {self.font_small}px;")
         self.battery_voltage_button.setEnabled(False)
         self.battery_voltage_button.setFixedSize(int(self.window_width * 0.1), int(self.window_height * 0.034))
 
         self.read_uLEDCheck_button = QPushButton("uLED Scan")
-        self.read_uLEDCheck_button.setStyleSheet("font-size: 12px;")
+        self.read_uLEDCheck_button.setStyleSheet(f"font-size: {self.font_small}px;")
         self.read_uLEDCheck_button.setEnabled(False)
         self.read_uLEDCheck_button.setFixedSize(int(self.window_width * 0.09), int(self.window_height * 0.034))
 
         self.read_lastStim_button = QPushButton("Last Stim")
-        self.read_lastStim_button.setStyleSheet("font-size: 12px;")
+        self.read_lastStim_button.setStyleSheet(f"font-size: {self.font_small}px;")
         self.read_lastStim_button.setEnabled(False)
         self.read_lastStim_button.setFixedSize(int(self.window_width * 0.09), int(self.window_height * 0.034))
 
@@ -365,16 +370,16 @@ class OptoGridGUI(QMainWindow):
         gatt_layout.setContentsMargins(4, 4, 4, 4)
         
         label = QLabel("GATT Table:")
-        label.setStyleSheet("font-size: 16px; font-weight: bold;")
+        label.setStyleSheet(f"font-size: {self.font_large}px; font-weight: bold;")
         gatt_layout.addWidget(label)
         
         self.gatt_tree = QTreeWidget()
         self.gatt_tree.setHeaderLabels(["Service", "Characteristic", "Value", "Write Value", "Unit"])
-        self.gatt_tree.setStyleSheet("""
-            QHeaderView::section {
-                font-size: 14px;
+        self.gatt_tree.setStyleSheet(f"""
+            QHeaderView::section {{
+                font-size: {self.font_medium}px;
                 font-weight: bold;
-            }
+            }}
         """)
         self.gatt_tree.setMaximumWidth(int(self.window_width * 0.5))
         header = self.gatt_tree.header()
@@ -394,7 +399,7 @@ class OptoGridGUI(QMainWindow):
         imu_layout.setContentsMargins(4, 4, 4, 4)
         
         label = QLabel("IMU Data (last 200 samples):")
-        label.setStyleSheet("font-size: 16px; font-weight: bold;")
+        label.setStyleSheet(f"font-size: {self.font_large}px; font-weight: bold;")
         imu_layout.addWidget(label)
         
         self.imu_plot_widget = IMUPlotWidget()
@@ -656,15 +661,15 @@ class OptoGridGUI(QMainWindow):
         """Update LED button visual states"""
         # Update SHAM LED button
         if self.sham_led_state:
-            self.sham_led_button.setStyleSheet("background-color: #90EE90; font-weight: bold; font-size: 16px;")
+            self.sham_led_button.setStyleSheet(f"background-color: #90EE90; font-weight: bold; font-size: {self.font_large}px;")
         else:
-            self.sham_led_button.setStyleSheet("background-color: #888888; font-weight: bold; font-size: 16px;")
+            self.sham_led_button.setStyleSheet(f"background-color: #888888; font-weight: bold; font-size: {self.font_large}px;")
         
         # Update STATUS LED button
         if self.status_led_state:
-            self.status_led_button.setStyleSheet("background-color: #90EE90; font-weight: bold; font-size: 16px;")
+            self.status_led_button.setStyleSheet(f"background-color: #90EE90; font-weight: bold; font-size: {self.font_large}px;")
         else:
-            self.status_led_button.setStyleSheet("background-color: #888888; font-weight: bold; font-size: 16px;")
+            self.status_led_button.setStyleSheet(f"background-color: #888888; font-weight: bold; font-size: {self.font_large}px;")
     
     # ==================== GATT Operations ====================
     
@@ -797,9 +802,9 @@ class OptoGridGUI(QMainWindow):
         
         # Update button appearance
         if self.sham_led_state:
-            self.sham_led_button.setStyleSheet("background-color: #90EE90; font-weight: bold; font-size: 16px;")
+            self.sham_led_button.setStyleSheet(f"background-color: #90EE90; font-weight: bold; font-size: {self.font_large}px;")
         else:
-            self.sham_led_button.setStyleSheet("background-color: #888888; font-weight: bold; font-size: 16px;")
+            self.sham_led_button.setStyleSheet(f"background-color: #888888; font-weight: bold; font-size: {self.font_large}px;")
         
         self.log(f"SHAM LED: {value}")
     
@@ -816,9 +821,9 @@ class OptoGridGUI(QMainWindow):
         
         # Update button appearance
         if self.status_led_state:
-            self.status_led_button.setStyleSheet("background-color: #90EE90; font-weight: bold; font-size: 16px;")
+            self.status_led_button.setStyleSheet(f"background-color: #90EE90; font-weight: bold; font-size: {self.font_large}px;")
         else:
-            self.status_led_button.setStyleSheet("background-color: #888888; font-weight: bold; font-size: 16px;")
+            self.status_led_button.setStyleSheet(f"background-color: #888888; font-weight: bold; font-size: {self.font_large}px;")
         
         self.log(f"STATUS LED: {value}")
     
@@ -844,13 +849,13 @@ class OptoGridGUI(QMainWindow):
     def _on_imu_enabled(self, result: str):
         """Handle IMU enable completion"""
         self.imu_enable_state = True
-        self.imu_enable_button.setStyleSheet("background-color: #90EE90; font-weight: bold; font-size: 16px;")
+        self.imu_enable_button.setStyleSheet(f"background-color: #90EE90; font-weight: bold; font-size: {self.font_large}px;")
         self.log(result)
     
     def _on_imu_disabled(self, result: str):
         """Handle IMU disable completion"""
         self.imu_enable_state = False
-        self.imu_enable_button.setStyleSheet("background-color: #888888; font-weight: bold; font-size: 16px;")
+        self.imu_enable_button.setStyleSheet(f"background-color: #888888; font-weight: bold; font-size: {self.font_large}px;")
         self.log(result)
     
     def read_battery_voltage(self):
