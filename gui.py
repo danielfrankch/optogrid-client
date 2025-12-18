@@ -292,7 +292,7 @@ class OptoGridGUI(QMainWindow):
         label.setStyleSheet(f"font-size: {self.font_large}px;font-weight: bold;")
         right_layout.addWidget(label)
         
-        self.brain_map = BrainMapWidget()
+        self.brain_map = BrainMapWidget(font_mini=self.font_mini)
         right_layout.addWidget(self.brain_map)
         
         led_state_frame = QFrame()
@@ -977,15 +977,16 @@ class BrainMapWidget(QWidget):
     
     led_clicked = pyqtSignal(int)  # Signal emitted when LED is clicked
     
-    def __init__(self, parent=None):
+    def __init__(self, font_mini=12, parent=None):
         super().__init__(parent)
+        self.font_mini = font_mini  # Store font size
         self.led_positions: List[LEDPosition] = []
         self.led_selection_value = 0
         self.brain_pixmap: Optional[QPixmap] = None
         self.sham_led_state = False
         self.status_led_state = False
         self.led_width = 13
-        self.led_height = 23
+        self.led_height = 24
         self.log_message = None  # Store any log messages for parent
         self.led_check_mask = (1 << 64) - 1  # All intact by default
         
@@ -1071,60 +1072,96 @@ class BrainMapWidget(QWidget):
         self.led_positions = []
         
         # LED positioning parameters
-        X_space = 26
-        Y_space = 26 + 11 + 3
-        ARB_X = 106
-        ARB_Y = 25
+        X_space = 15
+        Y_space = 44
+        Center_X = 172
+        Center_Y = 10
         
-        # LED pixel coordinates mapping (same as original)
+        # LED pixel coordinates mapping (X_space multipliers doubled)
         led_pixel_map = {
             # Row 1 (bits 0-7)
-            0: [ARB_X-X_space*3, ARB_Y+Y_space*5], 1: [ARB_X, 24], 2: [ARB_X+X_space*1, ARB_Y],
-            3: [ARB_X+X_space*2, ARB_Y], 4: [ARB_X+X_space*3, ARB_Y], 5: [ARB_X+X_space*4, ARB_Y],
-            6: [ARB_X+X_space*5, ARB_Y], 7: [ARB_X+X_space*8, ARB_Y+Y_space*5],
-            
+            0:  [Center_X - 11*X_space + 14,     Center_Y + 5*Y_space],
+            1:  [Center_X - 5*X_space + 2,       Center_Y],
+            2:  [Center_X - 3*X_space + 1,       Center_Y],
+            3:  [Center_X - 1*X_space,           Center_Y],
+            4:  [Center_X + 1*X_space,           Center_Y],
+            5:  [Center_X + 3*X_space - 1,       Center_Y],
+            6:  [Center_X + 5*X_space - 2,       Center_Y],
+            7:  [Center_X + 11*X_space - 14,     Center_Y + 5*Y_space],
+
             # Row 2 (bits 8-15)
-            8: [ARB_X-X_space*1, ARB_Y+Y_space*1], 9: [ARB_X, ARB_Y+Y_space*1],
-            10: [ARB_X+X_space*1, ARB_Y+Y_space*1], 11: [ARB_X+X_space*2, ARB_Y+Y_space*1],
-            12: [ARB_X+X_space*3, ARB_Y+Y_space*1], 13: [ARB_X+X_space*4, ARB_Y+Y_space*1],
-            14: [ARB_X+X_space*5, ARB_Y+Y_space*1], 15: [ARB_X+X_space*6, ARB_Y+Y_space*1],
-            
+            8:  [Center_X - 7*X_space + 5,       Center_Y + 1*Y_space],
+            9:  [Center_X - 5*X_space + 2,       Center_Y + 1*Y_space],
+            10: [Center_X - 3*X_space + 1,       Center_Y + 1*Y_space],
+            11: [Center_X - 1*X_space,           Center_Y + 1*Y_space],
+            12: [Center_X + 1*X_space,           Center_Y + 1*Y_space],
+            13: [Center_X + 3*X_space - 1,       Center_Y + 1*Y_space],
+            14: [Center_X + 5*X_space - 2,       Center_Y + 1*Y_space],
+            15: [Center_X + 7*X_space - 5,       Center_Y + 1*Y_space],
+
             # Row 3 (bits 16-23)
-            16: [ARB_X-X_space*1, ARB_Y+Y_space*2], 17: [ARB_X, ARB_Y+Y_space*2],
-            18: [ARB_X+X_space*1, ARB_Y+Y_space*2], 19: [ARB_X+X_space*2, ARB_Y+Y_space*2],
-            20: [ARB_X+X_space*3, ARB_Y+Y_space*2], 21: [ARB_X+X_space*4, ARB_Y+Y_space*2],
-            22: [ARB_X+X_space*5, ARB_Y+Y_space*2], 23: [ARB_X+X_space*6, ARB_Y+Y_space*2],
-            
+            16: [Center_X - 7*X_space + 5,       Center_Y + 2*Y_space],
+            17: [Center_X - 5*X_space + 2,       Center_Y + 2*Y_space],
+            18: [Center_X - 3*X_space + 1,       Center_Y + 2*Y_space],
+            19: [Center_X - 1*X_space,           Center_Y + 2*Y_space],
+            20: [Center_X + 1*X_space,           Center_Y + 2*Y_space],
+            21: [Center_X + 3*X_space - 1,       Center_Y + 2*Y_space],
+            22: [Center_X + 5*X_space - 2,       Center_Y + 2*Y_space],
+            23: [Center_X + 7*X_space - 5,       Center_Y + 2*Y_space],
+
             # Row 4 (bits 24-31)
-            24: [ARB_X-X_space*1, ARB_Y+Y_space*3], 25: [ARB_X, ARB_Y+Y_space*3],
-            26: [ARB_X+X_space*1, ARB_Y+Y_space*3], 27: [ARB_X+X_space*2, ARB_Y+Y_space*3],
-            28: [ARB_X+X_space*3, ARB_Y+Y_space*3], 29: [ARB_X+X_space*4, ARB_Y+Y_space*3],
-            30: [ARB_X+X_space*5, ARB_Y+Y_space*3], 31: [ARB_X+X_space*6, ARB_Y+Y_space*3],
-            
+            24: [Center_X - 7*X_space + 5,       Center_Y + 3*Y_space],
+            25: [Center_X - 5*X_space + 2,       Center_Y + 3*Y_space],
+            26: [Center_X - 3*X_space + 1,       Center_Y + 3*Y_space],
+            27: [Center_X - 1*X_space,           Center_Y + 3*Y_space],
+            28: [Center_X + 1*X_space,           Center_Y + 3*Y_space],
+            29: [Center_X + 3*X_space - 1,       Center_Y + 3*Y_space],
+            30: [Center_X + 5*X_space - 2,       Center_Y + 3*Y_space],
+            31: [Center_X + 7*X_space - 5,       Center_Y + 3*Y_space],
+
             # Row 5 (bits 32-39)
-            32: [ARB_X-X_space*1, ARB_Y+Y_space*4], 33: [ARB_X, ARB_Y+Y_space*4],
-            34: [ARB_X+X_space*1, ARB_Y+Y_space*4], 35: [ARB_X+X_space*2, ARB_Y+Y_space*4],
-            36: [ARB_X+X_space*3, ARB_Y+Y_space*4], 37: [ARB_X+X_space*4, ARB_Y+Y_space*4],
-            38: [ARB_X+X_space*5, ARB_Y+Y_space*4], 39: [ARB_X+X_space*6, ARB_Y+Y_space*4],
-            
+            32: [Center_X - 7*X_space + 5,       Center_Y + 4*Y_space],
+            33: [Center_X - 5*X_space + 2,       Center_Y + 4*Y_space],
+            34: [Center_X - 3*X_space + 1,       Center_Y + 4*Y_space],
+            35: [Center_X - 1*X_space,           Center_Y + 4*Y_space],
+            36: [Center_X + 1*X_space,           Center_Y + 4*Y_space],
+            37: [Center_X + 3*X_space - 1,       Center_Y + 4*Y_space],
+            38: [Center_X + 5*X_space - 2,       Center_Y + 4*Y_space],
+            39: [Center_X + 7*X_space - 5,       Center_Y + 4*Y_space],
+
             # Row 6 (bits 40-47)
-            40: [ARB_X-X_space*1, ARB_Y+Y_space*5], 41: [ARB_X, ARB_Y+Y_space*5],
-            42: [ARB_X+X_space*1, ARB_Y+Y_space*5], 43: [ARB_X+X_space*2, ARB_Y+Y_space*5],
-            44: [ARB_X+X_space*3, ARB_Y+Y_space*5], 45: [ARB_X+X_space*4, ARB_Y+Y_space*5],
-            46: [ARB_X+X_space*5, ARB_Y+Y_space*5], 47: [ARB_X+X_space*6, ARB_Y+Y_space*5],
-            
+            40: [Center_X - 7*X_space + 5,       Center_Y + 5*Y_space],
+            41: [Center_X - 5*X_space + 2,       Center_Y + 5*Y_space],
+            42: [Center_X - 3*X_space + 1,       Center_Y + 5*Y_space],
+            43: [Center_X - 1*X_space,           Center_Y + 5*Y_space],
+            44: [Center_X + 1*X_space,           Center_Y + 5*Y_space],
+            45: [Center_X + 3*X_space - 1,       Center_Y + 5*Y_space],
+            46: [Center_X + 5*X_space - 2,       Center_Y + 5*Y_space],
+            47: [Center_X + 7*X_space - 5,       Center_Y + 5*Y_space],
+
             # Row 7 (bits 48-55)
-            48: [ARB_X-X_space*1, ARB_Y+Y_space*6], 49: [ARB_X, ARB_Y+Y_space*6],
-            50: [ARB_X+X_space*1, ARB_Y+Y_space*6], 51: [ARB_X+X_space*2, ARB_Y+Y_space*6],
-            52: [ARB_X+X_space*3, ARB_Y+Y_space*6], 53: [ARB_X+X_space*4, ARB_Y+Y_space*6],
-            54: [ARB_X+X_space*5, ARB_Y+Y_space*6], 55: [ARB_X+X_space*6, ARB_Y+Y_space*6],
-            
+            48: [Center_X - 7*X_space + 5,       Center_Y + 6*Y_space],
+            49: [Center_X - 5*X_space + 2,       Center_Y + 6*Y_space],
+            50: [Center_X - 3*X_space + 1,       Center_Y + 6*Y_space],
+            51: [Center_X - 1*X_space,           Center_Y + 6*Y_space],
+            52: [Center_X + 1*X_space,           Center_Y + 6*Y_space],
+            53: [Center_X + 3*X_space - 1,       Center_Y + 6*Y_space],
+            54: [Center_X + 5*X_space - 2,       Center_Y + 6*Y_space],
+            55: [Center_X + 7*X_space - 5,       Center_Y + 6*Y_space],
+
             # Row 8 (bits 56-63)
-            56: [ARB_X-X_space*2, ARB_Y+Y_space*6], 57: [ARB_X-X_space*2, ARB_Y+Y_space*5],
-            58: [ARB_X-X_space*2, ARB_Y+Y_space*4], 59: [ARB_X-X_space*2, ARB_Y+Y_space*3],
-            60: [ARB_X+X_space*7, ARB_Y+Y_space*3], 61: [ARB_X+X_space*7, ARB_Y+Y_space*4],
-            62: [ARB_X+X_space*7, ARB_Y+Y_space*5], 63: [ARB_X+X_space*7, ARB_Y+Y_space*6],
+            56: [Center_X - 9*X_space + 8,       Center_Y + 6*Y_space],
+            57: [Center_X - 9*X_space + 8,       Center_Y + 5*Y_space],
+            58: [Center_X - 9*X_space + 8,       Center_Y + 4*Y_space],
+            59: [Center_X - 9*X_space + 8,       Center_Y + 3*Y_space],
+            60: [Center_X + 9*X_space - 8,       Center_Y + 3*Y_space],
+            61: [Center_X + 9*X_space - 8,       Center_Y + 4*Y_space],
+            62: [Center_X + 9*X_space - 8,       Center_Y + 5*Y_space],
+            63: [Center_X + 9*X_space - 8,       Center_Y + 6*Y_space],
         }
+
+
+
         
         # Create LED position objects
         for bit_position in range(64):
@@ -1158,7 +1195,7 @@ class BrainMapWidget(QWidget):
             painter.drawPixmap(0, 0, self.brain_pixmap)
         
         # Draw selected LEDs
-        painter.setFont(QFont('Arial', 10, QFont.Bold))
+        painter.setFont(QFont('Arial', self.font_mini, QFont.Bold))
         
         for led_pos in self.led_positions:
             x1, y1, x2, y2 = led_pos.coords
@@ -1182,11 +1219,23 @@ class BrainMapWidget(QWidget):
                 painter.drawLine(x1, y2, x2, y1)
 
             # Always draw LED number on top
-            painter.setFont(QFont('Arial', 11, QFont.Bold))
+            font = QFont('Arial', self.font_mini, QFont.Bold)
+            painter.setFont(font)
             painter.setPen(QPen(QColor(0, 0, 0)))
+            
+            # Calculate centered position for text
+            text = str(led_pos.bit + 1)
+            font_metrics = painter.fontMetrics()
+            text_width = font_metrics.horizontalAdvance(text)
+            text_height = font_metrics.height()
+            
             center_x = x1 + (x2 - x1) / 2
             center_y = y1 + (y2 - y1) / 2
-            painter.drawText(int(center_x-5), int(center_y+3), str(led_pos.bit + 1))
+            
+            # Draw text centered
+            text_x = int(center_x - text_width / 2)
+            text_y = int(center_y + text_height / 4)  # Adjust baseline
+            painter.drawText(text_x, text_y, text)
     
     def mousePressEvent(self, event):
         """Handle mouse clicks for LED selection"""
