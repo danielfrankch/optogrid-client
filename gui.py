@@ -99,6 +99,13 @@ class OptoGridGUI(QMainWindow):
         self.battery_timer = QTimer()
         self.battery_timer.timeout.connect(self.read_battery_voltage)
         
+        # Set consistent font across platforms
+        app = QApplication.instance()
+        if app:
+            default_font = QFont("Arial", 10)
+            default_font.setStyleHint(QFont.SansSerif)
+            app.setFont(default_font)
+        
         # Setup UI components
         self.setup_ui()
         self.setup_connections()
