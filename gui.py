@@ -350,7 +350,7 @@ class OptoGridGUI(QMainWindow):
         self.battery_voltage_button = QPushButton("Read Battery")
         self.battery_voltage_button.setStyleSheet(f"font-size: {self.font_small}px;")
         self.battery_voltage_button.setEnabled(False)
-        self.battery_voltage_button.setFixedSize(int(self.window_width * 0.1), int(self.window_height * 0.034))
+        self.battery_voltage_button.setFixedSize(int(self.window_width * 0.09), int(self.window_height * 0.034))
 
         self.read_uLEDCheck_button = QPushButton("uLED Scan")
         self.read_uLEDCheck_button.setStyleSheet(f"font-size: {self.font_small}px;")
