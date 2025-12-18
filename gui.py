@@ -8,7 +8,7 @@ import sys
 import time
 import csv
 import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 import numpy as np
 from functools import partial
 
@@ -25,7 +25,7 @@ from PyQt5.QtWidgets import (
     QLabel, QMessageBox, QDialog, QLineEdit, QDialogButtonBox,
     QFrame, QHeaderView, QCheckBox, QProgressBar, QOpenGLWidget
 )
-from PyQt5.QtCore import Qt, QTimer, QRect
+from PyQt5.QtCore import Qt, QTimer, QRect, pyqtSignal
 from PyQt5.QtGui import QPainter, QPen, QBrush, QFont, QPixmap, QColor, QVector3D
 from PIL import Image
 import pyqtgraph as pg
@@ -37,7 +37,6 @@ from optogrid_client import OptoGridClient, UUID_NAME_MAP, uuid_to_unit, decode_
 # Import widget classes from original (these are pure GUI)
 from pyqt_optogrid_python_client import (
     IMU3DWidget,
-    BrainMapWidget,
     IMUPlotWidget,
     EditValueDialog
 )
@@ -77,6 +76,7 @@ class OptoGridGUI(QMainWindow):
         self.font_large = int(self.window_height * 0.0165)   # ~16px at 972px height
         self.font_medium = int(self.window_height * 0.0144)  # ~14px at 972px height
         self.font_small = int(self.window_height * 0.0123)   # ~12px at 972px height
+        self.font_mini = int(self.window_height * 0.0102)  # ~10px at 972 px height
 
         # GUI state
         self.device_list: List[BLEDevice] = []
@@ -102,7 +102,7 @@ class OptoGridGUI(QMainWindow):
         # Set consistent font across platforms
         app = QApplication.instance()
         if app:
-            default_font = QFont("Arial", 10)
+            default_font = QFont("Arial", self.font_mini)
             default_font.setStyleHint(QFont.SansSerif)
             app.setFont(default_font)
         
@@ -964,6 +964,241 @@ class OptoGridGUI(QMainWindow):
         finally:
             event.accept()
 
+class LEDPosition:
+    """Data class for LED position information"""
+    def __init__(self, x: int, y: int, bit: int, coords: Tuple[int, int, int, int]):
+        self.x = x
+        self.y = y
+        self.bit = bit
+        self.coords = coords  # (x1, y1, x2, y2)
+
+class BrainMapWidget(QWidget):
+    """Custom widget for brain map visualization with LED interaction"""
+    
+    led_clicked = pyqtSignal(int)  # Signal emitted when LED is clicked
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.led_positions: List[LEDPosition] = []
+        self.led_selection_value = 0
+        self.brain_pixmap: Optional[QPixmap] = None
+        self.sham_led_state = False
+        self.status_led_state = False
+        self.led_width = 13
+        self.led_height = 23
+        self.log_message = None  # Store any log messages for parent
+        self.led_check_mask = (1 << 64) - 1  # All intact by default
+        
+        self.setMinimumSize(358, 300)
+        self.setup_brain_map()
+        
+    def setup_brain_map(self):
+        """Load brain map image and calculate LED positions"""
+        try:
+            import os
+            import sys
+            # Try to load brain map image
+            if getattr(sys, 'frozen', False):
+                # For PyInstaller .app bundle on Mac
+                bundle_dir = sys._MEIPASS if hasattr(sys, '_MEIPASS') else os.path.dirname(sys.executable)
+            else:
+                bundle_dir = os.path.dirname(os.path.abspath(__file__))
+
+            brainmap_path = os.path.join(bundle_dir, "brainmap.png")
+            brain_image = Image.open(brainmap_path)
+
+            max_width = 358
+            w, h = brain_image.size
+            scale = min(max_width / w, 1)
+            new_size = (int(w * scale), int(h * scale))
+            
+            brain_image = brain_image.resize(new_size, Image.LANCZOS)
+            
+            # Convert PIL to QPixmap more reliably
+            import tempfile
+            import os
+            
+            # Save to temporary file and load as QPixmap
+            fd, tmp_path = tempfile.mkstemp(suffix='.png')
+            os.close(fd)  # Close file descriptor immediately
+
+            brain_image.save(tmp_path, 'PNG')
+            self.brain_pixmap = QPixmap(tmp_path)
+            os.unlink(tmp_path)  # Delete temp file after loading
+
+            self.setFixedSize(new_size[0], new_size[1])
+            self.calculate_led_positions(new_size[0], new_size[1])
+            
+        except FileNotFoundError:
+            # If brain map image not found, create a placeholder
+            self.log_message = "Brain map image 'brainmap.png' not found. Using placeholder."
+            self.brain_pixmap = QPixmap(358, 300)
+            self.brain_pixmap.fill(QColor(220, 220, 220))
+            
+            # Draw placeholder text
+            from PyQt5.QtGui import QPainter, QPen
+            painter = QPainter(self.brain_pixmap)
+            painter.setPen(QPen(QColor(100, 100, 100)))
+            painter.setFont(QFont('Arial', 12))
+            painter.drawText(50, 150, "Brain Map Placeholder")
+            painter.drawText(50, 170, "Place 'brainmap.png' in working directory")
+            painter.drawText(10, 190, f"Attempted path:")
+            painter.drawText(10, 210, brainmap_path)
+            painter.end()
+            
+            self.setFixedSize(358, 300)
+            self.calculate_led_positions(358, 300)
+        except Exception as e:
+            # Handle any other image loading errors
+            self.log_message = f"Error loading brain map: {str(e)}. Using placeholder."
+            self.brain_pixmap = QPixmap(358, 300)
+            self.brain_pixmap.fill(QColor(255, 200, 200))  # Light red to indicate error
+            
+            # Draw error message
+            from PyQt5.QtGui import QPainter, QPen
+            painter = QPainter(self.brain_pixmap)
+            painter.setPen(QPen(QColor(150, 0, 0)))
+            painter.setFont(QFont('Arial', 10))
+            painter.drawText(10, 150, "Error loading brain map image")
+            painter.drawText(10, 170, str(e)[:40] + "..." if len(str(e)) > 40 else str(e))
+            painter.end()
+            
+            self.setFixedSize(358, 300)
+            self.calculate_led_positions(358, 300)
+    
+    def calculate_led_positions(self, canvas_width: int, canvas_height: int):
+        """Calculate LED positions on the brain map"""
+        self.led_positions = []
+        
+        # LED positioning parameters
+        X_space = 26
+        Y_space = 26 + 11 + 3
+        ARB_X = 106
+        ARB_Y = 25
+        
+        # LED pixel coordinates mapping (same as original)
+        led_pixel_map = {
+            # Row 1 (bits 0-7)
+            0: [ARB_X-X_space*3, ARB_Y+Y_space*5], 1: [ARB_X, 24], 2: [ARB_X+X_space*1, ARB_Y],
+            3: [ARB_X+X_space*2, ARB_Y], 4: [ARB_X+X_space*3, ARB_Y], 5: [ARB_X+X_space*4, ARB_Y],
+            6: [ARB_X+X_space*5, ARB_Y], 7: [ARB_X+X_space*8, ARB_Y+Y_space*5],
+            
+            # Row 2 (bits 8-15)
+            8: [ARB_X-X_space*1, ARB_Y+Y_space*1], 9: [ARB_X, ARB_Y+Y_space*1],
+            10: [ARB_X+X_space*1, ARB_Y+Y_space*1], 11: [ARB_X+X_space*2, ARB_Y+Y_space*1],
+            12: [ARB_X+X_space*3, ARB_Y+Y_space*1], 13: [ARB_X+X_space*4, ARB_Y+Y_space*1],
+            14: [ARB_X+X_space*5, ARB_Y+Y_space*1], 15: [ARB_X+X_space*6, ARB_Y+Y_space*1],
+            
+            # Row 3 (bits 16-23)
+            16: [ARB_X-X_space*1, ARB_Y+Y_space*2], 17: [ARB_X, ARB_Y+Y_space*2],
+            18: [ARB_X+X_space*1, ARB_Y+Y_space*2], 19: [ARB_X+X_space*2, ARB_Y+Y_space*2],
+            20: [ARB_X+X_space*3, ARB_Y+Y_space*2], 21: [ARB_X+X_space*4, ARB_Y+Y_space*2],
+            22: [ARB_X+X_space*5, ARB_Y+Y_space*2], 23: [ARB_X+X_space*6, ARB_Y+Y_space*2],
+            
+            # Row 4 (bits 24-31)
+            24: [ARB_X-X_space*1, ARB_Y+Y_space*3], 25: [ARB_X, ARB_Y+Y_space*3],
+            26: [ARB_X+X_space*1, ARB_Y+Y_space*3], 27: [ARB_X+X_space*2, ARB_Y+Y_space*3],
+            28: [ARB_X+X_space*3, ARB_Y+Y_space*3], 29: [ARB_X+X_space*4, ARB_Y+Y_space*3],
+            30: [ARB_X+X_space*5, ARB_Y+Y_space*3], 31: [ARB_X+X_space*6, ARB_Y+Y_space*3],
+            
+            # Row 5 (bits 32-39)
+            32: [ARB_X-X_space*1, ARB_Y+Y_space*4], 33: [ARB_X, ARB_Y+Y_space*4],
+            34: [ARB_X+X_space*1, ARB_Y+Y_space*4], 35: [ARB_X+X_space*2, ARB_Y+Y_space*4],
+            36: [ARB_X+X_space*3, ARB_Y+Y_space*4], 37: [ARB_X+X_space*4, ARB_Y+Y_space*4],
+            38: [ARB_X+X_space*5, ARB_Y+Y_space*4], 39: [ARB_X+X_space*6, ARB_Y+Y_space*4],
+            
+            # Row 6 (bits 40-47)
+            40: [ARB_X-X_space*1, ARB_Y+Y_space*5], 41: [ARB_X, ARB_Y+Y_space*5],
+            42: [ARB_X+X_space*1, ARB_Y+Y_space*5], 43: [ARB_X+X_space*2, ARB_Y+Y_space*5],
+            44: [ARB_X+X_space*3, ARB_Y+Y_space*5], 45: [ARB_X+X_space*4, ARB_Y+Y_space*5],
+            46: [ARB_X+X_space*5, ARB_Y+Y_space*5], 47: [ARB_X+X_space*6, ARB_Y+Y_space*5],
+            
+            # Row 7 (bits 48-55)
+            48: [ARB_X-X_space*1, ARB_Y+Y_space*6], 49: [ARB_X, ARB_Y+Y_space*6],
+            50: [ARB_X+X_space*1, ARB_Y+Y_space*6], 51: [ARB_X+X_space*2, ARB_Y+Y_space*6],
+            52: [ARB_X+X_space*3, ARB_Y+Y_space*6], 53: [ARB_X+X_space*4, ARB_Y+Y_space*6],
+            54: [ARB_X+X_space*5, ARB_Y+Y_space*6], 55: [ARB_X+X_space*6, ARB_Y+Y_space*6],
+            
+            # Row 8 (bits 56-63)
+            56: [ARB_X-X_space*2, ARB_Y+Y_space*6], 57: [ARB_X-X_space*2, ARB_Y+Y_space*5],
+            58: [ARB_X-X_space*2, ARB_Y+Y_space*4], 59: [ARB_X-X_space*2, ARB_Y+Y_space*3],
+            60: [ARB_X+X_space*7, ARB_Y+Y_space*3], 61: [ARB_X+X_space*7, ARB_Y+Y_space*4],
+            62: [ARB_X+X_space*7, ARB_Y+Y_space*5], 63: [ARB_X+X_space*7, ARB_Y+Y_space*6],
+        }
+        
+        # Create LED position objects
+        for bit_position in range(64):
+            if bit_position in led_pixel_map:
+                x, y = led_pixel_map[bit_position]
+                x1, y1 = x, y
+                x2, y2 = x + self.led_width, y + self.led_height
+                
+                grid_x = (bit_position % 8) + 1
+                grid_y = (bit_position // 8) + 1
+                
+                led_pos = LEDPosition(grid_x, grid_y, bit_position, (x1, y1, x2, y2))
+                self.led_positions.append(led_pos)
+    
+    def update_led_selection(self, value: int):
+        """Update LED selection value and repaint"""
+        self.led_selection_value = value
+        self.update()
+
+    def update_led_check_overlay(self, led_check_mask: int):
+        """Update the overlay mask for broken LEDs and repaint"""
+        self.led_check_mask = led_check_mask
+        self.update()
+
+    def paintEvent(self, event):
+        """Paint the brain map and LEDs"""
+        painter = QPainter(self)
+        
+        # Draw brain map background
+        if self.brain_pixmap:
+            painter.drawPixmap(0, 0, self.brain_pixmap)
+        
+        # Draw selected LEDs
+        painter.setFont(QFont('Arial', 10, QFont.Bold))
+        
+        for led_pos in self.led_positions:
+            x1, y1, x2, y2 = led_pos.coords
+
+            if self.led_selection_value & (1 << led_pos.bit):
+                # Draw LED rectangle
+                painter.setPen(QPen(QColor(0, 190, 255), 2))
+                painter.setBrush(QBrush(QColor(0, 190, 255)))
+                painter.drawRect(QRect(x1, y1, x2-x1, y2-y1))
+
+            # Draw red overlay if LED is broken (corresponding uLED check bit is 0)
+            # if ((self.led_check_mask >> led_pos.bit) & 1) == 0:
+            #     x1, y1, x2, y2 = led_pos.coords
+            #     painter.setPen(Qt.NoPen)
+            #     painter.setBrush(QBrush(QColor(255, 0, 0, 120)))  # Semi-transparent red
+            #     painter.drawRect(QRect(x1, y1, x2-x1, y2-y1))
+            # Draw X overlay if LED is broken (corresponding uLED check bit is 0)
+            if ((self.led_check_mask >> led_pos.bit) & 1) == 0:
+                painter.setPen(QPen(QColor(255, 0, 0), 3))
+                painter.drawLine(x1, y1, x2, y2)
+                painter.drawLine(x1, y2, x2, y1)
+
+            # Always draw LED number on top
+            painter.setFont(QFont('Arial', 11, QFont.Bold))
+            painter.setPen(QPen(QColor(0, 0, 0)))
+            center_x = x1 + (x2 - x1) / 2
+            center_y = y1 + (y2 - y1) / 2
+            painter.drawText(int(center_x-5), int(center_y+3), str(led_pos.bit + 1))
+    
+    def mousePressEvent(self, event):
+        """Handle mouse clicks for LED selection"""
+        if event.button() == Qt.LeftButton:
+            x, y = event.x(), event.y()
+            
+            # Find clicked LED
+            for led_pos in self.led_positions:
+                x1, y1, x2, y2 = led_pos.coords
+                if x1 <= x <= x2 and y1 <= y <= y2:
+                    self.led_clicked.emit(led_pos.bit)
+                    break
 
 # For backward compatibility
 __all__ = ['OptoGridGUI']
