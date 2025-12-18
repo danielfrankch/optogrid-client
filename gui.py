@@ -67,8 +67,11 @@ class OptoGridGUI(QMainWindow):
         screen = QApplication.primaryScreen()
         size = screen.size()
         self.window_width = int(size.width() * 0.5)   # 50% of screen width
-        self.window_height = int(size.height() * 0.9)  # 90% of screen height
+        self.window_height = int(size.height() * 0.87)  # 90% of screen height
         self.setGeometry(0, 0, self.window_width, self.window_height)
+        
+        # Make window non-resizable
+        self.setFixedSize(self.window_width, self.window_height)
         
         # Proportional font sizes (based on window height)
         self.font_large = int(self.window_height * 0.0165)   # ~16px at 972px height
@@ -180,13 +183,14 @@ class OptoGridGUI(QMainWindow):
         # Left: Device controls, log, and buttons
         left_panel = QWidget()
         left_layout = QVBoxLayout(left_panel)
-        left_layout.setSpacing(4)
-        left_layout.setContentsMargins(4, 4, 4, 4)
+        left_layout.setSpacing(int(self.window_height * 0.004))
+        left_layout.setContentsMargins(int(self.window_width * 0.004), int(self.window_height * 0.004), 
+                                       int(self.window_width * 0.004), int(self.window_height * 0.004))
 
         device_frame = QFrame()
         device_layout = QHBoxLayout(device_frame)
         controls_container = QVBoxLayout()
-        controls_container.setSpacing(4)
+        controls_container.setSpacing(int(self.window_height * 0.004))
         controls_container.setContentsMargins(0, 0, 0, 0)
         
         self.scan_button = QPushButton("Scan")
@@ -209,8 +213,8 @@ class OptoGridGUI(QMainWindow):
 
         self.debug_button = QCheckBox("Debug Mode")
         self.debug_button.setStyleSheet(f"""
-            QCheckBox {{ spacing: 16px; font-weight: bold; font-size: {self.font_large}px;}}
-            QCheckBox::indicator {{ width: 60px; height: 15px; border: 2px solid #8f8f91; border-radius: 8px; }}
+            QCheckBox {{ spacing: {int(self.window_width * 0.017)}px; font-weight: bold; font-size: {self.font_large}px;}}
+            QCheckBox::indicator {{ width: {int(self.window_width * 0.0625)}px; height: {int(self.window_height * 0.015)}px; border: 2px solid #8f8f91; border-radius: 8px; }}
             QCheckBox::indicator:unchecked {{ background-color: #f0f0f0; }}
             QCheckBox::indicator:checked {{ background-color: #90EE90; border-color: #4CAF50; }}
         """)
@@ -240,7 +244,7 @@ class OptoGridGUI(QMainWindow):
             }}
         """)
         left_layout.addWidget(self.log_text)
-        left_layout.addSpacing(2)
+        left_layout.addSpacing(int(self.window_height * 0.002))
 
         # Control buttons
         control_frame = QFrame()
@@ -253,14 +257,14 @@ class OptoGridGUI(QMainWindow):
         self.read_button.setFixedSize(int(self.window_width * 0.18), int(self.window_height * 0.044))
         self.read_button.setEnabled(False)
         control_layout.addWidget(self.read_button)
-        control_layout.addSpacing(20)
+        control_layout.addSpacing(int(self.window_width * 0.02))
         
         self.write_button = QPushButton("Write Values")
         self.write_button.setStyleSheet(f"font-size: {self.font_large}px; font-weight: bold;")
         self.write_button.setFixedSize(int(self.window_width * 0.18), int(self.window_height * 0.044))
         self.write_button.setEnabled(False)
         control_layout.addWidget(self.write_button)
-        control_layout.addSpacing(20)
+        control_layout.addSpacing(int(self.window_width * 0.02))
 
         self.trigger_button = QPushButton("TRIGGER")
         self.trigger_button.setEnabled(False)
@@ -273,10 +277,11 @@ class OptoGridGUI(QMainWindow):
         # Right: Brain map and LED controls
         right_panel = QWidget()
         right_layout = QVBoxLayout(right_panel)
-        right_layout.setSpacing(4)
-        right_layout.setContentsMargins(4, 4, 4, 4)
+        right_layout.setSpacing(int(self.window_height * 0.004))
+        right_layout.setContentsMargins(int(self.window_width * 0.004), int(self.window_height * 0.004),
+                                        int(self.window_width * 0.004), int(self.window_height * 0.004))
         
-        label = QLabel("LED selection GUI:")
+        label = QLabel("Toggle the LEDs to select:")
         label.setStyleSheet(f"font-size: {self.font_large}px;font-weight: bold;")
         right_layout.addWidget(label)
         
@@ -285,7 +290,7 @@ class OptoGridGUI(QMainWindow):
         
         led_state_frame = QFrame()
         led_state_layout = QHBoxLayout(led_state_frame)
-        right_layout.addSpacing(1)
+        right_layout.addSpacing(int(self.window_height * 0.001))
 
         self.sham_led_button = QPushButton("SHAM LED")
         self.sham_led_button.setEnabled(False)
@@ -310,11 +315,11 @@ class OptoGridGUI(QMainWindow):
         right_layout.addWidget(led_state_frame)
         
         led_state_layout2 = QHBoxLayout()
-        right_layout.addSpacing(1)
+        right_layout.addSpacing(int(self.window_height * 0.001))
         
         # Battery display
         battery_row_layout = QHBoxLayout()
-        battery_row_layout.setSpacing(8)
+        battery_row_layout.setSpacing(int(self.window_width * 0.008))
 
         self.battery_voltage_bar = QProgressBar()
         self.battery_voltage_bar.setFixedSize(int(self.window_width * 0.1), int(self.window_height * 0.034))
@@ -366,8 +371,9 @@ class OptoGridGUI(QMainWindow):
         # Left: GATT Table
         gatt_panel = QWidget()
         gatt_layout = QVBoxLayout(gatt_panel)
-        gatt_layout.setSpacing(4)
-        gatt_layout.setContentsMargins(4, 4, 4, 4)
+        gatt_layout.setSpacing(int(self.window_height * 0.004))
+        gatt_layout.setContentsMargins(int(self.window_width * 0.004), int(self.window_height * 0.004),
+                                       int(self.window_width * 0.004), int(self.window_height * 0.004))
         
         label = QLabel("GATT Table:")
         label.setStyleSheet(f"font-size: {self.font_large}px; font-weight: bold;")
@@ -395,8 +401,9 @@ class OptoGridGUI(QMainWindow):
         # Right: IMU Data Visualization
         imu_panel = QWidget()
         imu_layout = QVBoxLayout(imu_panel)
-        imu_layout.setSpacing(4)
-        imu_layout.setContentsMargins(4, 4, 4, 4)
+        imu_layout.setSpacing(int(self.window_height * 0.004))
+        imu_layout.setContentsMargins(int(self.window_width * 0.004), int(self.window_height * 0.004),
+                                      int(self.window_width * 0.004), int(self.window_height * 0.004))
         
         label = QLabel("IMU Data (last 200 samples):")
         label.setStyleSheet(f"font-size: {self.font_large}px; font-weight: bold;")
