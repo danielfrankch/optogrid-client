@@ -63,8 +63,9 @@ class OptoGridGUI(QMainWindow):
         self.setWindowTitle("OptoGrid BLE Browser")
         screen = QApplication.primaryScreen()
         size = screen.size()
-        self.window_width = int(size.width() * 0.5)   # 50% of screen width
-        self.window_height = int(size.height() * 0.87)  # 90% of screen height
+        self.window_height = int(size.height() * 0.87)  # 87% of screen height
+        self.window_width = int(self.window_height * 1.13)   # width is 50% of height
+        
         self.setGeometry(0, 0, self.window_width, self.window_height)
         
         # Make window non-resizable
