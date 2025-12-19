@@ -36,8 +36,6 @@ from optogrid_client import OptoGridClient, UUID_NAME_MAP, uuid_to_unit, decode_
 
 # Import widget classes from original (these are pure GUI)
 from pyqt_optogrid_python_client import (
-    IMU3DWidget,
-    IMUPlotWidget,
     EditValueDialog
 )
 
@@ -231,8 +229,7 @@ class OptoGridGUI(QMainWindow):
         left_layout.addWidget(device_frame)
 
         # Add IMU 3D display
-        self.imu_3d_widget = IMU3DWidget()
-        self.imu_3d_widget.setFixedSize(int(self.window_width * 0.3), int(self.window_height * 0.16)) 
+        self.imu_3d_widget = IMU3DWidget(window_width=self.window_width, window_height=self.window_height)
         device_layout.addWidget(self.imu_3d_widget)
         
         # Log output
@@ -292,7 +289,7 @@ class OptoGridGUI(QMainWindow):
         label.setStyleSheet(f"font-size: {self.font_large}px;font-weight: bold;")
         right_layout.addWidget(label)
         
-        self.brain_map = BrainMapWidget(font_mini=self.font_mini)
+        self.brain_map = BrainMapWidget(font_mini=self.font_mini, window_width=self.window_width, window_height=self.window_height)
         right_layout.addWidget(self.brain_map)
         
         led_state_frame = QFrame()
@@ -416,8 +413,7 @@ class OptoGridGUI(QMainWindow):
         label.setStyleSheet(f"font-size: {self.font_large}px; font-weight: bold;")
         imu_layout.addWidget(label)
         
-        self.imu_plot_widget = IMUPlotWidget()
-        self.imu_plot_widget.setFixedSize(int(self.window_width * 0.45), int(self.window_height * 0.43))
+        self.imu_plot_widget = IMUPlotWidget(window_width=self.window_width, window_height=self.window_height)
         imu_layout.addWidget(self.imu_plot_widget, stretch=1)
         bottom_section.addWidget(imu_panel, 1)
 
@@ -977,20 +973,29 @@ class BrainMapWidget(QWidget):
     
     led_clicked = pyqtSignal(int)  # Signal emitted when LED is clicked
     
-    def __init__(self, font_mini=12, parent=None):
+    def __init__(self, font_mini=12, window_width=950, window_height=800, parent=None):
         super().__init__(parent)
         self.font_mini = font_mini  # Store font size
+        self.window_width = window_width
+        self.window_height = window_height
         self.led_positions: List[LEDPosition] = []
         self.led_selection_value = 0
         self.brain_pixmap: Optional[QPixmap] = None
         self.sham_led_state = False
         self.status_led_state = False
-        self.led_width = 13
-        self.led_height = 24
+        
+        # Scale LED dimensions based on window size
+        self.led_width = int(window_width * 0.0142)  # ~13px at 950px width
+        self.led_height = int(window_height * 0.03)  # ~24px at 800px height
+        
         self.log_message = None  # Store any log messages for parent
         self.led_check_mask = (1 << 64) - 1  # All intact by default
         
-        self.setMinimumSize(358, 300)
+        # Calculate brain map size based on window dimensions
+        self.brain_map_width = int(window_width * 0.377)  # ~358px at 950px width
+        self.brain_map_height = int(window_height * 0.375)  # ~300px at 800px height
+        
+        self.setMinimumSize(self.brain_map_width, self.brain_map_height)
         self.setup_brain_map()
         
     def setup_brain_map(self):
@@ -1008,9 +1013,9 @@ class BrainMapWidget(QWidget):
             brainmap_path = os.path.join(bundle_dir, "brainmap.png")
             brain_image = Image.open(brainmap_path)
 
-            max_width = 358
+            # Scale to fit the calculated brain map dimensions
             w, h = brain_image.size
-            scale = min(max_width / w, 1)
+            scale = min(self.brain_map_width / w, self.brain_map_height / h)
             new_size = (int(w * scale), int(h * scale))
             
             brain_image = brain_image.resize(new_size, Image.LANCZOS)
@@ -1033,7 +1038,7 @@ class BrainMapWidget(QWidget):
         except FileNotFoundError:
             # If brain map image not found, create a placeholder
             self.log_message = "Brain map image 'brainmap.png' not found. Using placeholder."
-            self.brain_pixmap = QPixmap(358, 300)
+            self.brain_pixmap = QPixmap(self.brain_map_width, self.brain_map_height)
             self.brain_pixmap.fill(QColor(220, 220, 220))
             
             # Draw placeholder text
@@ -1047,12 +1052,12 @@ class BrainMapWidget(QWidget):
             painter.drawText(10, 210, brainmap_path)
             painter.end()
             
-            self.setFixedSize(358, 300)
-            self.calculate_led_positions(358, 300)
+            self.setFixedSize(self.brain_map_width, self.brain_map_height)
+            self.calculate_led_positions(self.brain_map_width, self.brain_map_height)
         except Exception as e:
             # Handle any other image loading errors
             self.log_message = f"Error loading brain map: {str(e)}. Using placeholder."
-            self.brain_pixmap = QPixmap(358, 300)
+            self.brain_pixmap = QPixmap(self.brain_map_width, self.brain_map_height)
             self.brain_pixmap.fill(QColor(255, 200, 200))  # Light red to indicate error
             
             # Draw error message
@@ -1064,100 +1069,105 @@ class BrainMapWidget(QWidget):
             painter.drawText(10, 170, str(e)[:40] + "..." if len(str(e)) > 40 else str(e))
             painter.end()
             
-            self.setFixedSize(358, 300)
-            self.calculate_led_positions(358, 300)
+            self.setFixedSize(self.brain_map_width, self.brain_map_height)
+            self.calculate_led_positions(self.brain_map_width, self.brain_map_height)
     
     def calculate_led_positions(self, canvas_width: int, canvas_height: int):
         """Calculate LED positions on the brain map"""
         self.led_positions = []
         
-        # LED positioning parameters
-        X_space = 15
-        Y_space = 44
-        Center_X = 172
-        Center_Y = 10
+        # LED positioning parameters - scale based on canvas size
+        # Original values were at 358x300 canvas
+        scale_x = canvas_width / 358
+        scale_y = canvas_height / 300
         
-        # LED pixel coordinates mapping (X_space multipliers doubled)
+        X_space = int(15 * scale_x)
+        Y_space = int(40 * scale_y)
+        Center_X = int(172 * scale_x)
+        Center_Y = int(10 * scale_y)
+        
+        # LED pixel coordinates mapping with scaled offsets
+        # Original offsets scaled by scale_x or scale_y
         led_pixel_map = {
             # Row 1 (bits 0-7)
-            0:  [Center_X - 11*X_space + 14,     Center_Y + 5*Y_space],
-            1:  [Center_X - 5*X_space + 2,       Center_Y],
-            2:  [Center_X - 3*X_space + 1,       Center_Y],
-            3:  [Center_X - 1*X_space,           Center_Y],
-            4:  [Center_X + 1*X_space,           Center_Y],
-            5:  [Center_X + 3*X_space - 1,       Center_Y],
-            6:  [Center_X + 5*X_space - 2,       Center_Y],
-            7:  [Center_X + 11*X_space - 14,     Center_Y + 5*Y_space],
+            0:  [Center_X - 11*X_space + int(14*scale_x),     Center_Y + 5*Y_space],
+            1:  [Center_X - 5*X_space + int(2*scale_x),       Center_Y],
+            2:  [Center_X - 3*X_space + int(1*scale_x),       Center_Y],
+            3:  [Center_X - 1*X_space,                        Center_Y],
+            4:  [Center_X + 1*X_space,                        Center_Y],
+            5:  [Center_X + 3*X_space - int(1*scale_x),       Center_Y],
+            6:  [Center_X + 5*X_space - int(2*scale_x),       Center_Y],
+            7:  [Center_X + 11*X_space - int(14*scale_x),     Center_Y + 5*Y_space],
 
             # Row 2 (bits 8-15)
-            8:  [Center_X - 7*X_space + 5,       Center_Y + 1*Y_space],
-            9:  [Center_X - 5*X_space + 2,       Center_Y + 1*Y_space],
-            10: [Center_X - 3*X_space + 1,       Center_Y + 1*Y_space],
-            11: [Center_X - 1*X_space,           Center_Y + 1*Y_space],
-            12: [Center_X + 1*X_space,           Center_Y + 1*Y_space],
-            13: [Center_X + 3*X_space - 1,       Center_Y + 1*Y_space],
-            14: [Center_X + 5*X_space - 2,       Center_Y + 1*Y_space],
-            15: [Center_X + 7*X_space - 5,       Center_Y + 1*Y_space],
+            8:  [Center_X - 7*X_space + int(5*scale_x),       Center_Y + 1*Y_space],
+            9:  [Center_X - 5*X_space + int(2*scale_x),       Center_Y + 1*Y_space],
+            10: [Center_X - 3*X_space + int(1*scale_x),       Center_Y + 1*Y_space],
+            11: [Center_X - 1*X_space,                        Center_Y + 1*Y_space],
+            12: [Center_X + 1*X_space,                        Center_Y + 1*Y_space],
+            13: [Center_X + 3*X_space - int(1*scale_x),       Center_Y + 1*Y_space],
+            14: [Center_X + 5*X_space - int(2*scale_x),       Center_Y + 1*Y_space],
+            15: [Center_X + 7*X_space - int(5*scale_x),       Center_Y + 1*Y_space],
 
             # Row 3 (bits 16-23)
-            16: [Center_X - 7*X_space + 5,       Center_Y + 2*Y_space],
-            17: [Center_X - 5*X_space + 2,       Center_Y + 2*Y_space],
-            18: [Center_X - 3*X_space + 1,       Center_Y + 2*Y_space],
-            19: [Center_X - 1*X_space,           Center_Y + 2*Y_space],
-            20: [Center_X + 1*X_space,           Center_Y + 2*Y_space],
-            21: [Center_X + 3*X_space - 1,       Center_Y + 2*Y_space],
-            22: [Center_X + 5*X_space - 2,       Center_Y + 2*Y_space],
-            23: [Center_X + 7*X_space - 5,       Center_Y + 2*Y_space],
+            16: [Center_X - 7*X_space + int(5*scale_x),       Center_Y + 2*Y_space],
+            17: [Center_X - 5*X_space + int(2*scale_x),       Center_Y + 2*Y_space],
+            18: [Center_X - 3*X_space + int(1*scale_x),       Center_Y + 2*Y_space],
+            19: [Center_X - 1*X_space,                        Center_Y + 2*Y_space],
+            20: [Center_X + 1*X_space,                        Center_Y + 2*Y_space],
+            21: [Center_X + 3*X_space - int(1*scale_x),       Center_Y + 2*Y_space],
+            22: [Center_X + 5*X_space - int(2*scale_x),       Center_Y + 2*Y_space],
+            23: [Center_X + 7*X_space - int(5*scale_x),       Center_Y + 2*Y_space],
 
             # Row 4 (bits 24-31)
-            24: [Center_X - 7*X_space + 5,       Center_Y + 3*Y_space],
-            25: [Center_X - 5*X_space + 2,       Center_Y + 3*Y_space],
-            26: [Center_X - 3*X_space + 1,       Center_Y + 3*Y_space],
-            27: [Center_X - 1*X_space,           Center_Y + 3*Y_space],
-            28: [Center_X + 1*X_space,           Center_Y + 3*Y_space],
-            29: [Center_X + 3*X_space - 1,       Center_Y + 3*Y_space],
-            30: [Center_X + 5*X_space - 2,       Center_Y + 3*Y_space],
-            31: [Center_X + 7*X_space - 5,       Center_Y + 3*Y_space],
+            24: [Center_X - 7*X_space + int(5*scale_x),       Center_Y + 3*Y_space],
+            25: [Center_X - 5*X_space + int(2*scale_x),       Center_Y + 3*Y_space],
+            26: [Center_X - 3*X_space + int(1*scale_x),       Center_Y + 3*Y_space],
+            27: [Center_X - 1*X_space,                        Center_Y + 3*Y_space],
+            28: [Center_X + 1*X_space,                        Center_Y + 3*Y_space],
+            29: [Center_X + 3*X_space - int(1*scale_x),       Center_Y + 3*Y_space],
+            30: [Center_X + 5*X_space - int(2*scale_x),       Center_Y + 3*Y_space],
+            31: [Center_X + 7*X_space - int(5*scale_x),       Center_Y + 3*Y_space],
 
             # Row 5 (bits 32-39)
-            32: [Center_X - 7*X_space + 5,       Center_Y + 4*Y_space],
-            33: [Center_X - 5*X_space + 2,       Center_Y + 4*Y_space],
-            34: [Center_X - 3*X_space + 1,       Center_Y + 4*Y_space],
-            35: [Center_X - 1*X_space,           Center_Y + 4*Y_space],
-            36: [Center_X + 1*X_space,           Center_Y + 4*Y_space],
-            37: [Center_X + 3*X_space - 1,       Center_Y + 4*Y_space],
-            38: [Center_X + 5*X_space - 2,       Center_Y + 4*Y_space],
-            39: [Center_X + 7*X_space - 5,       Center_Y + 4*Y_space],
+            32: [Center_X - 7*X_space + int(5*scale_x),       Center_Y + 4*Y_space],
+            33: [Center_X - 5*X_space + int(2*scale_x),       Center_Y + 4*Y_space],
+            34: [Center_X - 3*X_space + int(1*scale_x),       Center_Y + 4*Y_space],
+            35: [Center_X - 1*X_space,                        Center_Y + 4*Y_space],
+            36: [Center_X + 1*X_space,                        Center_Y + 4*Y_space],
+            37: [Center_X + 3*X_space - int(1*scale_x),       Center_Y + 4*Y_space],
+            38: [Center_X + 5*X_space - int(2*scale_x),       Center_Y + 4*Y_space],
+            39: [Center_X + 7*X_space - int(5*scale_x),       Center_Y + 4*Y_space],
 
             # Row 6 (bits 40-47)
-            40: [Center_X - 7*X_space + 5,       Center_Y + 5*Y_space],
-            41: [Center_X - 5*X_space + 2,       Center_Y + 5*Y_space],
-            42: [Center_X - 3*X_space + 1,       Center_Y + 5*Y_space],
-            43: [Center_X - 1*X_space,           Center_Y + 5*Y_space],
-            44: [Center_X + 1*X_space,           Center_Y + 5*Y_space],
-            45: [Center_X + 3*X_space - 1,       Center_Y + 5*Y_space],
-            46: [Center_X + 5*X_space - 2,       Center_Y + 5*Y_space],
-            47: [Center_X + 7*X_space - 5,       Center_Y + 5*Y_space],
+            40: [Center_X - 7*X_space + int(5*scale_x),       Center_Y + 5*Y_space],
+            41: [Center_X - 5*X_space + int(2*scale_x),       Center_Y + 5*Y_space],
+            42: [Center_X - 3*X_space + int(1*scale_x),       Center_Y + 5*Y_space],
+            43: [Center_X - 1*X_space,                        Center_Y + 5*Y_space],
+            44: [Center_X + 1*X_space,                        Center_Y + 5*Y_space],
+            45: [Center_X + 3*X_space - int(1*scale_x),       Center_Y + 5*Y_space],
+            46: [Center_X + 5*X_space - int(2*scale_x),       Center_Y + 5*Y_space],
+            47: [Center_X + 7*X_space - int(5*scale_x),       Center_Y + 5*Y_space],
 
             # Row 7 (bits 48-55)
-            48: [Center_X - 7*X_space + 5,       Center_Y + 6*Y_space],
-            49: [Center_X - 5*X_space + 2,       Center_Y + 6*Y_space],
-            50: [Center_X - 3*X_space + 1,       Center_Y + 6*Y_space],
-            51: [Center_X - 1*X_space,           Center_Y + 6*Y_space],
-            52: [Center_X + 1*X_space,           Center_Y + 6*Y_space],
-            53: [Center_X + 3*X_space - 1,       Center_Y + 6*Y_space],
-            54: [Center_X + 5*X_space - 2,       Center_Y + 6*Y_space],
-            55: [Center_X + 7*X_space - 5,       Center_Y + 6*Y_space],
+            48: [Center_X - 7*X_space + int(5*scale_x),       Center_Y + 6*Y_space],
+            49: [Center_X - 5*X_space + int(2*scale_x),       Center_Y + 6*Y_space],
+            50: [Center_X - 3*X_space + int(1*scale_x),       Center_Y + 6*Y_space],
+            51: [Center_X - 1*X_space,                        Center_Y + 6*Y_space],
+            52: [Center_X + 1*X_space,                        Center_Y + 6*Y_space],
+            53: [Center_X + 3*X_space - int(1*scale_x),       Center_Y + 6*Y_space],
+            54: [Center_X + 5*X_space - int(2*scale_x),       Center_Y + 6*Y_space],
+            55: [Center_X + 7*X_space - int(5*scale_x),       Center_Y + 6*Y_space],
 
             # Row 8 (bits 56-63)
-            56: [Center_X - 9*X_space + 8,       Center_Y + 6*Y_space],
-            57: [Center_X - 9*X_space + 8,       Center_Y + 5*Y_space],
-            58: [Center_X - 9*X_space + 8,       Center_Y + 4*Y_space],
-            59: [Center_X - 9*X_space + 8,       Center_Y + 3*Y_space],
-            60: [Center_X + 9*X_space - 8,       Center_Y + 3*Y_space],
-            61: [Center_X + 9*X_space - 8,       Center_Y + 4*Y_space],
-            62: [Center_X + 9*X_space - 8,       Center_Y + 5*Y_space],
-            63: [Center_X + 9*X_space - 8,       Center_Y + 6*Y_space],
+            56: [Center_X - 9*X_space + int(8*scale_x),       Center_Y + 6*Y_space],
+            57: [Center_X - 9*X_space + int(8*scale_x),       Center_Y + 5*Y_space],
+            58: [Center_X - 9*X_space + int(8*scale_x),       Center_Y + 4*Y_space],
+            59: [Center_X - 9*X_space + int(8*scale_x),       Center_Y + 3*Y_space],
+            60: [Center_X + 9*X_space - int(8*scale_x),       Center_Y + 3*Y_space],
+            61: [Center_X + 9*X_space - int(8*scale_x),       Center_Y + 4*Y_space],
+            62: [Center_X + 9*X_space - int(8*scale_x),       Center_Y + 5*Y_space],
+            63: [Center_X + 9*X_space - int(8*scale_x),       Center_Y + 6*Y_space],
         }
 
 
@@ -1248,6 +1258,393 @@ class BrainMapWidget(QWidget):
                 if x1 <= x <= x2 and y1 <= y <= y2:
                     self.led_clicked.emit(led_pos.bit)
                     break
+
+class IMU3DWidget(QOpenGLWidget):
+    """A simple 3D widget to visualize device orientation with a rat head model"""
+    def __init__(self, window_width=950, window_height=800, parent=None):
+        super().__init__(parent)
+        self.roll = 0
+        self.pitch = 0
+        self.yaw = 0
+        
+        # Scale widget size based on window dimensions
+        imu_width = int(window_width * 0.3)  # ~285px at 950px width
+        imu_height = int(window_height * 0.16)  # ~128px at 800px height
+        self.setFixedSize(imu_width, imu_height)
+        self.setMinimumSize(imu_width, imu_height)
+
+        # Disable this timer, Let IMU drive frame updates
+        # self.timer = QTimer(self)
+        # self.timer.timeout.connect(self.update)
+        # self.timer.start(10)  # ~100 FPS
+
+    def set_orientation(self, roll, pitch, yaw):
+        self.roll = roll
+        self.pitch = pitch
+        self.yaw = yaw
+        self.update()
+
+    def initializeGL(self):
+        from OpenGL.GL import glClearColor, glEnable, GL_DEPTH_TEST
+        glClearColor(0.5, 0.6, 0.6, 1)
+        glEnable(GL_DEPTH_TEST)
+
+    def resizeGL(self, w, h):
+        from OpenGL.GL import glViewport, glMatrixMode, glLoadIdentity, GL_PROJECTION, GL_MODELVIEW
+        from OpenGL.GLU import gluPerspective
+        glViewport(0, 0, w, h)
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        gluPerspective(45, w / h if h != 0 else 1, 0.1, 100.0)
+        glMatrixMode(GL_MODELVIEW)
+
+    def draw_sphere(self, radius, slices=8, stacks=8):
+        """Draw a simple sphere using quads"""
+        from OpenGL.GL import glBegin, glEnd, glVertex3f, GL_QUADS
+        import math
+        
+        glBegin(GL_QUADS)
+        for i in range(stacks):
+            lat0 = math.pi * (-0.5 + float(i) / stacks)
+            z0 = radius * math.sin(lat0)
+            zr0 = radius * math.cos(lat0)
+            
+            lat1 = math.pi * (-0.5 + float(i + 1) / stacks)
+            z1 = radius * math.sin(lat1)
+            zr1 = radius * math.cos(lat1)
+            
+            for j in range(slices):
+                lng = 2 * math.pi * float(j) / slices
+                x = math.cos(lng)
+                y = math.sin(lng)
+                
+                lng1 = 2 * math.pi * float(j + 1) / slices
+                x1 = math.cos(lng1)
+                y1 = math.sin(lng1)
+                
+                glVertex3f(x * zr0, y * zr0, z0)
+                glVertex3f(x1 * zr0, y1 * zr0, z0)
+                glVertex3f(x1 * zr1, y1 * zr1, z1)
+                glVertex3f(x * zr1, y * zr1, z1)
+        glEnd()
+    
+
+    def draw_ellipsoid(self, rx, ry, rz, slices=8, stacks=8):
+        """Draw an ellipsoid with proper vertex counting"""
+        from OpenGL.GL import glBegin, glEnd, glVertex3f, GL_TRIANGLES
+        import math
+        
+        # Use triangles instead of quads for more reliable rendering
+        glBegin(GL_TRIANGLES)
+        
+        for i in range(stacks):
+            lat0 = math.pi * (-0.5 + float(i) / stacks)
+            z0 = rz * math.sin(lat0)
+            zr0 = math.cos(lat0)
+            
+            lat1 = math.pi * (-0.5 + float(i + 1) / stacks)
+            z1 = rz * math.sin(lat1)
+            zr1 = math.cos(lat1)
+            
+            for j in range(slices):
+                lng = 2 * math.pi * float(j) / slices
+                x0 = rx * math.cos(lng) * zr0
+                y0 = ry * math.sin(lng) * zr0
+                
+                lng1 = 2 * math.pi * float(j + 1) / slices
+                x1 = rx * math.cos(lng1) * zr0
+                y1 = ry * math.sin(lng1) * zr0
+                
+                x0_1 = rx * math.cos(lng) * zr1
+                y0_1 = ry * math.sin(lng) * zr1
+                x1_1 = rx * math.cos(lng1) * zr1
+                y1_1 = ry * math.sin(lng1) * zr1
+                
+                # First triangle
+                glVertex3f(x0, y0, z0)
+                glVertex3f(x1, y1, z0)
+                glVertex3f(x0_1, y0_1, z1)
+                
+                # Second triangle
+                glVertex3f(x1, y1, z0)
+                glVertex3f(x1_1, y1_1, z1)
+                glVertex3f(x0_1, y0_1, z1)
+        
+        glEnd()
+
+
+    def draw_cone(self, base_radius, height, slices=8):
+        """Draw a cone pointing in +Z direction"""
+        from OpenGL.GL import glBegin, glEnd, glVertex3f, GL_TRIANGLES, GL_TRIANGLE_FAN
+        import math
+        
+        # Draw base
+        glBegin(GL_TRIANGLE_FAN)
+        glVertex3f(0, 0, 0)  # Center of base
+        for i in range(slices + 1):
+            angle = 2 * math.pi * i / slices
+            x = base_radius * math.cos(angle)
+            y = base_radius * math.sin(angle)
+            glVertex3f(x, y, 0)
+        glEnd()
+        
+        # Draw sides
+        glBegin(GL_TRIANGLES)
+        for i in range(slices):
+            angle1 = 2 * math.pi * i / slices
+            angle2 = 2 * math.pi * (i + 1) / slices
+            
+            x1 = base_radius * math.cos(angle1)
+            y1 = base_radius * math.sin(angle1)
+            x2 = base_radius * math.cos(angle2)
+            y2 = base_radius * math.sin(angle2)
+            
+            glVertex3f(0, 0, height)  # Tip
+            glVertex3f(x1, y1, 0)     # Base point 1
+            glVertex3f(x2, y2, 0)     # Base point 2
+        glEnd()
+
+    def paintGL(self):
+        from OpenGL.GL import (
+        glClear, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, glLoadIdentity,
+        glTranslatef, glRotatef, glColor3f, glPushMatrix, glPopMatrix, glScalef,
+        glBegin, glEnd, glVertex3f, GL_LINES, GL_TRIANGLES
+        )
+        
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glLoadIdentity()
+        glTranslatef(0.0, 0.0, -6.0)
+        
+        # Apply rotations
+        glRotatef(self.pitch, 1, 0, 0)
+        glRotatef(-self.roll, 0, 0, 1)
+        glRotatef(self.yaw, 0, 1, 0)
+        
+        # glRotatef(0, 0, 0, 1)
+        # glRotatef(0, 1, 0, 0)
+        # glRotatef(180, 0, 1, 0)
+        
+
+        # Draw rat head (5 shapes total)
+        
+        # 1. Main head (ellipsoid) - pinkish color
+        glPushMatrix()
+        glColor3f(0.9, 0.7, 0.7)  # Light pink
+        glScalef(0.8, 0.6, 1.0)   # Elongated head shape
+        self.draw_ellipsoid(1.5, 2, 1.5)
+        glPopMatrix()
+        
+        # 2. Snout (cone) - dark 
+        glPushMatrix()
+        glColor3f(0.2, 0.2, 0.2)  # Darker pink
+        glTranslatef(0, 0, 1.5)   # Move to front of head
+        glScalef(0.6, 0.6, 0.4)   # Small pointy snout
+        self.draw_cone(0.5, 1.0)
+        glPopMatrix()
+        
+        # 3. Left ear (ellipsoid) - Dark
+        glPushMatrix()
+        glColor3f(0.2, 0.2, 0.3)  # 
+        glTranslatef(-1.0, 0.7, -0.2)  # Left side, top, slightly forward
+        glRotatef(30, 0, 0, 1)    # Tilt ear outward
+        glScalef(0.8, 0.9, 0.3) # Thin, tall ear
+        self.draw_ellipsoid(1.0, 1.0, 1.0)
+        glPopMatrix()
+        
+        # 4. Right ear (ellipsoid) - Dark
+        glPushMatrix()
+        glColor3f(0.2, 0.2, 0.3)  # 
+        glTranslatef(1.0, 0.7, -0.2)    # Right side, top, slightly forward
+        glRotatef(-30, 0, 0, 1)   # Tilt ear outward
+        glScalef(0.8, 0.9, 0.3) # Thin, tall ear
+        self.draw_ellipsoid(1.0, 1.0, 1.0)
+        glPopMatrix()
+        
+        # 5. Eyes (two small spheres, counted as one shape since they're identical)
+        glColor3f(0.1, 0.1, 0.1)  # Black eyes
+        
+        # Left eye
+        glPushMatrix()
+        glTranslatef(-0.5, 0.5, 1)  # Left side of head, forward
+        glScalef(0.2, 0.2, 0.2)      # Small eye
+        self.draw_sphere(1.0)
+        glPopMatrix()
+        
+        # Right eye
+        glPushMatrix()
+        glTranslatef(0.5, 0.5, 1)   # Right side of head, forward
+        glScalef(0.2, 0.2, 0.2)      # Small eye
+        self.draw_sphere(1.0)
+        glPopMatrix()
+
+        # Draw coordinate axes (thicker lines)
+        glLineWidth(3.0)
+        glBegin(GL_LINES)
+
+        # X axis (red) - pointing right
+        glColor3f(1, 0, 0)
+        glVertex3f(0, 0, 0)
+        glVertex3f(2, 0, 0)
+
+        # Y axis (green) - pointing up
+        glColor3f(0, 1, 0)
+        glVertex3f(0, 0, 0)
+        glVertex3f(0, 2, 0)
+
+        # Z axis (blue) - pointing forward
+        glColor3f(0, 0, 1)
+        glVertex3f(0, 0, 0)
+        glVertex3f(0, 0, 3)
+
+        glEnd()
+
+
+        # # Draw coordinate axes (thinner lines)
+        # from OpenGL.GL import glLineWidth
+        # glLineWidth(3.0)
+        # glBegin(GL_LINES)
+        # # Rat head local reference frame:
+        # # X axis (red) - pointing left
+        # glColor3f(1, 0, 0)
+        # glVertex3f(0, 0, 0)
+        # glVertex3f(-2, 0, 0)
+        # # Y axis (green) - pointing up
+        # glColor3f(0, 1, 0)
+        # glVertex3f(0, 0, 0)
+        # glVertex3f(0, 2, 0)
+        # # Z axis (blue) - pointing out of the screen
+        # glColor3f(0, 0, 1)
+        # glVertex3f(0, 0, 0)
+        # glVertex3f(0, 0, -2)
+        # glEnd()
+
+        # # Draw global reference frame in upper right corner
+        # glPushMatrix()
+        # glLoadIdentity()
+        # glTranslatef(1.9, 0.6, -3)  # Position in upper right
+        
+        # glLineWidth(2.0)
+        # glBegin(GL_LINES)
+        # # Reference X (RED) - up
+        # glColor3f(1, 0, 0)
+        # glVertex3f(0, 0, 0)
+        # glVertex3f(0.5, 0, 0)
+        # # Reference Y (GREEN) - right
+        # glColor3f(0, 1, 0)  
+        # glVertex3f(0, 0, 0)
+        # glVertex3f(0, 0.5, 0)
+        # # Reference Z (BLUE) - out
+        # glColor3f(0, 0, 1)
+        # glVertex3f(-0.05, -0.05, 0); glVertex3f(0.05, -0.05, 0)
+        # glVertex3f(0.05, -0.05, 0); glVertex3f(0.05, 0.05, 0)  
+        # glVertex3f(0.05, 0.05, 0); glVertex3f(-0.05, 0.05, 0)
+        # glVertex3f(-0.05, 0.05, 0); glVertex3f(-0.05, -0.05, 0)
+        # glEnd()
+        
+        
+        # glPopMatrix()
+
+class IMUPlotWidget(QWidget):
+    def __init__(self, window_width=950, window_height=800, parent=None):
+        super().__init__(parent)
+        layout = QVBoxLayout(self)
+        self.plot_widget = pg.GraphicsLayoutWidget()
+        layout.addWidget(self.plot_widget)
+        
+        # Scale widget size based on window dimensions
+        plot_width = int(window_width * 0.45)  # ~427px at 950px width
+        plot_height = int(window_height * 0.43)  # ~344px at 800px height
+        self.setFixedSize(plot_width, plot_height)
+        
+        self.max_points = 200
+        self.data = [np.zeros(self.max_points) for _ in range(9)]
+
+        self.curves = []
+        self.plots = []
+
+        # Initialize plots to certain refresh rate
+        self.plot_timer = QTimer()
+        self.plot_timer.timeout.connect(self.update_display)
+        self.plot_timer.start(50)  # Update at 20 Hz
+        self.pending_data = None
+
+        # Colors for each sensor type
+        line_colors = [
+            'r', 'g', (100, 200, 255),  # X: Accel, Gyro, Mag
+            'r', 'g', (100, 200, 255),  # Y: Accel, Gyro, Mag
+            'r', 'g', (100, 200, 255),  # Z: Accel, Gyro, Mag
+        ]
+        title_colors = [
+            (255, 80, 80), (80, 255, 80), (100, 200, 255),  # X
+            (255, 80, 80), (80, 255, 80), (100, 200, 255),  # Y
+            (255, 80, 80), (80, 255, 80), (100, 200, 255),  # Z
+        ]
+        titles = [
+            "Accel X", "Gyro X", "Mag X",
+            "Accel Y", "Gyro Y", "Mag Y",
+            "Accel Z", "Gyro Z", "Mag Z"
+        ]
+            
+        # Layout: columns = Accel, Gyro, Mag; rows = X, Y, Z
+        for axis in range(3):  # rows: 0=X, 1=Y, 2=Z
+            self.plot_widget.nextRow()
+            for sensor in range(3):  # columns: 0=Accel, 1=Gyro, 2=Mag
+                idx = axis * 3 + sensor  # 0: Accel X, 1: Gyro X, 2: Mag X, 3: Accel Y, ...
+                p = self.plot_widget.addPlot()
+                
+                # AutoRange
+                p.enableAutoRange(axis='y')
+                p.setXRange(0, self.max_points)
+                    
+                # Set title with color
+                title_style = f"<span style='color: rgb{title_colors[idx]}; font-size:14pt'><b>{titles[idx]}</b></span>"
+                p.setTitle(title_style)
+
+                # Update yticks to show only min/max when y-range changes
+                def make_updater(plot):
+                    def update_ticks():
+                        try:
+                            ymin, ymax = plot.viewRange()[1]
+                            if ymax > ymin:
+                                ticks = [(ymin, f"{int(ymin)}"), (ymax, f"{int(ymax)}")]
+                                plot.getAxis('left').setTicks([ticks])
+                        except:
+                            pass
+                    return update_ticks
+                
+                p.vb.sigYRangeChanged.connect(make_updater(p))
+
+                # Reduce x-axis ticks (show only start, middle, end)
+                p.getAxis('bottom').setTicks([[(0, '0'), (self.max_points//2, str(self.max_points//2)), (self.max_points, str(self.max_points))]])
+                
+                curve = p.plot(self.data[idx], pen=pg.mkPen(line_colors[idx], width=2))
+                self.curves.append(curve)
+                self.plots.append(p)
+
+    # Replace update_plot with:
+    def update_plot(self, imu_values):
+        # Store the latest data
+        self.pending_data = imu_values
+
+    def update_display(self):
+        # Only update if we have new data
+        if self.pending_data is None:
+            return
+            
+        imu_values = self.pending_data
+        for axis in range(3):  # 0=X, 1=Y, 2=Z
+            for sensor in range(3):  # 0=Accel, 1=Gyro, 2=Mag
+                idx = axis * 3 + sensor
+                data_idx = 1 + sensor * 3 + axis  # skip timestamp
+                if sensor == 2:
+                    self.data[idx] = np.roll(self.data[idx], -1)
+                    self.data[idx][-1] = imu_values[data_idx]
+                    self.curves[idx].setData(self.data[idx])
+                else:
+                    self.data[idx] = np.roll(self.data[idx], -1)
+                    self.data[idx][-1] = imu_values[data_idx]
+                    self.curves[idx].setData(self.data[idx])
+        self.pending_data = None
 
 # For backward compatibility
 __all__ = ['OptoGridGUI']
