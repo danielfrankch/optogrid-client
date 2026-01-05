@@ -1,8 +1,7 @@
 import asyncio
-import sys
 import struct
 import threading
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 import os
 import zmq
 import numpy as np
@@ -12,9 +11,7 @@ from ahrs.filters import EKF
 from ahrs.common.orientation import q2euler
 import logging
 from bleak import BleakScanner, BleakClient, BLEDevice
-import queue
 import signal
-import time
 import socket
 
 try:
@@ -168,7 +165,12 @@ class HeadlessOptoGridClient:
         self.zmq_socket = self.zmq_context.socket(zmq.REP)
         ip = get_ip()
         self.zmq_socket.bind(f"tcp://0.0.0.0:5555")
-        self.logger.info(f"ZMQ server listening on tcp://{ip}:5555...")
+        self.logger.info(f"ZMQ REP server listening on tcp://{ip}:5555...")
+        
+        # PUB/SUB ZMQ socket for streaming GUI updates
+        self.zmq_pub_socket = self.zmq_context.socket(zmq.PUB)
+        self.zmq_pub_socket.bind(f"tcp://0.0.0.0:5556")
+        self.logger.info(f"ZMQ PUB server publishing on tcp://{ip}:5556...")
         
         # IMU processing setup
         self.setup_imu_processing()
@@ -206,8 +208,6 @@ class HeadlessOptoGridClient:
         
         self.running = True
         
-
-
     def start_ble_loop(self):
         """Start the dedicated BLE event loop"""
         asyncio.set_event_loop(self.ble_loop)
@@ -250,8 +250,6 @@ class HeadlessOptoGridClient:
         self.last_pitch = None
         self.last_yaw = None
         self.last_mag = np.zeros(3)
-
-
     
     def setup_gpio_trigger(self, pin):
         """Setup GPIO pin for rising edge detection using gpiozero"""
@@ -285,7 +283,6 @@ class HeadlessOptoGridClient:
 
         print(f"[GPIOZERO] Rising edge detected on GPIO {self.gpio_pin}")
         self.logger.info(f"Rising edge detected on GPIO {self.gpio_pin}")
-
 
     def signal_handler(self, signum, frame):
         """Handle shutdown signals"""
@@ -383,7 +380,6 @@ class HeadlessOptoGridClient:
         except Exception as e:
             self.logger.error(f"Failed to toggle Status LED: {e}")
             return f"Failed to toggle Status LED: {str(e)}"
-
 
     async def connect_device(self, device_name: str) -> str:
         """Connect to specified BLE device"""
@@ -868,7 +864,20 @@ class HeadlessOptoGridClient:
         except Exception as e:
             return f"Programming failed: {str(e)}"
 
-    async def cleanup(self):
+    # Publishing IMU data
+    def publish_imu_data(self, roll, pitch, yaw):
+        """Publish IMU data to ZMQ PUB socket"""
+        imu_message = {
+            "type": "imu_update",
+            "timestamp": time.time(),
+            "roll": roll,
+            "pitch": pitch, 
+            "yaw": yaw,
+        }
+        # Send as JSON string with topic prefix
+        self.zmq_pub_socket.send_string(f"IMU {json.dumps(imu_message)}")
+
+
         """Cleanup resources"""
         self.logger.info("Cleaning up resources...")
         
@@ -898,10 +907,21 @@ class HeadlessOptoGridClient:
         # Close ZMQ
         try:
             self.zmq_socket.close()
+            self.zmq_pub_socket.close()
             self.zmq_context.term()
             self.logger.info("ZMQ closed")
         except Exception as e:
             self.logger.error(f"ZMQ cleanup error: {e}")
+    
+    # Publishing a gui status message
+    def publish_gui_status(self, message):
+        """Publish GUI status message to ZMQ PUB socket"""
+        status_data = {
+            "type": "gui_status",
+            "timestamp": time.time(),
+            "message": message
+        }
+        self.zmq_pub_socket.send_string(f"GUI {json.dumps(status_data)}")
 
 def get_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
