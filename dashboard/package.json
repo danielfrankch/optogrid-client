@@ -1,0 +1,24 @@
+{
+  "name": "optogrid-dashboard",
+  "version": "1.0.0",
+  "description": "Web-based dashboard for OptoGrid BLE device control",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "optogrid",
+    "ble",
+    "dashboard",
+    "imu",
+    "visualization"
+  ],
+  "author": "Fukui Yang",
+  "license": "MIT",
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

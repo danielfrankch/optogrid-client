@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptoGrid BLE Browser</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>OptoGrid BLE Browser</h1>
+        </header>
+        
+        <div class="main-content">
+            <!-- Top Section -->
+            <div class="top-section">
+                <!-- Left Panel -->
+                <div class="left-panel">
+                    <!-- Device Controls -->
+                    <div class="device-frame">
+                        <div class="controls-container">
+                            <button id="scan-button" class="control-button primary">Scan</button>
+                            <select id="devices-combo" class="devices-dropdown">
+                                <option value="">Select device...</option>
+                            </select>
+                            <button id="connect-button" class="control-button primary">Connect</button>
+                            
+                            <div class="debug-container">
+                                <label class="debug-checkbox">
+                                    <input type="checkbox" id="debug-button">
+                                    <span class="checkmark"></span>
+                                    Debug Mode
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- IMU 3D Display -->
+                        <div class="imu-3d-widget">
+                            <canvas id="imu-3d-canvas" width="100" height="160"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Log Output -->
+                    <div class="log-container">
+                        <textarea id="log-text" readonly placeholder="[00:00:00] OptoGrid GUI initialized"></textarea>
+                    </div>
+                    
+                    <!-- Control Buttons -->
+                    <div class="control-frame">
+                        <button id="read-button" class="control-button secondary" disabled>Read</button>
+                        <button id="write-button" class="control-button secondary" disabled>Write</button>
+                        <button id="trigger-button" class="control-button trigger" disabled>Trigger</button>
+                    </div>
+                </div>
+                
+                <!-- Right Panel -->
+                <div class="right-panel">
+                    <div class="brain-map-section">
+                        <h3>Toggle the LEDs to select:</h3>
+                        <div class="brain-map-widget">
+                            <canvas id="brain-map-canvas" width="358" height="300"></canvas>
+                        </div>
+                        
+                        <!-- LED State Controls -->
+                        <div class="led-state-frame">
+                            <button id="sham-led-button" class="led-state-button" disabled>SHAM</button>
+                            <button id="imu-enable-button" class="led-state-button" disabled>IMU</button>
+                            <button id="status-led-button" class="led-state-button" disabled>STATUS</button>
+                        </div>
+                        
+                        <!-- Battery and Additional Controls -->
+                        <div class="battery-controls-frame">
+                            <button id="read-uLEDCheck-button" class="small-button" disabled>uLED Scan</button>
+                            <button id="read-lastStim-button" class="small-button" disabled>Last Stim</button>
+                            <button id="battery-voltage-button" class="small-button" disabled>Read Battery</button>
+                            <div class="battery-display">
+                                <div class="battery-bar">
+                                    <div id="battery-fill" class="battery-fill"></div>
+                                    <span id="battery-text" class="battery-text">4200 mV</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bottom Section -->
+            <div class="bottom-section">
+                <!-- GATT Table Panel -->
+                <div class="gatt-panel">
+                    <h3>GATT Table:</h3>
+                    <div class="gatt-table-container">
+                        <table id="gatt-table">
+                            <thead>
+                                <tr>
+                                    <th>Service</th>
+                                    <th>Characteristic</th>
+                                    <th>Value</th>
+                                    <th>Write Value</th>
+                                    <th>Unit</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gatt-table-body">
+                                <!-- GATT data will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- IMU Data Panel -->
+                <div class="imu-panel">
+                    <h3>IMU Data (last 200 samples):</h3>
+                    <div class="imu-plot-widget">
+                        <canvas id="imu-plot-canvas" width="450" height="350"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/brainMap.js"></script>
+    <script src="js/imuVisualization.js"></script>
+    <script src="js/zmqClient.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

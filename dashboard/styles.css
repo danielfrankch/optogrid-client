@@ -1,0 +1,533 @@
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+    overflow: hidden;
+}
+
+.app-container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.app-header {
+    background-color: #2c3e50;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.app-header h1 {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    gap: 8px;
+    overflow: auto;
+}
+
+/* Top Section */
+.top-section {
+    display: flex;
+    gap: 8px;
+    height: 55%;
+}
+
+.left-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.device-frame {
+    display: flex;
+    gap: 20px;
+}
+
+.controls-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.control-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 16px;
+}
+
+.control-button.primary {
+    background-color: #3498db;
+    color: white;
+}
+
+.control-button.primary:hover:not(:disabled) {
+    background-color: #2980b9;
+}
+
+.control-button.secondary {
+    background-color: #95a5a6;
+    color: white;
+}
+
+.control-button.secondary:hover:not(:disabled) {
+    background-color: #7f8c8d;
+}
+
+.control-button.trigger {
+    background-color: #ff4444;
+    color: white;
+}
+
+.control-button.trigger:hover:not(:disabled) {
+    background-color: #e74c3c;
+}
+
+.control-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.devices-dropdown {
+    padding: 8px;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    font-size: 16px;
+    background-color: white;
+}
+
+.debug-container {
+    margin-top: 12px;
+}
+
+.debug-checkbox {
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    gap: 8px;
+}
+
+.debug-checkbox input[type="checkbox"] {
+    display: none;
+}
+
+.checkmark {
+    width: 80px;
+    height: 20px;
+    border: 2px solid #8f8f91;
+    border-radius: 8px;
+    background-color: #f0f0f0;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.debug-checkbox input:checked + .checkmark {
+    background-color: #90EE90;
+    border-color: #4CAF50;
+}
+
+.checkmark::after {
+    content: "";
+    position: absolute;
+    
+    left: 36px;
+    top: 2px;
+    width: 3px;
+    height: 7px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.debug-checkbox input:checked + .checkmark::after {
+    opacity: 1;
+}
+
+.imu-3d-widget {
+    flex: 1;
+    position: relative;
+    background-color: #ecf0f1;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.imu-3d-placeholder {
+    color: #7f8c8d;
+    font-size: 14px;
+    text-align: center;
+}
+
+#imu-3d-canvas {
+    border-radius: 4px;
+}
+
+.log-container {
+    flex: 1;
+    min-height: 120px;
+}
+
+#log-text {
+    width: 100%;
+    height: 100%;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 14px;
+    line-height: 1.2;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    padding: 8px;
+    background-color: #fafafa;
+    resize: none;
+    overflow-y: auto;
+}
+
+.control-frame {
+    display: flex;
+    gap: 18px;
+    padding-top: 2px;
+}
+
+.control-frame .control-button {
+    flex: 1;
+    height: 44px;
+}
+
+/* Right Panel */
+.right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    gap: 8px;
+}
+
+.brain-map-section h3 {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.brain-map-widget {
+    position: relative;
+    align-self: center;
+    background-color: #ccd4d8;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+#brain-map-canvas {
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;  
+    margin: 0 auto;  
+    cursor: pointer;
+}
+
+.led-state-frame {
+    display: flex;
+    gap: 16px;
+    margin-top: 8px;
+    justify-content: space-between; /* Even spacing */
+    align-items: center;
+}
+
+.led-state-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #888888;
+    color: white;
+    transition: background-color 0.2s ease;
+    flex: 1; /* Equal width for all buttons */
+    height: 30px;
+    display: flex;
+    align-items: center;     /* Vertically centers the text */
+    justify-content: center; /* Horizontally centers the text */
+}
+
+.led-state-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.led-state-button.active {
+    background-color: #90EE90;
+}
+
+.battery-controls-frame {
+    display: flex;
+    gap: 16px;
+    margin-top: 8px;
+    align-items: center;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+}
+
+.small-button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    background-color: #6c757d;
+    color: white;
+    transition: background-color 0.2s ease;
+    height: 40px;
+    flex: 1;
+    display: flex;
+    align-items: center;     /* Vertically centers the text */
+    justify-content: center; /* Horizontally centers the text */
+}
+
+.small-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.small-button:hover:not(:disabled) {
+    background-color: #5a6268;
+}
+
+.battery-display {
+    display: flex;
+    align-items: center;
+    flex: 1; /* Take equal space like other elements */
+    justify-content: center; /* Center the battery bar within its space */
+}
+
+.battery-bar {
+    position: relative;
+    width: 100px;
+    height: 34px;
+    border: 1px solid #bbb;
+    border-radius: 5px;
+    background-color: #f8f9fa;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.battery-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background-color: #4caf50;
+    width: 100%;
+    transition: width 0.3s ease;
+}
+
+.battery-text {
+    position: relative;
+    z-index: 2;
+    font-size: 12px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Bottom Section */
+.bottom-section {
+    display: flex;
+    gap: 8px;
+    height: 45%;
+}
+
+.gatt-panel {
+    flex: 2;
+    padding: 8px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    min-height: 120px;
+}
+
+.gatt-panel h3 {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.gatt-table-container {
+    flex: 1;
+    overflow: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+#gatt-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+#gatt-table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    padding: 8px;
+    text-align: left;
+    border-bottom: 2px solid #dee2e6;
+    position: sticky;
+    top: 0;
+}
+
+#gatt-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #dee2e6;
+    vertical-align: top;
+}
+
+#gatt-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+#gatt-table .service-cell {
+    font-weight: bold;
+}
+
+#gatt-table .writable-cell {
+    background-color: #f5f5f5;
+}
+
+.imu-panel {
+    flex: 1;
+    padding: 8px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 240px;
+}
+
+.imu-panel h3 {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.imu-plot-widget {
+    flex: 1;
+    position: relative;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+
+#imu-plot-canvas {
+    border-radius: 4px;
+    max-width: 100%; /* Never exceed container width */
+}
+
+/* Responsive adjustments */
+@media (max-width: 800px) {
+    .top-section {
+        flex-direction: column;
+        height: auto;
+    }
+    
+    .bottom-section {
+        flex-direction: column;
+        height: auto;
+    }
+    
+    .device-frame {
+        flex-direction: column;
+    }
+    
+    .imu-3d-widget {
+        flex-direction: column;
+    }
+}
+
+/* LED styles for brain map */
+.led-rect {
+    fill: rgba(0, 190, 255, 0.7);
+    stroke: rgb(0, 190, 255);
+    stroke-width: 2;
+}
+
+.led-number {
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    font-size: 10px;
+    fill: black;
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+
+.led-broken-x {
+    stroke: red;
+    stroke-width: 3;
+}
+
+.connection-status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-left: 8px;
+}
+
+.connection-status.connected {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.connection-status.disconnected {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.connection-status.connecting {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}

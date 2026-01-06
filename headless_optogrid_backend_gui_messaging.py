@@ -13,6 +13,8 @@ import logging
 from bleak import BleakScanner, BleakClient, BLEDevice
 import signal
 import socket
+import time
+import json
 
 try:
     from gpiozero import Button, OutputDevice
@@ -876,8 +878,18 @@ class HeadlessOptoGridClient:
         }
         # Send as JSON string with topic prefix
         self.zmq_pub_socket.send_string(f"IMU {json.dumps(imu_message)}")
+    
+    # Publishing a gui status message
+    def publish_gui_status(self, message):
+        """Publish GUI status message to ZMQ PUB socket"""
+        status_data = {
+            "type": "gui_status",
+            "timestamp": time.time(),
+            "message": message
+        }
+        self.zmq_pub_socket.send_string(f"GUI {json.dumps(status_data)}")
 
-
+    async def cleanup(self):
         """Cleanup resources"""
         self.logger.info("Cleaning up resources...")
         
@@ -912,16 +924,6 @@ class HeadlessOptoGridClient:
             self.logger.info("ZMQ closed")
         except Exception as e:
             self.logger.error(f"ZMQ cleanup error: {e}")
-    
-    # Publishing a gui status message
-    def publish_gui_status(self, message):
-        """Publish GUI status message to ZMQ PUB socket"""
-        status_data = {
-            "type": "gui_status",
-            "timestamp": time.time(),
-            "message": message
-        }
-        self.zmq_pub_socket.send_string(f"GUI {json.dumps(status_data)}")
 
 def get_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
