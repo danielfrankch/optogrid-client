@@ -28,7 +28,7 @@ body {
 }
 
 .app-header h1 {
-    font-size: 1.5rem;
+    font-size: 1rem;
     font-weight: bold;
 }
 
@@ -45,7 +45,7 @@ body {
 .top-section {
     display: flex;
     gap: 8px;
-    height: 55%;
+    height: 60%;
 }
 
 .left-panel {
@@ -232,6 +232,7 @@ body {
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     gap: 8px;
+    overflow: hidden;
 }
 
 .brain-map-section h3 {
@@ -367,7 +368,7 @@ body {
 .bottom-section {
     display: flex;
     gap: 8px;
-    height: 45%;
+    height: 40%;
 }
 
 .gatt-panel {
