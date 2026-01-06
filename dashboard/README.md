@@ -22,6 +22,8 @@ A web-based interface for the OptoGrid BLE device control system, built with HTM
 1. **Start the dashboard server:**
    ```bash
    cd dashboard
+    npm init -y
+    npm install ws zeromq
    ./start.sh
    ```
    
@@ -32,8 +34,8 @@ A web-based interface for the OptoGrid BLE device control system, built with HTM
    ```
 
 2. **Access the dashboard:**
-   - Local: http://localhost:8080
-   - Network: http://[your-ip]:8080
+   - Local: http://localhost:3000
+   - Network: http://[your-ip]:3000
 
 3. **The dashboard will be available on your local network**, allowing access from any device with a web browser.
 

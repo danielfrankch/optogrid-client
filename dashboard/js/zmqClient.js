@@ -1,244 +1,317 @@
 /**
  * ZMQ Client for OptoGrid Dashboard
- * Handles WebSocket connection to ZMQ proxy for backend communication
+ * Handles ZMQ REQ/REP and PUB/SUB communication with backend
  */
 class ZMQClient {
     constructor() {
-        this.socket = null;
-        this.isConnected = false;
-        this.reconnectAttempts = 0;
-        this.maxReconnectAttempts = 10;
-        this.reconnectDelay = 1000; // Start with 1 second
-        this.maxReconnectDelay = 30000; // Max 30 seconds
+        this.reqSocket = null;
+        this.subSocket = null;
+        this.isReqConnected = false;
+        this.isSubConnected = false;
+        this.requestTimeout = 10000; // 10 second timeout for requests
+        this.pendingRequests = new Map(); // Track pending requests with timeouts
+        this.requestId = 0;
+        
+        // Callbacks
         this.onMessage = null;
         this.onConnectionChange = null;
+        this.onPubMessage = null; // For PUB/SUB messages
         
-        // Auto-connect on initialization
-        this.connect();
+        // Get local IP and connect
+        this.initializeConnections();
     }
     
-    connect() {
+    async initializeConnections() {
         try {
-            // Get local IP address and connect to ZMQ proxy WebSocket
-            this.getLocalIP().then(ip => {
-                const wsUrl = `ws://${ip}:8080/ws`;
-                console.log(`Connecting to ZMQ proxy at ${wsUrl}`);
-                
-                this.socket = new WebSocket(wsUrl);
-                this.setupSocketHandlers();
-            }).catch(err => {
-                console.error('Failed to get local IP:', err);
-                // Fallback to localhost
-                const wsUrl = 'ws://localhost:8080/ws';
-                console.log(`Connecting to ZMQ proxy at ${wsUrl} (fallback)`);
-                
-                this.socket = new WebSocket(wsUrl);
-                this.setupSocketHandlers();
-            });
+            // Use localhost for ZMQ connections as specified
+            const zmqHost = 'localhost';
+            console.log(`Using ZMQ host: ${zmqHost}`);
+            
+            // Initialize REQ socket for commands
+            this.initReqSocket(zmqHost);
+            
+            // Initialize SUB socket for streaming updates
+            this.initSubSocket(zmqHost);
+            
         } catch (error) {
-            console.error('Error creating WebSocket connection:', error);
-            this.scheduleReconnect();
+            console.error('Failed to initialize ZMQ connections:', error);
+            // Fallback to localhost
+            this.initReqSocket('localhost');
+            this.initSubSocket('localhost');
         }
     }
     
-    setupSocketHandlers() {
-        if (!this.socket) return;
-        
-        this.socket.onopen = (event) => {
-            console.log('Connected to ZMQ proxy');
-            this.isConnected = true;
-            this.reconnectAttempts = 0;
-            this.reconnectDelay = 1000;
+    initReqSocket(host) {
+        try {
+            // Note: WebSocket cannot directly connect to ZMQ sockets
+            // This requires a WebSocket-to-ZMQ bridge/proxy on the backend
+            // The backend should provide a WebSocket endpoint that forwards to ZMQ REQ socket
+            const reqUrl = `ws://${host}:8080/zmq-req`; // WebSocket proxy for ZMQ REQ
+            console.log(`Connecting REQ socket to ${reqUrl}`);
+            console.log('Note: Backend must provide WebSocket-to-ZMQ bridge');
             
-            if (this.onConnectionChange) {
-                this.onConnectionChange(true);
-            }
+            this.reqSocket = new WebSocket(reqUrl);
             
-            // Send initial handshake
-            this.send({
-                type: 'handshake',
-                clientType: 'web_dashboard',
-                timestamp: Date.now()
-            });
-        };
-        
-        this.socket.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                console.log('Received ZMQ message:', data);
+            this.reqSocket.onopen = () => {
+                console.log('REQ socket connected');
+                this.isReqConnected = true;
+                this.notifyConnectionChange();
+            };
+            
+            this.reqSocket.onmessage = (event) => {
+                this.handleReqResponse(event.data);
+            };
+            
+            this.reqSocket.onclose = () => {
+                console.log('REQ socket disconnected');
+                this.isReqConnected = false;
+                this.notifyConnectionChange();
+                this.scheduleReqReconnect(host);
+            };
+            
+            this.reqSocket.onerror = (error) => {
+                console.error('REQ socket error:', error);
+            };
+            
+        } catch (error) {
+            console.error('Error creating REQ socket:', error);
+            this.scheduleReqReconnect(host);
+        }
+    }
+    
+    initSubSocket(host) {
+        try {
+            // WebSocket proxy for ZMQ SUB socket
+            const subUrl = `ws://${host}:8080/zmq-sub`; // WebSocket proxy for ZMQ SUB
+            console.log(`Connecting SUB socket to ${subUrl}`);
+            
+            this.subSocket = new WebSocket(subUrl);
+            
+            this.subSocket.onopen = () => {
+                console.log('SUB socket connected');
+                this.isSubConnected = true;
+                this.notifyConnectionChange();
                 
-                if (this.onMessage) {
-                    this.onMessage(data);
-                }
-            } catch (error) {
-                console.error('Error parsing ZMQ message:', error);
-            }
-        };
-        
-        this.socket.onclose = (event) => {
-            console.log('Disconnected from ZMQ proxy');
-            this.isConnected = false;
+                // Subscribe to all topics (or specific ones)
+                this.subscribe('IMU');
+                this.subscribe('STATUS');
+                this.subscribe('BATTERY');
+                this.subscribe('LED');
+            };
             
-            if (this.onConnectionChange) {
-                this.onConnectionChange(false);
-            }
+            this.subSocket.onmessage = (event) => {
+                this.handleSubMessage(event.data);
+            };
             
-            // Attempt to reconnect unless explicitly closed
-            if (!event.wasClean) {
-                this.scheduleReconnect();
-            }
-        };
-        
-        this.socket.onerror = (error) => {
-            console.error('ZMQ WebSocket error:', error);
-        };
+            this.subSocket.onclose = () => {
+                console.log('SUB socket disconnected');
+                this.isSubConnected = false;
+                this.notifyConnectionChange();
+                this.scheduleSubReconnect(host);
+            };
+            
+            this.subSocket.onerror = (error) => {
+                console.error('SUB socket error:', error);
+            };
+            
+        } catch (error) {
+            console.error('Error creating SUB socket:', error);
+            this.scheduleSubReconnect(host);
+        }
     }
     
-    scheduleReconnect() {
-        if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-            console.error('Max reconnection attempts reached. Giving up.');
-            return;
-        }
-        
-        this.reconnectAttempts++;
-        
-        console.log(`Scheduling reconnect attempt ${this.reconnectAttempts} in ${this.reconnectDelay}ms`);
-        
+    scheduleReqReconnect(host, delay = 2000) {
         setTimeout(() => {
-            this.connect();
-        }, this.reconnectDelay);
-        
-        // Exponential backoff with jitter
-        this.reconnectDelay = Math.min(
-            this.maxReconnectDelay,
-            this.reconnectDelay * 2 + Math.random() * 1000
-        );
+            if (!this.isReqConnected) {
+                console.log('Attempting REQ socket reconnection...');
+                this.initReqSocket(host);
+            }
+        }, delay);
     }
     
-    send(data) {
-        if (!this.isConnected || !this.socket) {
-            console.warn('Cannot send message: not connected to ZMQ proxy');
-            return false;
+    scheduleSubReconnect(host, delay = 2000) {
+        setTimeout(() => {
+            if (!this.isSubConnected) {
+                console.log('Attempting SUB socket reconnection...');
+                this.initSubSocket(host);
+            }
+        }, delay);
+    }
+    
+    notifyConnectionChange() {
+        if (this.onConnectionChange) {
+            this.onConnectionChange(this.isReqConnected && this.isSubConnected);
         }
-        
+    }
+    
+    // Handle REQ/REP responses
+    handleReqResponse(data) {
         try {
-            this.socket.send(JSON.stringify(data));
-            return true;
+            const response = JSON.parse(data);
+            const requestId = response.requestId;
+            
+            if (this.pendingRequests.has(requestId)) {
+                const { resolve, timeoutId } = this.pendingRequests.get(requestId);
+                clearTimeout(timeoutId);
+                this.pendingRequests.delete(requestId);
+                resolve(response.data || response.message);
+            }
         } catch (error) {
-            console.error('Error sending ZMQ message:', error);
-            return false;
+            console.error('Error parsing REQ response:', error);
+        }
+    }
+    
+    // Handle PUB/SUB messages
+    handleSubMessage(data) {
+        try {
+            const parts = data.split(' ', 2); // Topic and JSON data
+            if (parts.length >= 2) {
+                const topic = parts[0];
+                const jsonData = parts.slice(1).join(' ');
+                const message = JSON.parse(jsonData);
+                
+                console.log(`Received ${topic} message:`, message);
+                
+                if (this.onPubMessage) {
+                    this.onPubMessage(topic, message);
+                }
+            }
+        } catch (error) {
+            console.error('Error parsing SUB message:', error);
+        }
+    }
+    
+    // Send REQ with timeout and promise-based response
+    sendRequest(command, data = null) {
+        return new Promise((resolve, reject) => {
+            if (!this.isReqConnected || !this.reqSocket) {
+                reject(new Error('REQ socket not connected'));
+                return;
+            }
+            
+            const requestId = ++this.requestId;
+            const message = {
+                requestId: requestId,
+                command: command,
+                data: data,
+                timestamp: Date.now()
+            };
+            
+            // Set timeout
+            const timeoutId = setTimeout(() => {
+                if (this.pendingRequests.has(requestId)) {
+                    this.pendingRequests.delete(requestId);
+                    reject(new Error(`Request timeout: ${command}`));
+                }
+            }, this.requestTimeout);
+            
+            // Store pending request
+            this.pendingRequests.set(requestId, { resolve, reject, timeoutId });
+            
+            // Send request
+            try {
+                this.reqSocket.send(JSON.stringify(message));
+            } catch (error) {
+                clearTimeout(timeoutId);
+                this.pendingRequests.delete(requestId);
+                reject(error);
+            }
+        });
+    }
+    
+    // Subscribe to PUB topics
+    subscribe(topic) {
+        if (this.isSubConnected && this.subSocket) {
+            const message = {
+                type: 'subscribe',
+                topic: topic
+            };
+            this.subSocket.send(JSON.stringify(message));
+            console.log(`Subscribed to topic: ${topic}`);
+        }
+    }
+    
+    // Unsubscribe from PUB topics
+    unsubscribe(topic) {
+        if (this.isSubConnected && this.subSocket) {
+            const message = {
+                type: 'unsubscribe',
+                topic: topic
+            };
+            this.subSocket.send(JSON.stringify(message));
+            console.log(`Unsubscribed from topic: ${topic}`);
         }
     }
     
     disconnect() {
-        if (this.socket) {
-            this.socket.close();
-            this.socket = null;
+        // Clear all pending requests
+        for (const [requestId, { reject, timeoutId }] of this.pendingRequests) {
+            clearTimeout(timeoutId);
+            reject(new Error('Client disconnecting'));
         }
-        this.isConnected = false;
+        this.pendingRequests.clear();
+        
+        // Close sockets
+        if (this.reqSocket) {
+            this.reqSocket.close();
+            this.reqSocket = null;
+        }
+        if (this.subSocket) {
+            this.subSocket.close();
+            this.subSocket = null;
+        }
+        
+        this.isReqConnected = false;
+        this.isSubConnected = false;
     }
     
-    // Commands to send to backend
+    // Command methods using REQ/REP pattern
     sendScanCommand() {
-        return this.send({
-            type: 'command',
-            action: 'scan',
-            timestamp: Date.now()
-        });
+        return this.sendRequest('optogrid.scan');
     }
     
-    sendConnectCommand(deviceAddress) {
-        return this.send({
-            type: 'command',
-            action: 'connect',
-            device_address: deviceAddress,
-            timestamp: Date.now()
-        });
+    sendConnectCommand(deviceName) {
+        return this.sendRequest(`optogrid.connect = ${deviceName}`);
     }
     
     sendDisconnectCommand() {
-        return this.send({
-            type: 'command',
-            action: 'disconnect',
-            timestamp: Date.now()
-        });
+        return this.sendRequest('optogrid.disconnect');
     }
     
     sendReadAllCommand() {
-        return this.send({
-            type: 'command',
-            action: 'read_all',
-            timestamp: Date.now()
-        });
+        return this.sendRequest('optogrid.read_all');
     }
     
-    sendWriteCommand(characteristics) {
-        return this.send({
-            type: 'command',
-            action: 'write',
-            characteristics: characteristics,
-            timestamp: Date.now()
-        });
+    sendWriteCommand(uuid, value) {
+        return this.sendRequest('optogrid.write', { uuid, value });
     }
     
     sendTriggerCommand() {
-        return this.send({
-            type: 'command',
-            action: 'trigger',
-            timestamp: Date.now()
-        });
+        return this.sendRequest('optogrid.trigger');
     }
     
     sendLedSelectionCommand(selection) {
-        return this.send({
-            type: 'command',
-            action: 'set_led_selection',
-            value: selection,
-            timestamp: Date.now()
-        });
+        return this.sendRequest('optogrid.led_selection', { value: selection });
     }
     
     sendLedStateCommand(ledType, state) {
-        return this.send({
-            type: 'command',
-            action: 'set_led_state',
-            led_type: ledType, // 'sham', 'status'
-            state: state,
-            timestamp: Date.now()
-        });
+        return this.sendRequest(`optogrid.${ledType}_led`, { state });
     }
     
     sendImuEnableCommand(enabled) {
-        return this.send({
-            type: 'command',
-            action: 'set_imu_enable',
-            enabled: enabled,
-            timestamp: Date.now()
-        });
+        return this.sendRequest('optogrid.imu_enable', { enabled });
     }
     
     sendBatteryReadCommand() {
-        return this.send({
-            type: 'command',
-            action: 'read_battery',
-            timestamp: Date.now()
-        });
+        return this.sendRequest('optogrid.read_battery');
     }
     
     sendULedCheckCommand() {
-        return this.send({
-            type: 'command',
-            action: 'read_uled_check',
-            timestamp: Date.now()
-        });
+        return this.sendRequest('optogrid.read_uled_check');
     }
     
     sendLastStimCommand() {
-        return this.send({
-            type: 'command',
-            action: 'read_last_stim',
-            timestamp: Date.now()
-        });
+        return this.sendRequest('optogrid.read_last_stim');
     }
     
     // Utility method to get local IP address
@@ -250,14 +323,15 @@ class ZMQClient {
             });
             
             pc.createDataChannel('');
-            pc.createOffer().then(offer => pc.setLocalDescription(offer));
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
             
             return new Promise((resolve, reject) => {
                 pc.onicecandidate = (event) => {
                     if (event.candidate) {
                         const candidate = event.candidate.candidate;
                         const ipMatch = candidate.match(/(\d+\.\d+\.\d+\.\d+)/);
-                        if (ipMatch) {
+                        if (ipMatch && !ipMatch[1].startsWith('127.')) {
                             pc.close();
                             resolve(ipMatch[1]);
                         }

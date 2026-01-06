@@ -31,3 +31,420 @@
 2026-01-05 20:48:59,520 - INFO - ZMQ closed
 2026-01-05 20:48:59,520 - INFO - Cleaning up resources...
 2026-01-05 20:48:59,520 - INFO - ZMQ closed
+2026-01-06 12:47:14,863 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-06 12:47:14,866 - INFO - ZMQ PUB server publishing on tcp://172.24.242.178:5556...
+2026-01-06 12:47:14,868 - INFO - OptoGrid Headless Client Started
+2026-01-06 13:17:15,912 - INFO - Received signal 2, shutting down...
+2026-01-06 13:17:15,912 - INFO - Cleaning up resources...
+2026-01-06 13:17:15,913 - INFO - ZMQ closed
+2026-01-06 13:17:15,913 - INFO - Cleaning up resources...
+2026-01-06 13:17:15,914 - INFO - ZMQ closed
+2026-01-06 13:17:17,839 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-06 13:17:17,841 - ERROR - Failed to start WebSocket server: name 'serve' is not defined
+2026-01-06 13:23:19,587 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-06 13:23:19,589 - INFO - OptoGrid Headless Client Started
+2026-01-06 13:23:19,589 - ERROR - Failed to start WebSocket server: name 'serve' is not defined
+2026-01-06 13:23:53,911 - INFO - Received signal 2, shutting down...
+2026-01-06 13:23:53,911 - INFO - Cleaning up resources...
+2026-01-06 13:23:53,911 - ERROR - ZMQ cleanup error: 'HeadlessOptoGridClient' object has no attribute 'zmq_pub_socket'
+2026-01-06 13:23:53,911 - INFO - Cleaning up resources...
+2026-01-06 13:23:53,912 - ERROR - ZMQ cleanup error: 'HeadlessOptoGridClient' object has no attribute 'zmq_pub_socket'
+2026-01-06 13:31:18,126 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-06 13:31:18,129 - INFO - OptoGrid Headless Client Started
+2026-01-06 13:31:18,129 - INFO - server listening on 0.0.0.0:8080
+2026-01-06 13:31:18,130 - INFO - WebSocket server started on ws://172.24.242.178:8080
+2026-01-06 13:32:21,600 - INFO - Received signal 2, shutting down...
+2026-01-06 13:32:21,600 - INFO - Cleaning up resources...
+2026-01-06 13:32:21,600 - ERROR - ZMQ cleanup error: 'HeadlessOptoGridClient' object has no attribute 'zmq_pub_socket'
+2026-01-06 13:32:21,600 - INFO - Cleaning up resources...
+2026-01-06 13:32:21,600 - ERROR - ZMQ cleanup error: 'HeadlessOptoGridClient' object has no attribute 'zmq_pub_socket'
+2026-01-06 13:32:22,687 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-06 13:32:22,689 - INFO - OptoGrid Headless Client Started
+2026-01-06 13:32:22,690 - INFO - server listening on 0.0.0.0:8080
+2026-01-06 13:32:22,690 - INFO - WebSocket server started on ws://172.24.242.178:8080
+2026-01-06 13:33:49,144 - INFO - Received signal 2, shutting down...
+2026-01-06 13:33:49,144 - INFO - Cleaning up resources...
+2026-01-06 13:33:49,145 - ERROR - ZMQ cleanup error: 'HeadlessOptoGridClient' object has no attribute 'zmq_pub_socket'
+2026-01-06 13:33:49,145 - INFO - Cleaning up resources...
+2026-01-06 13:33:49,145 - ERROR - ZMQ cleanup error: 'HeadlessOptoGridClient' object has no attribute 'zmq_pub_socket'
+2026-01-06 13:33:50,085 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-06 13:33:50,087 - INFO - OptoGrid Headless Client Started
+2026-01-06 13:33:50,101 - INFO - server listening on 0.0.0.0:8080
+2026-01-06 13:33:50,102 - INFO - WebSocket server started on ws://172.24.242.178:8080
+2026-01-06 13:33:52,407 - INFO - Received signal 2, shutting down...
+2026-01-06 13:33:52,407 - INFO - Cleaning up resources...
+2026-01-06 13:33:52,408 - ERROR - ZMQ cleanup error: 'HeadlessOptoGridClient' object has no attribute 'zmq_pub_socket'
+2026-01-06 13:33:52,408 - INFO - Cleaning up resources...
+2026-01-06 13:33:52,409 - ERROR - ZMQ cleanup error: 'HeadlessOptoGridClient' object has no attribute 'zmq_pub_socket'
+2026-01-06 13:33:56,017 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-06 13:33:56,019 - INFO - OptoGrid Headless Client Started
+2026-01-06 13:33:56,032 - INFO - server listening on 0.0.0.0:8080
+2026-01-06 13:33:56,032 - INFO - WebSocket server started on ws://172.24.242.178:8080
+2026-01-06 13:33:57,218 - INFO - Received signal 2, shutting down...
+2026-01-06 13:33:57,218 - INFO - Cleaning up resources...
+2026-01-06 13:33:57,218 - ERROR - ZMQ cleanup error: 'HeadlessOptoGridClient' object has no attribute 'zmq_pub_socket'
+2026-01-06 13:33:57,219 - INFO - Cleaning up resources...
+2026-01-06 13:33:57,219 - ERROR - ZMQ cleanup error: 'HeadlessOptoGridClient' object has no attribute 'zmq_pub_socket'
+2026-01-06 13:34:17,153 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-06 13:34:17,155 - INFO - OptoGrid Headless Client Started
+2026-01-06 13:34:17,168 - INFO - server listening on 0.0.0.0:8080
+2026-01-06 13:34:17,169 - INFO - WebSocket server started on ws://172.24.242.178:8080
+2026-01-06 13:34:18,051 - INFO - Received signal 2, shutting down...
+2026-01-06 13:34:18,051 - INFO - Cleaning up resources...
+2026-01-06 13:34:18,052 - INFO - ZMQ closed
+2026-01-06 13:34:18,052 - INFO - Cleaning up resources...
+2026-01-06 13:34:18,052 - INFO - ZMQ closed
+2026-01-06 13:34:26,795 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-06 13:34:26,797 - INFO - OptoGrid Headless Client Started
+2026-01-06 13:34:26,810 - INFO - server listening on 0.0.0.0:8080
+2026-01-06 13:34:26,810 - INFO - WebSocket server started on ws://172.24.242.178:8080
+2026-01-06 13:34:27,499 - INFO - Received signal 2, shutting down...
+2026-01-06 13:34:27,500 - INFO - Cleaning up resources...
+2026-01-06 13:34:27,502 - INFO - ZMQ closed
+2026-01-06 13:34:27,502 - INFO - Cleaning up resources...
+2026-01-06 13:34:27,503 - INFO - ZMQ closed
+2026-01-06 13:34:39,219 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-06 13:34:39,221 - INFO - OptoGrid Headless Client Started
+2026-01-06 13:34:39,235 - INFO - server listening on 0.0.0.0:8080
+2026-01-06 13:34:39,235 - INFO - WebSocket server started on ws://172.24.242.178:8080
+2026-01-06 13:35:15,161 - INFO - Received signal 2, shutting down...
+2026-01-06 13:35:15,161 - INFO - Cleaning up resources...
+2026-01-06 13:35:15,162 - INFO - ZMQ closed
+2026-01-06 13:35:15,162 - INFO - Cleaning up resources...
+2026-01-06 13:35:15,162 - INFO - ZMQ closed
+2026-01-06 13:44:20,548 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-06 13:44:20,551 - INFO - ZMQ PUB server publishing on tcp://172.24.242.178:5556...
+2026-01-06 13:44:20,553 - INFO - OptoGrid Headless Client Started
+2026-01-06 13:44:24,063 - INFO - Received signal 2, shutting down...
+2026-01-06 13:44:24,063 - INFO - Cleaning up resources...
+2026-01-06 13:44:49,945 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-06 13:44:49,948 - INFO - ZMQ PUB server publishing on tcp://172.24.242.178:5556...
+2026-01-06 13:44:49,950 - INFO - OptoGrid Headless Client Started
+2026-01-06 13:44:51,384 - INFO - Received signal 2, shutting down...
+2026-01-06 13:44:51,384 - INFO - Cleaning up resources...
+2026-01-06 13:44:51,385 - INFO - ZMQ closed
+2026-01-06 13:44:51,385 - INFO - Cleaning up resources...
+2026-01-06 13:44:51,385 - INFO - ZMQ closed
+2026-01-06 14:07:18,293 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-06 14:07:18,297 - INFO - ZMQ PUB server publishing on tcp://172.24.242.178:5556...
+2026-01-06 14:07:18,299 - INFO - OptoGrid Headless Client Started
+2026-01-06 14:07:18,383 - INFO - Received ZMQ command: optogrid.scan
+2026-01-06 14:07:18,384 - INFO - Scanning for BLE devices...
+2026-01-06 14:07:22,525 - INFO - Found devices: ['Nothing Ear (3) (70:D8:4D:FD:BE:F1)', 'LE_WH-1000XM5 (68:1F:AD:68:65:4E)', 'LE_WH-1000XM5 (6A:3D:C0:17:2F:AE)', 'Aranet4 0606D (C1:59:F0:E0:98:D4)', 'LE-Jingjie’s Bose QC35 I (49:23:96:70:7A:ED)']
+2026-01-06 14:07:25,803 - INFO - Received ZMQ command: optogrid.scan
+2026-01-06 14:07:25,803 - INFO - Scanning for BLE devices...
+2026-01-06 14:07:29,817 - INFO - Found devices: ['LE_WH-1000XM5 (6F:96:74:F4:64:B6)', 'Nothing Ear (3) (70:D8:4D:FD:BE:F1)', 'Aranet4 0606D (C1:59:F0:E0:98:D4)', 'LE-Jingjie’s Bose QC35 I (49:23:96:70:7A:ED)']
+2026-01-06 14:09:48,888 - INFO - Received ZMQ command: optogrid.scan
+2026-01-06 14:09:48,888 - INFO - Scanning for BLE devices...
+2026-01-06 14:09:52,916 - INFO - Found devices: ['Nothing Ear (3) (59:39:2A:A2:F9:55)', 'Aranet4 0606D (C1:59:F0:E0:98:D4)']
+2026-01-06 14:10:30,625 - INFO - Received ZMQ command: optogrid.scan
+2026-01-06 14:10:30,626 - INFO - Scanning for BLE devices...
+2026-01-06 14:10:34,657 - INFO - Found devices: ['LE-Jingjie’s Bose QC35 I (49:23:96:70:7A:ED)', 'LE_WH-1000XM5 (6A:3D:C0:17:2F:AE)']
+2026-01-06 14:11:39,628 - INFO - Received ZMQ command: optogrid.scan
+2026-01-06 14:11:39,629 - INFO - Scanning for BLE devices...
+2026-01-06 14:11:43,632 - INFO - Found devices: ['JON-O-0001 (FC:3D:82:50:DA:9A)', 'LE_WH-1000XM5 (6F:96:74:F4:64:B6)', 'Aranet4 0606D (C1:59:F0:E0:98:D4)']
+2026-01-06 14:11:51,839 - INFO - Received ZMQ command: optogrid.connect = JON-O-0001
+2026-01-06 14:11:51,839 - INFO - Scanning for device: JON-O-0001
+2026-01-06 14:11:55,851 - INFO - Connecting to JON-O-0001...
+2026-01-06 14:12:00,143 - INFO - BLE notifications enabled
+2026-01-06 14:12:00,177 - INFO - EKF filter frequency set to 100 Hz
+2026-01-06 14:12:01,893 - INFO - Magnetometer calibration file not found: data/JON-O-0001 Calibration.csv
+2026-01-06 14:12:01,893 - INFO - Using default calibration (no offset correction)
+2026-01-06 14:12:01,893 - INFO - Connected to JON-O-0001
+2026-01-06 14:12:05,118 - INFO - Received ZMQ command: optogrid.connect = JON-O-0001
+2026-01-06 14:12:08,440 - WARNING - BLE device disconnected unexpectedly at sample 0
+2026-01-06 14:12:08,443 - INFO - Scanning for device: JON-O-0001
+2026-01-06 14:12:12,462 - INFO - Connecting to JON-O-0001...
+2026-01-06 14:12:16,244 - INFO - BLE notifications enabled
+2026-01-06 14:12:16,322 - INFO - EKF filter frequency set to 100 Hz
+2026-01-06 14:12:16,323 - INFO - Magnetometer calibration file not found: data/JON-O-0001 Calibration.csv
+2026-01-06 14:12:16,323 - INFO - Using default calibration (no offset correction)
+2026-01-06 14:12:16,323 - INFO - Connected to JON-O-0001
+2026-01-06 14:12:51,074 - WARNING - BLE device disconnected unexpectedly at sample 0
+2026-01-06 14:22:25,808 - INFO - Received ZMQ command: optogrid.scan
+2026-01-06 14:22:25,808 - INFO - Scanning for BLE devices...
+2026-01-06 14:22:29,834 - INFO - Found devices: ['Nothing Ear (3) (59:39:2A:A2:F9:55)', 'JON-O-0001 (FC:3D:82:50:DA:9A)', 'LE_WH-1000XM5 (62:1B:07:08:4A:32)', 'LE-Jingjie’s Bose QC35 I (69:95:5E:20:DE:F1)', 'Aranet4 0606D (C1:59:F0:E0:98:D4)']
+2026-01-06 14:22:32,066 - INFO - Received ZMQ command: optogrid.connect = JON-O-0001
+2026-01-06 14:22:32,066 - INFO - Scanning for device: JON-O-0001
+2026-01-06 14:22:36,078 - INFO - Connecting to JON-O-0001...
+2026-01-06 14:22:40,365 - INFO - BLE notifications enabled
+2026-01-06 14:22:40,398 - INFO - EKF filter frequency set to 100 Hz
+2026-01-06 14:22:40,398 - INFO - Magnetometer calibration file not found: data/JON-O-0001 Calibration.csv
+2026-01-06 14:22:40,398 - INFO - Using default calibration (no offset correction)
+2026-01-06 14:22:40,398 - INFO - Connected to JON-O-0001
+2026-01-06 14:23:25,254 - WARNING - BLE device disconnected unexpectedly at sample 0
+2026-01-06 14:25:32,406 - INFO - Received signal 2, shutting down...
+2026-01-06 14:25:32,407 - INFO - Cleaning up resources...
+2026-01-06 14:25:32,410 - INFO - ZMQ closed
+2026-01-06 14:25:32,411 - INFO - Cleaning up resources...
+2026-01-06 14:25:32,411 - INFO - ZMQ closed
+2026-01-06 14:25:50,497 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-06 14:25:50,500 - INFO - ZMQ PUB server publishing on tcp://172.24.242.178:5556...
+2026-01-06 14:25:50,502 - INFO - OptoGrid Headless Client Started
+2026-01-06 14:25:55,266 - INFO - Received ZMQ command: optogrid.scan
+2026-01-06 14:25:55,266 - INFO - Scanning for BLE devices...
+2026-01-06 14:25:59,358 - INFO - Found devices: ['Nothing Ear (3) (7B:91:73:10:41:08)']
+2026-01-06 14:26:02,224 - INFO - Received ZMQ command: optogrid.scan
+2026-01-06 14:26:02,224 - INFO - Scanning for BLE devices...
+2026-01-06 14:26:06,236 - INFO - Found devices: ['JON-O-0001 (FC:3D:82:50:DA:9A)']
+2026-01-06 14:26:08,115 - INFO - Received ZMQ command: optogrid.connect = JON-O-0001
+2026-01-06 14:26:08,115 - INFO - Scanning for device: JON-O-0001
+2026-01-06 14:26:12,129 - INFO - Connecting to JON-O-0001...
+2026-01-06 14:26:15,507 - INFO - BLE notifications enabled
+2026-01-06 14:26:15,539 - INFO - EKF filter frequency set to 100 Hz
+2026-01-06 14:26:15,767 - INFO - Magnetometer calibration file not found: data/JON-O-0001 Calibration.csv
+2026-01-06 14:26:15,767 - INFO - Using default calibration (no offset correction)
+2026-01-06 14:26:15,767 - INFO - Connected to JON-O-0001
+2026-01-06 14:26:23,102 - INFO - Received signal 2, shutting down...
+2026-01-06 14:26:23,103 - INFO - Cleaning up resources...
+2026-01-06 14:26:26,266 - WARNING - BLE device disconnected unexpectedly at sample 0
+2026-01-06 14:26:26,270 - INFO - BLE disconnected
+2026-01-06 14:26:26,272 - INFO - ZMQ closed
+2026-01-06 14:26:26,273 - INFO - Cleaning up resources...
+2026-01-06 14:26:26,273 - INFO - ZMQ closed
+2026-01-06 14:27:52,153 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-06 14:27:52,156 - INFO - ZMQ PUB server publishing on tcp://172.24.242.178:5556...
+2026-01-06 14:27:52,158 - INFO - OptoGrid Headless Client Started
+2026-01-06 14:27:52,260 - INFO - Received ZMQ command: optogrid.scan
+2026-01-06 14:27:52,260 - INFO - Scanning for BLE devices...
+2026-01-06 14:27:56,340 - INFO - Found devices: ['LE-Jingjie’s Bose QC35 I (69:95:5E:20:DE:F1)']
+2026-01-06 14:28:02,996 - INFO - Received ZMQ command: optogrid.scan
+2026-01-06 14:28:02,996 - INFO - Scanning for BLE devices...
+2026-01-06 14:28:07,027 - INFO - Found devices: ['LE-Jingjie’s Bose QC35 I (69:95:5E:20:DE:F1)', 'JON-O-0001 (FC:3D:82:50:DA:9A)']
+2026-01-06 14:28:40,542 - INFO - Received signal 2, shutting down...
+2026-01-06 14:28:40,558 - INFO - Cleaning up resources...
+2026-01-06 14:28:40,559 - INFO - ZMQ closed
+2026-01-06 14:28:40,559 - INFO - Cleaning up resources...
+2026-01-06 14:28:40,560 - INFO - ZMQ closed
+2026-01-06 14:39:27,695 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-06 14:39:27,698 - INFO - ZMQ PUB server publishing on tcp://172.24.242.178:5556...
+2026-01-06 14:39:27,700 - INFO - OptoGrid Headless Client Started
+2026-01-06 14:39:35,271 - INFO - Received ZMQ command: optogrid.scan
+2026-01-06 14:39:35,271 - INFO - Scanning for BLE devices...
+2026-01-06 14:39:39,364 - INFO - Found devices: ['JON-O-0001 (FC:3D:82:50:DA:9A)']
+2026-01-06 14:39:44,426 - INFO - Received ZMQ command: optogrid.connect = JON-O-0001
+2026-01-06 14:39:44,426 - INFO - Scanning for device: JON-O-0001
+2026-01-06 14:39:48,437 - INFO - Connecting to JON-O-0001...
+2026-01-06 14:39:52,269 - INFO - BLE notifications enabled
+2026-01-06 14:39:52,301 - INFO - EKF filter frequency set to 100 Hz
+2026-01-06 14:39:52,545 - INFO - Magnetometer calibration file not found: data/JON-O-0001 Calibration.csv
+2026-01-06 14:39:52,546 - INFO - Using default calibration (no offset correction)
+2026-01-06 14:39:52,546 - INFO - Connected to JON-O-0001
+2026-01-06 14:39:52,565 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-06 14:39:52,707 - INFO - ble_log: Connection interval: Min = 1076756480 ms, Max = 0 ms
+2026-01-06 14:42:19,353 - WARNING - BLE device disconnected unexpectedly at sample 0
+2026-01-06 14:43:47,282 - INFO - Received signal 2, shutting down...
+2026-01-06 14:43:47,282 - INFO - Cleaning up resources...
+2026-01-06 14:43:47,283 - INFO - ZMQ closed
+2026-01-06 14:43:47,283 - INFO - Cleaning up resources...
+2026-01-06 14:43:47,283 - INFO - ZMQ closed
+2026-01-06 15:01:27,447 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-06 15:01:27,450 - INFO - ZMQ PUB server publishing on tcp://172.24.242.178:5556...
+2026-01-06 15:01:27,452 - INFO - OptoGrid Headless Client Started
+2026-01-06 15:01:35,079 - INFO - Received ZMQ command: optogrid.scan
+2026-01-06 15:01:35,079 - INFO - Scanning for BLE devices...
+2026-01-06 15:01:39,171 - INFO - Found devices: ['JON-O-0001 (FC:3D:82:50:DA:9A)']
+2026-01-06 15:01:40,575 - INFO - Received ZMQ command: optogrid.connect = JON-O-0001
+2026-01-06 15:01:40,575 - INFO - Scanning for device: JON-O-0001
+2026-01-06 15:01:44,584 - INFO - Connecting to JON-O-0001...
+2026-01-06 15:01:48,467 - INFO - BLE notifications enabled
+2026-01-06 15:01:48,513 - INFO - EKF filter frequency set to 100 Hz
+2026-01-06 15:01:48,742 - INFO - Magnetometer calibration file not found: data/JON-O-0001 Calibration.csv
+2026-01-06 15:01:48,743 - INFO - Using default calibration (no offset correction)
+2026-01-06 15:01:48,743 - INFO - Connected to JON-O-0001
+2026-01-06 15:01:48,754 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-06 15:01:54,549 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-06 15:01:54,631 - INFO - Sent opto trigger
+2026-01-06 15:01:56,797 - INFO - Received ZMQ command: optogrid.toggleShamLED = 1
+2026-01-06 15:01:56,912 - INFO - Sham LED turned on
+2026-01-06 15:01:57,717 - INFO - Received ZMQ command: optogrid.toggleShamLED = 0
+2026-01-06 15:01:57,752 - INFO - Sham LED turned off
+2026-01-06 15:01:58,714 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 1
+2026-01-06 15:01:58,772 - INFO - Status LED turned on
+2026-01-06 15:01:59,488 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 0
+2026-01-06 15:01:59,553 - INFO - Status LED turned off
+2026-01-06 15:02:00,167 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 1
+2026-01-06 15:02:00,212 - INFO - Status LED turned on
+2026-01-06 15:02:00,673 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 0
+2026-01-06 15:02:00,723 - INFO - Status LED turned off
+2026-01-06 15:02:01,242 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 1
+2026-01-06 15:02:01,322 - INFO - Status LED turned on
+2026-01-06 15:02:01,669 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 0
+2026-01-06 15:02:01,742 - INFO - Status LED turned off
+2026-01-06 15:02:02,667 - INFO - Received ZMQ command: optogrid.toggleShamLED = 1
+2026-01-06 15:02:02,702 - INFO - Sham LED turned on
+2026-01-06 15:02:03,413 - INFO - Received ZMQ command: optogrid.toggleShamLED = 0
+2026-01-06 15:02:03,482 - INFO - Sham LED turned off
+2026-01-06 15:02:04,220 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 1
+2026-01-06 15:02:04,262 - INFO - Status LED turned on
+2026-01-06 15:02:05,121 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 0
+2026-01-06 15:02:05,192 - INFO - Status LED turned off
+2026-01-06 15:02:06,357 - INFO - Received ZMQ command: optogrid.toggleShamLED = 1
+2026-01-06 15:02:06,422 - INFO - Sham LED turned on
+2026-01-06 15:02:06,706 - INFO - Received ZMQ command: optogrid.toggleShamLED = 0
+2026-01-06 15:02:06,752 - INFO - Sham LED turned off
+2026-01-06 15:02:08,604 - INFO - Received ZMQ command: optogrid.toggleShamLED = 1
+2026-01-06 15:02:08,642 - INFO - Sham LED turned on
+2026-01-06 15:02:08,999 - INFO - Received ZMQ command: optogrid.toggleShamLED = 0
+2026-01-06 15:02:09,062 - INFO - Sham LED turned off
+2026-01-06 15:02:09,617 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 1
+2026-01-06 15:02:09,662 - INFO - Status LED turned on
+2026-01-06 15:02:10,091 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 0
+2026-01-06 15:02:10,141 - INFO - Status LED turned off
+2026-01-06 15:02:11,060 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-06 15:02:11,102 - INFO - Sent opto trigger
+2026-01-06 15:02:12,296 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-06 15:02:12,362 - INFO - Sent opto trigger
+2026-01-06 15:02:13,358 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-06 15:02:13,412 - INFO - Sent opto trigger
+2026-01-06 15:03:11,224 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-06 15:03:11,313 - INFO - Sent opto trigger
+2026-01-06 15:03:27,412 - INFO - Received ZMQ command: optogrid.program
+2026-01-06 15:03:27,513 - INFO - Written sequence_length: 1
+2026-01-06 15:03:27,572 - INFO - Written led_selection: 1
+2026-01-06 15:03:27,632 - INFO - Written duration: 2000
+2026-01-06 15:03:27,693 - INFO - Written period: 10
+2026-01-06 15:03:27,752 - INFO - Written pulse_width: 5
+2026-01-06 15:03:27,812 - INFO - Written amplitude: 100
+2026-01-06 15:03:27,872 - INFO - Written pwm_frequency: 50000
+2026-01-06 15:03:27,932 - INFO - Written ramp_up: 0
+2026-01-06 15:03:27,992 - INFO - Written ramp_down: 0
+2026-01-06 15:03:28,015 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-06 15:03:29,233 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-06 15:03:29,282 - INFO - Sent opto trigger
+2026-01-06 15:03:33,109 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-06 15:03:33,182 - INFO - Sent opto trigger
+2026-01-06 15:03:38,232 - INFO - Received ZMQ command: optogrid.program
+2026-01-06 15:03:38,312 - INFO - Written sequence_length: 1
+2026-01-06 15:03:38,373 - INFO - Written led_selection: 1
+2026-01-06 15:03:38,432 - INFO - Written duration: 2000
+2026-01-06 15:03:38,492 - INFO - Written period: 10
+2026-01-06 15:03:38,552 - INFO - Written pulse_width: 5
+2026-01-06 15:03:38,612 - INFO - Written amplitude: 100
+2026-01-06 15:03:38,672 - INFO - Written pwm_frequency: 50000
+2026-01-06 15:03:38,733 - INFO - Written ramp_up: 0
+2026-01-06 15:03:38,792 - INFO - Written ramp_down: 0
+2026-01-06 15:03:38,815 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-06 15:03:39,587 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-06 15:03:39,632 - INFO - Sent opto trigger
+2026-01-06 15:04:04,068 - INFO - Received signal 2, shutting down...
+2026-01-06 15:04:04,068 - INFO - Cleaning up resources...
+2026-01-06 15:04:04,717 - WARNING - BLE device disconnected unexpectedly at sample 0
+2026-01-06 15:04:04,718 - INFO - BLE disconnected
+2026-01-06 15:04:04,719 - INFO - ZMQ closed
+2026-01-06 15:04:04,719 - INFO - Cleaning up resources...
+2026-01-06 15:04:04,719 - INFO - ZMQ closed
+2026-01-06 15:11:07,825 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-06 15:11:07,828 - INFO - ZMQ PUB server publishing on tcp://172.24.242.178:5556...
+2026-01-06 15:11:07,831 - INFO - OptoGrid Headless Client Started
+2026-01-06 15:11:16,503 - INFO - Received ZMQ command: optogrid.scan
+2026-01-06 15:11:16,504 - INFO - Scanning for BLE devices...
+2026-01-06 15:11:20,622 - INFO - Found devices: ['JON-O-0001 (FC:3D:82:50:DA:9A)']
+2026-01-06 15:11:21,762 - INFO - Received ZMQ command: optogrid.connect = JON-O-0001
+2026-01-06 15:11:21,762 - INFO - Scanning for device: JON-O-0001
+2026-01-06 15:11:25,779 - INFO - Connecting to JON-O-0001...
+2026-01-06 15:11:29,252 - INFO - BLE notifications enabled
+2026-01-06 15:11:29,291 - INFO - EKF filter frequency set to 100 Hz
+2026-01-06 15:11:29,691 - INFO - Magnetometer calibration file not found: data/JON-O-0001 Calibration.csv
+2026-01-06 15:11:29,692 - INFO - Using default calibration (no offset correction)
+2026-01-06 15:11:29,693 - INFO - Connected to JON-O-0001
+2026-01-06 15:11:29,706 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-06 15:11:30,089 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-06 15:11:32,694 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 0
+2026-01-06 15:11:32,748 - INFO - Status LED turned off
+2026-01-06 15:11:33,496 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 1
+2026-01-06 15:11:33,559 - INFO - Status LED turned on
+2026-01-06 15:11:34,230 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 0
+2026-01-06 15:11:34,278 - INFO - Status LED turned off
+2026-01-06 15:11:34,863 - INFO - Received ZMQ command: optogrid.toggleShamLED = 1
+2026-01-06 15:11:34,909 - INFO - Sham LED turned on
+2026-01-06 15:11:36,000 - INFO - Received ZMQ command: optogrid.toggleShamLED = 0
+2026-01-06 15:11:36,047 - INFO - Sham LED turned off
+2026-01-06 15:11:37,933 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 1
+2026-01-06 15:11:37,999 - INFO - Status LED turned on
+2026-01-06 15:11:38,733 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 0
+2026-01-06 15:11:38,779 - INFO - Status LED turned off
+2026-01-06 15:11:40,427 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-06 15:11:40,488 - INFO - Sent opto trigger
+2026-01-06 15:11:41,668 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-06 15:11:41,717 - INFO - Sent opto trigger
+2026-01-06 15:15:05,955 - INFO - Received ZMQ command: optogrid.scan
+2026-01-06 15:15:05,955 - INFO - Scanning for BLE devices...
+2026-01-06 15:15:07,645 - WARNING - BLE device disconnected unexpectedly at sample 0
+2026-01-06 15:15:09,974 - INFO - Found devices: ['JON-O-0001 (FC:3D:82:50:DA:9A)']
+2026-01-06 15:15:11,280 - INFO - Received ZMQ command: optogrid.connect = JON-O-0001
+2026-01-06 15:15:11,280 - INFO - Scanning for device: JON-O-0001
+2026-01-06 15:15:15,296 - INFO - Connecting to JON-O-0001...
+2026-01-06 15:15:17,242 - INFO - BLE notifications enabled
+2026-01-06 15:15:17,275 - INFO - EKF filter frequency set to 100 Hz
+2026-01-06 15:15:17,275 - INFO - Magnetometer calibration file not found: data/JON-O-0001 Calibration.csv
+2026-01-06 15:15:17,275 - INFO - Using default calibration (no offset correction)
+2026-01-06 15:15:17,275 - INFO - Connected to JON-O-0001
+2026-01-06 15:15:17,299 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-06 15:15:17,678 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-06 15:15:27,671 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 0
+2026-01-06 15:15:27,742 - INFO - Status LED turned off
+2026-01-06 15:15:41,655 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-06 15:15:55,742 - WARNING - BLE device disconnected unexpectedly at sample 0
+2026-01-06 15:16:39,850 - INFO - Received signal 2, shutting down...
+2026-01-06 15:16:39,850 - INFO - Cleaning up resources...
+2026-01-06 15:16:39,852 - INFO - ZMQ closed
+2026-01-06 15:16:39,852 - INFO - Cleaning up resources...
+2026-01-06 15:16:39,852 - INFO - ZMQ closed
+2026-01-06 15:23:37,346 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-06 15:23:37,349 - INFO - ZMQ PUB server publishing on tcp://172.24.242.178:5556...
+2026-01-06 15:23:37,351 - INFO - OptoGrid Headless Client Started
+2026-01-06 15:23:48,563 - INFO - Received ZMQ command: optogrid.scan
+2026-01-06 15:23:48,564 - INFO - Scanning for BLE devices...
+2026-01-06 15:23:52,658 - INFO - Found devices: ['JON-O-0001 (FC:3D:82:50:DA:9A)']
+2026-01-06 15:23:54,065 - INFO - Received ZMQ command: optogrid.connect = FC:3D:82:50:DA:9A
+2026-01-06 15:23:54,065 - INFO - Connecting directly to device address: FC:3D:82:50:DA:9A
+2026-01-06 15:23:56,257 - INFO - BLE notifications enabled
+2026-01-06 15:23:56,289 - INFO - EKF filter frequency set to 100 Hz
+2026-01-06 15:23:56,517 - INFO - Magnetometer calibration file not found: data/JON-O-0001 Calibration.csv
+2026-01-06 15:23:56,517 - INFO - Using default calibration (no offset correction)
+2026-01-06 15:23:56,517 - INFO - Connected to JON-O-0001 at FC:3D:82:50:DA:9A
+2026-01-06 15:23:56,531 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-06 15:23:56,942 - INFO - Received ZMQ command: optogrid.readbattery
+2026-01-06 15:23:56,996 - INFO - ble_log: Connection interval: Min = 1076756480 ms, Max = 0 ms
+2026-01-06 15:23:56,996 - INFO - Received ZMQ command: optogrid.readuLEDCheck
+2026-01-06 15:23:57,023 - INFO - uLED Check: 18446744073709551615
+2026-01-06 15:24:15,468 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 0
+2026-01-06 15:24:15,563 - INFO - Status LED turned off
+2026-01-06 15:24:16,069 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 1
+2026-01-06 15:24:16,133 - INFO - Status LED turned on
+2026-01-06 15:24:16,576 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 0
+2026-01-06 15:24:16,613 - INFO - Status LED turned off
+2026-01-06 15:24:17,050 - INFO - Received ZMQ command: optogrid.toggleShamLED = 1
+2026-01-06 15:24:17,093 - INFO - Sham LED turned on
+2026-01-06 15:24:17,634 - INFO - Received ZMQ command: optogrid.toggleShamLED = 0
+2026-01-06 15:24:17,693 - INFO - Sham LED turned off
+2026-01-06 15:24:34,926 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-06 15:24:46,049 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-06 15:24:48,426 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 1
+2026-01-06 15:24:48,474 - INFO - Status LED turned on
+2026-01-06 15:24:49,409 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-06 15:24:50,881 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 0
+2026-01-06 15:24:50,934 - INFO - Status LED turned off
+2026-01-06 15:24:58,622 - WARNING - BLE device disconnected unexpectedly at sample 0
+2026-01-06 15:28:58,953 - INFO - Received ZMQ command: optogrid.scan
+2026-01-06 15:28:58,953 - INFO - Scanning for BLE devices...
+2026-01-06 15:29:02,978 - INFO - Found devices: ['JON-O-0001 (FC:3D:82:50:DA:9A)']
+2026-01-06 15:29:04,007 - INFO - Received ZMQ command: optogrid.connect = FC:3D:82:50:DA:9A
+2026-01-06 15:29:04,007 - INFO - Connecting directly to device address: FC:3D:82:50:DA:9A
+2026-01-06 15:29:08,910 - INFO - BLE notifications enabled
+2026-01-06 15:29:08,944 - INFO - EKF filter frequency set to 100 Hz
+2026-01-06 15:29:08,971 - INFO - Magnetometer calibration file not found: data/JON-O-0001 Calibration.csv
+2026-01-06 15:29:08,971 - INFO - Using default calibration (no offset correction)
+2026-01-06 15:29:08,971 - INFO - Connected to JON-O-0001 at FC:3D:82:50:DA:9A
+2026-01-06 15:29:08,983 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-06 15:29:09,364 - INFO - Received ZMQ command: optogrid.readbattery
+2026-01-06 15:29:09,439 - INFO - ble_log: Connection interval: Min = 1076756480 ms, Max = 0 ms
+2026-01-06 15:29:09,439 - INFO - Received ZMQ command: optogrid.readuLEDCheck
+2026-01-06 15:29:09,466 - INFO - uLED Check: 18446744073709551615
+2026-01-06 15:29:26,640 - WARNING - BLE device disconnected unexpectedly at sample 0
+2026-01-06 15:35:00,496 - INFO - Received signal 2, shutting down...
+2026-01-06 15:35:00,496 - INFO - Cleaning up resources...
+2026-01-06 15:35:00,498 - INFO - ZMQ closed
+2026-01-06 15:35:00,498 - INFO - Cleaning up resources...
+2026-01-06 15:35:00,499 - INFO - ZMQ closed

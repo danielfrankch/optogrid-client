@@ -101,22 +101,59 @@ class OptoGridApp {
     
     // Device control methods
     startScan() {
-        this.log('Scanning for devices...');
+        this.log('Scanning for devices containing "O"...');
         this.elements.scanButton.disabled = true;
         this.elements.devicesCombo.innerHTML = '<option value="">Scanning...</option>';
         
-        // TODO: Send scan command to backend via ZMQ
-        // For now, simulate scan completion
-        setTimeout(() => {
-            this.onScanComplete([
-                { name: 'OptoGrid-001', address: '00:11:22:33:44:55' },
-                { name: 'OptoGrid-002', address: '00:11:22:33:44:56' }
-            ]);
-        }, 2000);
+        // Send scan command to backend via ZMQ
+        this.zmqClient.sendRequest('optogrid.scan')
+            .then(response => {
+                this.onScanComplete(response);
+            })
+            .catch(error => {
+                this.log(`Scan failed: ${error}`);
+                this.elements.scanButton.disabled = false;
+                this.elements.devicesCombo.innerHTML = '<option value="">Scan failed</option>';
+            });
     }
     
-    onScanComplete(devices) {
+    onScanComplete(response) {
         this.elements.scanButton.disabled = false;
+        
+        // Parse ZMQ response - backend returns newline-separated device strings
+        let devices = [];
+        try {
+            if (typeof response === 'string') {
+                if (response.trim() === 'No Bluetooth devices found') {
+                    devices = [];
+                } else {
+                    // Split by newlines and filter out empty lines
+                    const deviceLines = response.split('\n').filter(line => line.trim() !== '');
+                    devices = deviceLines.map(line => {
+                        // Parse "DeviceName (Address)" format
+                        const match = line.match(/^(.+?)\s*\(([^)]+)\)$/);
+                        if (match) {
+                            return {
+                                name: match[1].trim(),
+                                address: match[2].trim()
+                            };
+                        } else {
+                            // Fallback for simple device name
+                            return {
+                                name: line.trim(),
+                                address: 'Unknown'
+                            };
+                        }
+                    });
+                }
+            } else if (Array.isArray(response)) {
+                devices = response;
+            }
+        } catch (error) {
+            this.log(`Error parsing scan response: ${error}`);
+            devices = [];
+        }
+        
         this.deviceList = devices;
         
         const combo = this.elements.devicesCombo;
@@ -125,33 +162,46 @@ class OptoGridApp {
         if (devices.length > 0) {
             devices.forEach((device, index) => {
                 const option = document.createElement('option');
-                option.value = index;
-                option.textContent = `${device.name} (${device.address})`;
+                option.value = device.name;
+                // Display only device name, not the address
+                option.textContent = device.name;
                 combo.appendChild(option);
             });
             this.elements.connectButton.disabled = false;
-            this.log(`Found ${devices.length} OptoGrid devices`);
+            this.log(`Found ${devices.length} Bluetooth devices`);
         } else {
-            this.log('No OptoGrid devices found');
+            this.log('No Bluetooth devices found');
             this.elements.connectButton.disabled = true;
         }
     }
     
     connectToDevice() {
-        const selectedIndex = this.elements.devicesCombo.value;
-        if (selectedIndex === '') return;
+        const selectedDeviceName = this.elements.devicesCombo.value;
+        if (selectedDeviceName === '') return;
         
-        this.selectedDevice = this.deviceList[selectedIndex];
-        this.log(`Connecting to ${this.selectedDevice.name}...`);
+        // Find the selected device from the list
+        this.selectedDevice = this.deviceList.find(device => 
+            (device.name === selectedDeviceName) || (device === selectedDeviceName)
+        ) || { name: selectedDeviceName };
+        
+        this.log(`Connecting to ${selectedDeviceName}...`);
         this.elements.connectButton.disabled = true;
         this.elements.scanButton.disabled = true;
         this.connectionStatus = 'connecting';
         
-        // TODO: Send connect command to backend via ZMQ
-        // For now, simulate successful connection
-        setTimeout(() => {
-            this.onConnected(this.selectedDevice.name, this.selectedDevice.address);
-        }, 1500);
+        // Send connect command to backend via ZMQ using device UUID/address
+        const deviceAddress = this.selectedDevice.address || selectedDeviceName;
+        this.zmqClient.sendRequest(`optogrid.connect = ${deviceAddress}`)
+            .then(response => {
+                if (response.includes('Connected') || response.includes('success')) {
+                    this.onConnected(selectedDeviceName, this.selectedDevice.address || 'Unknown');
+                } else {
+                    this.onConnectionFailed(response);
+                }
+            })
+            .catch(error => {
+                this.onConnectionFailed(`Connection error: ${error}`);
+            });
     }
     
     onConnected(name, address) {
@@ -163,11 +213,17 @@ class OptoGridApp {
         // Enable control buttons
         this.setControlButtonsEnabled(true);
         
-        // Populate GATT table with sample data
-        this.populateGattTable();
-        
-        // Update battery display
-        this.updateBatteryDisplay(4100);
+        // Populate GATT table with Opto Control Parameters and update device status
+        this.zmqClient.sendRequest('optogrid.gattread')
+            .then(response => {
+                this.parseAndPopulateGattTable(response);
+                this.updateDeviceStatus(response);
+            })
+            .catch(error => {
+                this.log(`GATT read failed: ${error}`);
+                // Fallback to empty table or error display
+                this.elements.gattTableBody.innerHTML = '<tr><td colspan="4">Failed to read GATT table</td></tr>';
+            });
     }
     
     onConnectionFailed(error) {
@@ -208,51 +264,203 @@ class OptoGridApp {
         this.log('Reading all values...');
         this.elements.readButton.disabled = true;
         
-        // TODO: Send read all command to backend
-        setTimeout(() => {
-            this.elements.readButton.disabled = false;
-            this.log('Read all complete');
-        }, 1000);
+        // Send GATT read command to refresh the table
+        this.zmqClient.sendRequest('optogrid.gattread')
+            .then(response => {
+                this.parseAndPopulateGattTable(response);
+                this.elements.readButton.disabled = false;
+                this.log('Read all complete');
+            })
+            .catch(error => {
+                this.log(`GATT read failed: ${error}`);
+                this.elements.readButton.disabled = false;
+            });
     }
     
     writeValues() {
         this.log('Writing modified values...');
         this.elements.writeButton.disabled = true;
         
-        // TODO: Send write values command to backend
-        setTimeout(() => {
+        // Collect the full Opto Control Settings from the table
+        const optoSettings = this.collectOptoSettings();
+        
+        if (Object.keys(optoSettings).length === 0) {
+            this.log('No modified values to write');
             this.elements.writeButton.disabled = false;
-            this.log('Wrote 5 values');
-        }, 1000);
+            return;
+        }
+        
+        // Send optogrid.program command first
+        this.zmqClient.sendRequest('optogrid.program')
+            .then(response => {
+                if (response === 'Ready for program data') {
+                    // Send the OptoSetting data as JSON
+                    return this.zmqClient.sendRequest(JSON.stringify(optoSettings));
+                } else {
+                    throw new Error(`Unexpected response: ${response}`);
+                }
+            })
+            .then(response => {
+                if (response.includes('Opto Programmed')) {
+                    this.log(`Successfully wrote ${Object.keys(optoSettings).length} values`);
+                    // Refresh the table to show updated values
+                    return this.zmqClient.sendRequest('optogrid.gattread');
+                } else {
+                    throw new Error(`Programming failed: ${response}`);
+                }
+            })
+            .then(response => {
+                // Update the table with fresh values
+                this.parseAndPopulateGattTable(response);
+                this.elements.writeButton.disabled = false;
+                this.log('Write complete, table refreshed');
+            })
+            .catch(error => {
+                this.log(`Write failed: ${error}`);
+                this.elements.writeButton.disabled = false;
+            });
+    }
+    
+    collectOptoSettings() {
+        const optoSettings = {};
+        const writableCells = this.elements.gattTableBody.querySelectorAll('.writable-cell');
+        
+        // Mapping from characteristic names to OptoSetting keys
+        const charToSettingMap = {
+            'Sequence Length': 'sequence_length',
+            'LED Selection': 'led_selection', 
+            'Duration': 'duration',
+            'Period': 'period',
+            'Pulse Width': 'pulse_width',
+            'Amplitude': 'amplitude',
+            'PWM Frequency': 'pwm_frequency',
+            'Ramp Up Time': 'ramp_up',
+            'Ramp Down Time': 'ramp_down'
+        };
+        
+        writableCells.forEach(cell => {
+            const value = cell.textContent.trim();
+            if (value === '') return; // Skip empty write values
+            
+            // Get the characteristic name from the same row
+            const row = cell.closest('tr');
+            const charCell = row.querySelector('td:first-child');
+            const charName = charCell.textContent.trim();
+            
+            const settingKey = charToSettingMap[charName];
+            if (settingKey) {
+                // Convert value to appropriate type
+                let convertedValue;
+                if (settingKey === 'led_selection') {
+                    // LED Selection should be uint64
+                    convertedValue = parseInt(value);
+                } else if (settingKey === 'sequence_length' || settingKey === 'amplitude') {
+                    // These are typically integers
+                    convertedValue = parseInt(value);
+                } else {
+                    // Duration, period, pulse_width, pwm_frequency, ramp_up, ramp_down are numbers
+                    convertedValue = parseFloat(value);
+                }
+                
+                if (!isNaN(convertedValue)) {
+                    optoSettings[settingKey] = convertedValue;
+                }
+            }
+        });
+        
+        return optoSettings;
     }
     
     sendTrigger() {
         this.log('Sending trigger...');
         this.elements.triggerButton.disabled = true;
         
-        // TODO: Send trigger command to backend
-        setTimeout(() => {
-            this.elements.triggerButton.disabled = false;
-            this.log('Trigger sent successfully');
-        }, 500);
+        // Send trigger command to backend via ZMQ
+        this.zmqClient.sendRequest('optogrid.trigger')
+            .then(response => {
+                if (response.includes('Opto Triggered')) {
+                    this.log('Trigger sent successfully');
+                } else {
+                    this.log(`Trigger response: ${response}`);
+                }
+                this.elements.triggerButton.disabled = false;
+            })
+            .catch(error => {
+                this.log(`Trigger failed: ${error}`);
+                this.elements.triggerButton.disabled = false;
+            });
     }
     
     toggleShamLed() {
         this.shamLedState = !this.shamLedState;
         this.updateLedButtonState(this.elements.shamLedButton, this.shamLedState);
-        this.log(`SHAM LED: ${this.shamLedState ? 'True' : 'False'}`);
+        
+        // Send toggleShamLED command via ZMQ (assuming similar pattern to toggleStatusLED)
+        const state = this.shamLedState ? 1 : 0;
+        this.zmqClient.sendRequest(`optogrid.toggleShamLED = ${state}`)
+            .then(response => {
+                const expectedResponse = this.shamLedState ? 'Sham LED turned on' : 'Sham LED turned off';
+                if (response.includes(expectedResponse)) {
+                    this.log(`SHAM LED: ${this.shamLedState ? 'True' : 'False'}`);
+                } else {
+                    this.log(`SHAM LED response: ${response}`);
+                }
+            })
+            .catch(error => {
+                this.log(`SHAM LED toggle failed: ${error}`);
+                // Revert state on error
+                this.shamLedState = !this.shamLedState;
+                this.updateLedButtonState(this.elements.shamLedButton, this.shamLedState);
+            });
     }
     
     toggleImuEnable() {
-        this.imuEnableState = !this.imuEnableState;
-        this.updateLedButtonState(this.elements.imuEnableButton, this.imuEnableState);
-        this.log(`IMU Enable: ${this.imuEnableState ? 'True' : 'False'}`);
+        const newState = !this.imuEnableState;
+        this.updateLedButtonState(this.elements.imuEnableButton, newState);
+        
+        // Send appropriate IMU command based on new state
+        const command = newState ? 'optogrid.enableIMU' : 'optogrid.disableIMU';
+        const expectedResponse = newState ? 'IMU enabled, and logging started' : 'IMU disabled, and logging stopped';
+        
+        this.zmqClient.sendRequest(command)
+            .then(response => {
+                if (response.includes(expectedResponse)) {
+                    this.imuEnableState = newState;
+                    this.log(`IMU Enable: ${this.imuEnableState ? 'True' : 'False'}`);
+                } else {
+                    this.log(`IMU response: ${response}`);
+                    // Revert button state if unexpected response
+                    this.updateLedButtonState(this.elements.imuEnableButton, this.imuEnableState);
+                }
+            })
+            .catch(error => {
+                this.log(`IMU toggle failed: ${error}`);
+                // Revert button state on error
+                this.updateLedButtonState(this.elements.imuEnableButton, this.imuEnableState);
+            });
     }
     
     toggleStatusLed() {
         this.statusLedState = !this.statusLedState;
         this.updateLedButtonState(this.elements.statusLedButton, this.statusLedState);
-        this.log(`STATUS LED: ${this.statusLedState ? 'True' : 'False'}`);
+        
+        // Send toggleStatusLED command via ZMQ (following MATLAB pattern)
+        const state = this.statusLedState ? 1 : 0;
+        this.zmqClient.sendRequest(`optogrid.toggleStatusLED = ${state}`)
+            .then(response => {
+                const expectedResponse = this.statusLedState ? 'Status LED turned on' : 'Status LED turned off';
+                if (response.includes(expectedResponse)) {
+                    this.log(`STATUS LED: ${this.statusLedState ? 'True' : 'False'}`);
+                } else {
+                    this.log(`STATUS LED response: ${response}`);
+                }
+            })
+            .catch(error => {
+                this.log(`STATUS LED toggle failed: ${error}`);
+                // Revert state on error
+                this.statusLedState = !this.statusLedState;
+                this.updateLedButtonState(this.elements.statusLedButton, this.statusLedState);
+            });
     }
     
     updateLedButtonState(button, isActive) {
@@ -267,24 +475,58 @@ class OptoGridApp {
         this.log('Reading battery voltage...');
         this.elements.batteryVoltageButton.disabled = true;
         
-        // TODO: Send battery read command to backend
-        setTimeout(() => {
-            this.elements.batteryVoltageButton.disabled = false;
-            const voltage = 3900 + Math.random() * 300; // Simulate voltage reading
-            this.updateBatteryDisplay(Math.round(voltage));
-            this.log(`Battery: ${Math.round(voltage)} mV`);
-        }, 500);
+        // Send battery read command to backend via ZMQ
+        this.zmqClient.sendRequest('optogrid.readbattery')
+            .then(response => {
+                // Parse battery response: "DeviceName Battery Voltage = XXXX mV"
+                const voltageMatch = response.match(/Battery Voltage = (\d+) mV/);
+                if (voltageMatch) {
+                    const voltage = parseInt(voltageMatch[1]);
+                    this.updateBatteryDisplay(voltage);
+                    this.log(`Battery: ${voltage} mV`);
+                } else {
+                    this.log(`Battery response: ${response}`);
+                }
+                this.elements.batteryVoltageButton.disabled = false;
+            })
+            .catch(error => {
+                this.log(`Battery read failed: ${error}`);
+                this.elements.batteryVoltageButton.disabled = false;
+            });
     }
     
     readULEDCheck() {
         this.log('Reading uLED check...');
         this.elements.readULEDCheckButton.disabled = true;
         
-        // TODO: Send uLED check command to backend
-        setTimeout(() => {
-            this.elements.readULEDCheckButton.disabled = false;
-            this.log('uLED Check: 0xFFFFFFFFFFFFFFFF');
-        }, 500);
+        // Send uLED check command to backend via ZMQ
+        this.zmqClient.sendRequest('optogrid.readuLEDCheck')
+            .then(response => {
+                // Parse uLED response: "DeviceName uLED Check = VALUE"
+                const uledMatch = response.match(/uLED Check = (.+)$/);
+                if (uledMatch) {
+                    const uledValue = uledMatch[1].trim();
+                    this.log(`uLED Check: ${uledValue}`);
+                    // Update brain map with uLED check value if needed
+                    if (this.brainMap && typeof this.brainMap.updateLedCheckOverlay === 'function') {
+                        // Convert hex string to number if needed
+                        try {
+                            const numericValue = uledValue.startsWith('0x') ? 
+                                parseInt(uledValue, 16) : parseInt(uledValue);
+                            this.brainMap.updateLedCheckOverlay(numericValue);
+                        } catch (e) {
+                            // If parsing fails, just log the value
+                        }
+                    }
+                } else {
+                    this.log(`uLED response: ${response}`);
+                }
+                this.elements.readULEDCheckButton.disabled = false;
+            })
+            .catch(error => {
+                this.log(`uLED Check read failed: ${error}`);
+                this.elements.readULEDCheckButton.disabled = false;
+            });
     }
     
     readLastStim() {
@@ -308,49 +550,181 @@ class OptoGridApp {
         this.elements.batteryText.textContent = `${voltage} mV`;
     }
     
-    populateGattTable() {
-        // Sample GATT data for demonstration
-        const sampleGattData = [
-            { service: 'Device Information', characteristic: 'Device Name', value: 'OptoGrid-001', writeValue: '', unit: '' },
-            { service: '', characteristic: 'Manufacturer', value: 'OptoGrid Inc.', writeValue: '', unit: '' },
-            { service: 'OptoGrid Service', characteristic: 'LED Selection', value: '0', writeValue: '0', unit: 'bitmap' },
-            { service: '', characteristic: 'Battery Voltage', value: '4100', writeValue: '', unit: 'mV' },
-            { service: '', characteristic: 'IMU Enable', value: 'False', writeValue: 'False', unit: 'bool' },
-            { service: '', characteristic: 'SHAM LED', value: 'False', writeValue: 'False', unit: 'bool' },
-            { service: '', characteristic: 'Status LED', value: 'False', writeValue: 'False', unit: 'bool' }
-        ];
+    updateDeviceStatus(gattData = null) {
+        // Parse device states from provided GATT data or read fresh data if not provided
+        if (gattData) {
+            this.parseDeviceStates(gattData);
+        } else {
+            // Read GATT characteristics for LED states and IMU state
+            this.zmqClient.sendRequest('optogrid.gattread')
+                .then(response => {
+                    this.parseDeviceStates(response);
+                })
+                .catch(error => {
+                    this.log(`Failed to read device states: ${error}`);
+                });
+        }
         
+        // Read battery voltage
+        this.readBatteryVoltage();
+        
+        // Read uLED check
+        this.readULEDCheck();
+    }
+    
+    parseDeviceStates(csvData) {
+        try {
+            // Parse CSV response to get LED and IMU states
+            const lines = csvData.trim().split('\n');
+            const dataLines = lines.slice(1); // Skip header
+            
+            dataLines.forEach(line => {
+                const columns = line.split(',');
+                if (columns.length >= 5) {
+                    const characteristic = columns[1].trim();
+                    const value = columns[3].trim();
+                    
+                    // Update button states based on device values
+                    switch (characteristic) {
+                        case 'Status LED state':
+                            const statusState = value.toLowerCase() === 'true' || value === '1';
+                            if (this.statusLedState !== statusState) {
+                                this.statusLedState = statusState;
+                                this.updateLedButtonState(this.elements.statusLedButton, this.statusLedState);
+                            }
+                            break;
+                            
+                        case 'Sham LED state':
+                            const shamState = value.toLowerCase() === 'true' || value === '1';
+                            if (this.shamLedState !== shamState) {
+                                this.shamLedState = shamState;
+                                this.updateLedButtonState(this.elements.shamLedButton, this.shamLedState);
+                            }
+                            break;
+                            
+                        case 'IMU Enable':
+                            const imuState = value.toLowerCase() === 'true' || value === '1';
+                            if (this.imuEnableState !== imuState) {
+                                this.imuEnableState = imuState;
+                                this.updateLedButtonState(this.elements.imuEnableButton, this.imuEnableState);
+                            }
+                            break;
+                    }
+                }
+            });
+        } catch (error) {
+            this.log(`Error parsing device states: ${error}`);
+        }
+    }
+    
+    populateGattTable() {
+        this.log('Reading GATT table from device...');
+        
+        // Send GATT read command to backend via ZMQ
+        this.zmqClient.sendRequest('optogrid.gattread')
+            .then(response => {
+                this.parseAndPopulateGattTable(response);
+            })
+            .catch(error => {
+                this.log(`GATT read failed: ${error}`);
+                // Fallback to empty table or error display
+                this.elements.gattTableBody.innerHTML = '<tr><td colspan="5">Failed to read GATT table</td></tr>';
+            });
+    }
+    
+    parseAndPopulateGattTable(csvData) {
         this.elements.gattTableBody.innerHTML = '';
         
-        sampleGattData.forEach(item => {
-            const row = document.createElement('tr');
+        try {
+            // Parse CSV response from backend
+            const lines = csvData.trim().split('\n');
             
-            const serviceCell = document.createElement('td');
-            serviceCell.textContent = item.service;
-            if (item.service) serviceCell.classList.add('service-cell');
-            row.appendChild(serviceCell);
+            // Skip header line (Service,Characteristic,UUID,Value,Unit)
+            const dataLines = lines.slice(1);
             
-            const charCell = document.createElement('td');
-            charCell.textContent = item.characteristic;
-            row.appendChild(charCell);
+            let displayedRows = 0;
             
-            const valueCell = document.createElement('td');
-            valueCell.textContent = item.value;
-            row.appendChild(valueCell);
+            dataLines.forEach(line => {
+                // Parse CSV line
+                const columns = line.split(',');
+                if (columns.length >= 5) {
+                    const service = columns[0].trim();
+                    const characteristic = columns[1].trim();
+                    const uuid = columns[2].trim();
+                    const value = columns[3].trim();
+                    const unit = columns[4].trim();
+                    
+                    // Skip error entries
+                    if (value.startsWith('ERROR:')) {
+                        this.log(`GATT read error for ${characteristic}: ${value}`);
+                        return;
+                    }
+                    
+                    // Skip device state characteristics from table display
+                    if (characteristic === 'Status LED state' || 
+                        characteristic === 'Sham LED state' || 
+                        characteristic === 'IMU Enable') {
+                        return;
+                    }
+                    
+                    const row = document.createElement('tr');
+                    
+                    // Characteristic cell (no service column displayed)
+                    const charCell = document.createElement('td');
+                    charCell.textContent = characteristic;
+                    row.appendChild(charCell);
+                    
+                    // Value cell
+                    const valueCell = document.createElement('td');
+                    valueCell.textContent = value;
+                    row.appendChild(valueCell);
+                    
+                    // Write value cell (empty for now, could be made editable)
+                    const writeCell = document.createElement('td');
+                    writeCell.textContent = '';
+                    // Make certain characteristics writable
+                    if (this.isWritableCharacteristic(characteristic)) {
+                        writeCell.textContent = value; // Use current value as default
+                        writeCell.classList.add('writable-cell');
+                        writeCell.setAttribute('data-uuid', uuid); // Store UUID for writing
+                    }
+                    row.appendChild(writeCell);
+                    
+                    // Unit cell
+                    const unitCell = document.createElement('td');
+                    unitCell.textContent = unit;
+                    row.appendChild(unitCell);
+                    
+                    this.elements.gattTableBody.appendChild(row);
+                    displayedRows++;
+                }
+            });
             
-            const writeCell = document.createElement('td');
-            writeCell.textContent = item.writeValue;
-            if (item.writeValue !== '') writeCell.classList.add('writable-cell');
-            row.appendChild(writeCell);
+            this.log(`GATT table populated with ${displayedRows} characteristics`);
             
-            const unitCell = document.createElement('td');
-            unitCell.textContent = item.unit;
-            row.appendChild(unitCell);
-            
-            this.elements.gattTableBody.appendChild(row);
-        });
-        
-        this.log('GATT table populated');
+        } catch (error) {
+            this.log(`Error parsing GATT table: ${error}`);
+            this.elements.gattTableBody.innerHTML = '<tr><td colspan="4">Error parsing GATT data</td></tr>';
+        }
+    }
+    
+    isWritableCharacteristic(charName) {
+        // Define which characteristics are writable
+        const writableChars = [
+            'LED Selection',
+            'Duration', 
+            'Period',
+            'Pulse Width',
+            'Amplitude',
+            'PWM Frequency',
+            'Ramp Up Time',
+            'Ramp Down Time',
+            'IMU Enable',
+            'Status LED state',
+            'Sham LED state',
+            'Sequence Length'
+        ];
+        return writableChars.includes(charName);
     }
     
     editCharacteristicValue(event) {

@@ -25,10 +25,10 @@ except ImportError:
 # Constants and mappings
 UUID_NAME_MAP = {
     # Services
-    "56781400-5678-1234-1234-5678abcdeff0": "Device Info Service",
-    "56781401-5678-1234-1234-5678abcdeff0": "Opto Control Service",
-    "56781402-5678-1234-1234-5678abcdeff0": "Data Streaming Service",
-    "0000fe59-0000-1000-8000-00805f9b34fb": "Secure DFU Service",
+    "56781400-5678-1234-1234-5678abcdeff0": "Device Info",
+    "56781401-5678-1234-1234-5678abcdeff0": "Opto Control",
+    "56781402-5678-1234-1234-5678abcdeff0": "Data Streaming",
+    "0000fe59-0000-1000-8000-00805f9b34fb": "Secure DFU",
 
     # Device Info Characteristics
     "56781500-5678-1234-1234-5678abcdeff0": "Device ID",
@@ -162,7 +162,7 @@ class HeadlessOptoGridClient:
         self.imu_enable_state = False
         self.imu_counter = 0
         
-        # REQ/REP ZMQ socket for important device commands
+        # REQ/REP ZMQ socket for MATLAB commands
         self.zmq_context = zmq.Context()
         self.zmq_socket = self.zmq_context.socket(zmq.REP)
         ip = get_ip()
@@ -322,12 +322,24 @@ class HeadlessOptoGridClient:
     async def handle_command(self, message: str) -> str:
         """Handle incoming ZMQ commands"""
         try:
-            if "optogrid.connect" in message:
+            if "optogrid.trigger" in message:
+                return await self.send_trigger()
+            
+            elif "optogrid.scan" in message:
+                return await self.scan_devices()
+            
+            elif "optogrid.connect" in message:
                 device_name = message.split('=')[1].strip()
                 return await self.connect_device(device_name)
                 
-            elif "optogrid.trigger" in message:
-                return await self.send_trigger()
+            elif "optogrid.gattread" in message:
+                # Check if UUID is specified
+                if '=' in message:
+                    uuid = message.split('=')[1].strip()
+                    return await self.gatt_read(uuid)
+                else:
+                # Otherwise perform full GATT read
+                    return await self.gatt_read()
                 
             elif "optogrid.enableIMU" in message:
                 return await self.enable_imu()
@@ -344,6 +356,14 @@ class HeadlessOptoGridClient:
             elif "optogrid.readlastStim" in message:
                 return await self.read_last_stim_time()
                 
+            elif "optogrid.gattread" in message:
+                # Check if UUID is specified
+                if '=' in message:
+                    uuid = message.split('=')[1].strip()
+                    return await self.gatt_read(uuid)
+                else:
+                    return await self.gatt_read()
+                
             elif "optogrid.sync" in message:
                 sync_value = int(message.split('=')[1].strip())
                 return self.handle_sync(sync_value)
@@ -355,6 +375,14 @@ class HeadlessOptoGridClient:
                     return await self.toggle_status_led(led_value)
                 except Exception as e:
                     return f"ERROR: Invalid value for toggleStatusLED: {e}"
+                
+            elif "optogrid.toggleShamLED" in message:
+                # Parse value (should be 0 or 1)
+                try:
+                    led_value = int(message.split('=')[1].strip())
+                    return await self.toggle_sham_led(led_value)
+                except Exception as e:
+                    return f"ERROR: Invalid value for toggleShamLED: {e}"
                 
             elif "optogrid.program" in message:
                 # Expect program data in the next message
@@ -383,41 +411,174 @@ class HeadlessOptoGridClient:
             self.logger.error(f"Failed to toggle Status LED: {e}")
             return f"Failed to toggle Status LED: {str(e)}"
 
-    async def connect_device(self, device_name: str) -> str:
-        """Connect to specified BLE device"""
+    async def toggle_sham_led(self, value: int) -> str:
+        """Toggle Sham LED on the device (0=off, 1=on)"""
+        if not self.client or not self.client.is_connected:
+            return "Not connected to device"
+        try:
+            uuid = "56781508-5678-1234-1234-5678abcdeff0"  # Sham LED state
+            encoded_value = encode_value(uuid, str(value))
+            await self.client.write_gatt_char(uuid, encoded_value)
+            state = "on" if value else "off"
+            self.logger.info(f"Sham LED turned {state}")
+            return f"Sham LED turned {state}"
+        except Exception as e:
+            self.logger.error(f"Failed to toggle Sham LED: {e}")
+            return f"Failed to toggle Sham LED: {str(e)}"
+
+    async def scan_devices(self) -> str:
+        """Scan for available BLE devices"""
+        try:
+            self.logger.info("Scanning for BLE devices...")
+            devices = await BleakScanner.discover(timeout=4)
+            # Filter devices that contain 'O' in their name (capital O only)
+            device_list = [f"{d.name} ({d.address})" for d in devices if d.name and 'O' in d.name]
+            if device_list:
+                self.logger.info(f"Found devices: {device_list}")
+                return "\n".join(device_list)
+            else:
+                self.logger.info("No BLE devices containing 'O' found")
+                return "No BLE devices found"
+        except Exception as e:
+            self.logger.error(f"Scan error: {e}")
+            return f"Scan failed: {str(e)}"
+        
+    async def connect_device(self, device_identifier: str) -> str:
+        """Connect to specified BLE device by UUID/address or name"""
         try:
             # Disconnect existing connection
             if self.client and self.client.is_connected:
                 await self.client.disconnect()
                 self.client = None
             
-            self.logger.info(f"Scanning for device: {device_name}")
-            devices = await BleakScanner.discover(timeout=4)
-            matching_device = next((d for d in devices if d.name and device_name in d.name), None)
-            
-            if not matching_device:
-                return f"Device {device_name} not found"
-            
-            self.logger.info(f"Connecting to {matching_device.name}...")
-            self.client = BleakClient(
-                matching_device.address,
-                disconnected_callback=self.on_disconnect_callback
+            # Check if device_identifier looks like a UUID/MAC address
+            # UUID format: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+            # MAC format: XX:XX:XX:XX:XX:XX or similar
+            is_uuid_or_address = (
+                len(device_identifier) == 36 and device_identifier.count('-') == 4 or  # UUID format
+                len(device_identifier) == 17 and ':' in device_identifier or  # MAC address format
+                len(device_identifier) > 10 and all(c in '0123456789ABCDEFabcdef:-' for c in device_identifier)  # General address format
             )
-            await self.client.connect()
             
-            # Setup notifications
-            await self.setup_notifications()
-            
-            # Load magnetometer calibration
-            self.load_magnetometer_calibration(matching_device.name)
-            
-            self.selected_device = matching_device
-            self.logger.info(f"Connected to {matching_device.name}")
-            return f"{matching_device.name} Connected"
+            if is_uuid_or_address:
+                # Connect directly using UUID/address without scanning
+                self.logger.info(f"Connecting directly to device address: {device_identifier}")
+                self.client = BleakClient(
+                    device_identifier,
+                    disconnected_callback=self.on_disconnect_callback
+                )
+                await self.client.connect()
+                
+                # Setup notifications
+                await self.setup_notifications()
+                
+                # For direct connection, we don't have device name initially
+                # Try to read device name from GATT characteristic
+                device_name = device_identifier
+                try:
+                    device_name = await self.read_characteristic("56781500-5678-1234-1234-5678abcdeff0")  # Device ID
+                except:
+                    device_name = f"OptoGrid-{device_identifier[-4:]}"  # Fallback name
+                
+                # Load magnetometer calibration using device name
+                self.load_magnetometer_calibration(device_name)
+                
+                # Create a mock device object for compatibility
+                self.selected_device = type('Device', (), {
+                    'name': device_name,
+                    'address': device_identifier
+                })()
+                
+                self.logger.info(f"Connected to {device_name} at {device_identifier}")
+                return f"{device_name} Connected"
+                
+            else:
+                # Original scanning method for device names
+                self.logger.info(f"Scanning for device: {device_identifier}")
+                devices = await BleakScanner.discover(timeout=4)
+                matching_device = next((d for d in devices if d.name and device_identifier in d.name), None)
+                
+                if not matching_device:
+                    return f"Device {device_identifier} not found"
+                
+                self.logger.info(f"Connecting to {matching_device.name}...")
+                self.client = BleakClient(
+                    matching_device.address,
+                    disconnected_callback=self.on_disconnect_callback
+                )
+                await self.client.connect()
+                
+                # Setup notifications
+                await self.setup_notifications()
+                
+                # Load magnetometer calibration
+                self.load_magnetometer_calibration(matching_device.name)
+                
+                self.selected_device = matching_device
+                self.logger.info(f"Connected to {matching_device.name}")
+                return f"{matching_device.name} Connected"
             
         except Exception as e:
             self.logger.error(f"Connection error: {e}")
             return f"Connection failed: {str(e)}"
+
+    async def gatt_read(self, uuid: str = None) -> str:
+        """Read GATT characteristic(s) - single UUID or all characteristics"""
+        if not self.client or not self.client.is_connected:
+            return "Not connected to device"
+            
+        try:
+            if uuid:
+                # Read single characteristic
+                value = await self.read_characteristic(uuid)
+                char_name = UUID_NAME_MAP.get(uuid, "Unknown Characteristic")
+                return f"{char_name}: {value}"
+            else:
+                # Read all GATT characteristics - only Opto Control Service plus LED/IMU states
+                gatt_table = []
+                gatt_table.append("Service,Characteristic,UUID,Value,Unit")
+                
+                # Opto Control Service characteristics
+                opto_control_chars = [
+                    ("56781600-5678-1234-1234-5678abcdeff0", "Sequence Length", "count"),
+                    ("56781601-5678-1234-1234-5678abcdeff0", "LED Selection", "bitmap"),
+                    ("56781602-5678-1234-1234-5678abcdeff0", "Duration", "ms"),
+                    ("56781603-5678-1234-1234-5678abcdeff0", "Period", "ms"),
+                    ("56781604-5678-1234-1234-5678abcdeff0", "Pulse Width", "us"),
+                    ("56781605-5678-1234-1234-5678abcdeff0", "Amplitude", "%"),
+                    ("56781606-5678-1234-1234-5678abcdeff0", "PWM Frequency", "Hz"),
+                    ("56781607-5678-1234-1234-5678abcdeff0", "Ramp Up Time", "ms"),
+                    ("56781608-5678-1234-1234-5678abcdeff0", "Ramp Down Time", "ms")
+                ]
+                
+                for char_uuid, char_name, unit in opto_control_chars:
+                    try:
+                        value = await self.read_characteristic(char_uuid)
+                        service_name = "Opto Control" if char_uuid == opto_control_chars[0][0] else ""
+                        gatt_table.append(f"{service_name},{char_name},{char_uuid},{value},{unit}")
+                    except Exception as e:
+                        gatt_table.append(f",{char_name},{char_uuid},ERROR: {str(e)},{unit}")
+                
+                # Device state characteristics for GUI updates
+                state_chars = [
+                    ("56781507-5678-1234-1234-5678abcdeff0", "Status LED state", "bool"),
+                    ("56781508-5678-1234-1234-5678abcdeff0", "Sham LED state", "bool"),
+                    ("56781700-5678-1234-1234-5678abcdeff0", "IMU Enable", "bool")
+                ]
+                
+                for char_uuid, char_name, unit in state_chars:
+                    try:
+                        value = await self.read_characteristic(char_uuid)
+                        service_name = "Device State" if char_uuid == state_chars[0][0] else ""
+                        gatt_table.append(f"{service_name},{char_name},{char_uuid},{value},{unit}")
+                    except Exception as e:
+                        gatt_table.append(f",{char_name},{char_uuid},ERROR: {str(e)},{unit}")
+                
+                return "\n".join(gatt_table)
+                
+        except Exception as e:
+            self.logger.error(f"GATT read error: {e}")
+            return f"GATT read failed: {str(e)}"
 
     async def setup_notifications(self):
         """Setup BLE notifications"""

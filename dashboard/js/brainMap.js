@@ -236,8 +236,7 @@ class BrainMapVisualization {
             }
             
             // Draw X overlay if LED is broken
-            // if ((this.ledCheckMask & (1n << BigInt(ledPos.bit))) === 0n) {
-            if (ledPos.bit == 0 || ledPos.bit == 7) {
+            if ((this.ledCheckMask & (1n << BigInt(ledPos.bit))) === 0n) {
                 this.ctx.strokeStyle = 'red';
                 this.ctx.lineWidth = 2;
                 this.ctx.beginPath();
