@@ -25,15 +25,15 @@ class BrainMapVisualization {
         const rect = this.canvas.getBoundingClientRect();
         const dpr = window.devicePixelRatio || 1;
         
-        this.canvas.width = rect.width * dpr;
-        this.canvas.height = rect.height * dpr;
+        this.canvas.width = 358 * dpr;
+        this.canvas.height = 300 * dpr;
         
         this.ctx.scale(dpr, dpr);
-        this.canvas.style.width = rect.width + 'px';
-        this.canvas.style.height = rect.height + 'px';
+        this.canvas.style.width = 358 + 'px';
+        this.canvas.style.height = 300 + 'px';
         
-        this.canvasWidth = rect.width;
-        this.canvasHeight = rect.height;
+        this.canvasWidth = 358;
+        this.canvasHeight = 300;
     }
     
     calculateLedPositions() {
