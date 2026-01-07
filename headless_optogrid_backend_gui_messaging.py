@@ -718,10 +718,10 @@ class HeadlessOptoGridClient:
                     self.flush_imu_buffer()
 
             # Publish orientation update via ZMQ PUB socket
-            orientation_message = f"IMUOrientation, Roll: {smooth_roll:.1f}, Pitch: {smooth_pitch:.1f}, Yaw: {smooth_yaw:.1f}"
-            self.zmq_pub_socket.send_string(orientation_message)
-
+            self.publish_imu_data(smooth_roll, smooth_pitch, smooth_yaw)
             
+
+
         except Exception as e:
             self.logger.error(f"Error in IMU data handler: {str(e)}")
 
@@ -741,9 +741,9 @@ class HeadlessOptoGridClient:
         mag = mag_calibrated * (100.0 / 65536.0)  # gauss
 
         # Transform to device frame
-        acc_world = np.array([-acc[2], -acc[0], acc[1]])
-        gyr_world = np.array([-gyr[2], -gyr[0], gyr[1]])
-        mag_world = np.array([-mag_calibrated[2], -mag_calibrated[1], mag_calibrated[0]])
+        acc_world = np.array([acc[0], -acc[1], -acc[2]])  
+        gyr_world = np.array([gyr[0], -gyr[1], -gyr[2]])
+        mag_world = np.array([mag[1], -mag[0], -mag[2]])  
 
         # Zero small gyro values
         gyro_noise_threshold = 5
@@ -900,11 +900,10 @@ class HeadlessOptoGridClient:
                 os.makedirs("data", exist_ok=True)
                 
                 # Get device info for filename
-                animal_id = await self.read_characteristic("56781502-5678-1234-1234-5678abcdeff0")
                 device_id = await self.read_characteristic("56781500-5678-1234-1234-5678abcdeff0")
                 
                 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                filename = f"data/{animal_id}_{device_id}_{timestamp}.csv"
+                filename = f"data/{device_id}_{timestamp}.csv"
                 
                 self.imu_csv_file = open(filename, "w", newline="")
                 self.imu_csv_writer = csv.writer(self.imu_csv_file)

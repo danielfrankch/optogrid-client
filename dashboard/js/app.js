@@ -493,27 +493,27 @@ class OptoGridApp {
     
     toggleImuEnable() {
         const newState = !this.imuEnableState;
-        this.updateLedButtonState(this.elements.imuEnableButton, newState);
         
         // Send appropriate IMU command based on new state
         const command = newState ? 'optogrid.enableIMU' : 'optogrid.disableIMU';
-        const expectedResponse = newState ? 'IMU enabled, and logging started' : 'IMU disabled, and logging stopped';
+        const expectedResponse = newState ? 'IMU enabled' : 'IMU disabled';
+        
+        this.log(`Sending command: ${command} (current state: ${this.imuEnableState}, new state: ${newState})`);
         
         this.zmqClient.sendRequest(command)
             .then(response => {
                 if (response.includes(expectedResponse)) {
                     this.imuEnableState = newState;
+                    this.updateLedButtonState(this.elements.imuEnableButton, this.imuEnableState);
                     this.log(`IMU Enable: ${this.imuEnableState ? 'True' : 'False'}`);
                 } else {
                     this.log(`IMU response: ${response}`);
-                    // Revert button state if unexpected response
-                    this.updateLedButtonState(this.elements.imuEnableButton, this.imuEnableState);
+                    // Keep button state as is since command didn't work as expected
                 }
             })
             .catch(error => {
                 this.log(`IMU toggle failed: ${error}`);
-                // Revert button state on error
-                this.updateLedButtonState(this.elements.imuEnableButton, this.imuEnableState);
+                // Keep button state as is on error
             });
     }
     
@@ -830,32 +830,45 @@ class OptoGridApp {
     }
     
     // Handle ZMQ PUB messages from backend
-    handleZMQMessage(topic, message) {
+    handleZMQMessage(topic, data) {
         try {
-            const data = JSON.parse(message);
-            
             switch (topic) {
                 case 'IMU':
-
-                    // Update IMU visualization with roll, pitch, yaw
-                    this.imuVisualization.updateIMU(data.roll, data.pitch, data.yaw, null);
-                    
-                    // Log IMU data occasionally (every 100th update to avoid spam)
-                    if (Math.random() < 0.01) { // 1% chance to log
-                        this.log(`IMU Update - Roll: ${data.roll.toFixed(1)}°, Pitch: ${data.pitch.toFixed(1)}°, Yaw: ${data.yaw.toFixed(1)}°`);
+                    if (data.type === 'imu_update') {
+                        // Update IMU visualization with roll, pitch, yaw
+                        this.imuVisualization.updateIMU(data.roll, data.pitch, data.yaw, null);
+                        // Log IMU data occasionally (every 100th update to avoid spam)
+                        if (Math.random() < 0.01) { // 1% chance to log
+                            this.log(`IMU Update - Roll: ${data.roll.toFixed(1)}°, Pitch: ${data.pitch.toFixed(1)}°, Yaw: ${data.yaw.toFixed(1)}°`);
+                        }
                     }
-
                     break;
 
                 case 'GUI':
+                    // Handle GUI-specific messages (battery updates, device logs, etc.)
+                    switch (data.type) {
+                        case 'device_log':
+                            this.log(`Device: ${data.message}`);
+                            break;
+                        case 'battery_update':
+                            this.updateBatteryDisplay(data.voltage);
+                            break;
+                        case 'led_check':
+                            this.brainMap.updateLedCheckOverlay(data.value);
+                            break;
+                        default:
+                            this.log(`GUI message: ${data.type}`);
+                            break;
+                    }
+                    break;
 
                 default:
                     this.log(`Received unhandled ZMQ topic: ${topic}`);
                     break;
-
             }
         } catch (e) {
-            console.error('Error parsing ZMQ message:', e);
+            console.error('Error handling ZMQ message:', e);
+            console.log('Topic:', topic, 'Data:', data);
         }
     }
     

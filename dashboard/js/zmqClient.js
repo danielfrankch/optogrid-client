@@ -171,18 +171,24 @@ class ZMQClient {
                 // Not a connection message, continue with normal parsing
             }
             
-            // Handle ZMQ PUB messages (format: "TOPIC JSON_DATA")
-            const parts = data.split(' ', 2);
-            if (parts.length >= 2) {
-                const topic = parts[0];
-                const jsonData = parts.slice(1).join(' ');
-                const message = JSON.parse(jsonData);
+            // Handle ZMQ PUB messages (format: "TOPIC {JSON_DATA}")
+            // Example: "IMU {"type": "imu_update", "timestamp": 1767745255.439629, "roll": -86.04804656897706, "pitch": 9.53953135397922, "yaw": 278.61122391075867}"
+            const spaceIndex = data.indexOf(' ');
+            if (spaceIndex > 0) {
+                const topic = data.substring(0, spaceIndex);
+                const jsonData = data.substring(spaceIndex + 1);
                 
-                console.log(`Received ${topic} message:`, message);
-                
-                // Forward to main app via onPubMessage callback
-                if (this.onPubMessage) {
-                    this.onPubMessage(topic, message);
+                try {
+                    const message = JSON.parse(jsonData);
+                    console.log(`Received ${topic} message:`, message);
+                    
+                    // Forward to main app via onPubMessage callback
+                    if (this.onPubMessage) {
+                        this.onPubMessage(topic, message);
+                    }
+                } catch (jsonError) {
+                    console.error(`Error parsing JSON for topic ${topic}:`, jsonError);
+                    console.log('Raw JSON data:', jsonData);
                 }
             } else {
                 // Single part message - log but don't try to parse as JSON

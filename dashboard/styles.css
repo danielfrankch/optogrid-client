@@ -195,7 +195,7 @@ body {
 
 .log-container {
     flex: 1;
-    min-height: 120px;
+    min-height: 20px;
 }
 
 #log-text {
