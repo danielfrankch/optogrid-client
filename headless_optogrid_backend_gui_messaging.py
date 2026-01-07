@@ -328,6 +328,9 @@ class HeadlessOptoGridClient:
             elif "optogrid.scan" in message:
                 return await self.scan_devices()
             
+            elif "optogrid.status" in message:
+                return await self.get_status()
+            
             elif "optogrid.connect" in message:
                 device_name = message.split('=')[1].strip()
                 return await self.connect_device(device_name)
@@ -442,6 +445,22 @@ class HeadlessOptoGridClient:
         except Exception as e:
             self.logger.error(f"Scan error: {e}")
             return f"Scan failed: {str(e)}"
+    
+    async def get_status(self) -> str:
+        """Get current connection status"""
+        try:
+            if self.client and self.client.is_connected:
+                if self.selected_device:
+                    device_name = getattr(self.selected_device, 'name', 'Unknown Device')
+                    device_address = getattr(self.selected_device, 'address', 'Unknown Address')
+                    return f"Connected to {device_name} ({device_address})"
+                else:
+                    return "Connected to Unknown Device"
+            else:
+                return "Disconnected"
+        except Exception as e:
+            self.logger.error(f"Status check error: {e}")
+            return "Disconnected"
         
     async def connect_device(self, device_identifier: str) -> str:
         """Connect to specified BLE device by UUID/address or name"""
@@ -698,6 +717,11 @@ class HeadlessOptoGridClient:
                 if len(self.imu_data_buffer) >= 100:
                     self.flush_imu_buffer()
 
+            # Publish orientation update via ZMQ PUB socket
+            orientation_message = f"IMUOrientation, Roll: {smooth_roll:.1f}, Pitch: {smooth_pitch:.1f}, Yaw: {smooth_yaw:.1f}"
+            self.zmq_pub_socket.send_string(orientation_message)
+
+            
         except Exception as e:
             self.logger.error(f"Error in IMU data handler: {str(e)}")
 

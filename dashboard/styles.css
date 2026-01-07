@@ -304,6 +304,15 @@ body {
     background-color: #90EE90;
 }
 
+/* Specific colors for individual LED buttons */
+#sham-led-button.active {
+    background-color: #0080FF; /* Bright Blue */
+}
+
+#status-led-button.active {
+    background-color: #FF4444; /* Bright Red */
+}
+
 .battery-controls-frame {
     display: flex;
     gap: 16px;

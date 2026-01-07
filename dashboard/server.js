@@ -48,11 +48,12 @@ function getLocalIP() {
 // ZMQ to WebSocket Bridge
 class ZMQWebSocketBridge {
     constructor() {
-        this.wsServer = null;
+        this.reqWsServer = null;
+        this.subWsServer = null;
         this.zmqReqSocket = null;
         this.zmqSubSocket = null;
-        this.clients = new Set();
-        this.pendingRequests = new Map();
+        this.reqClients = new Set();
+        this.subClients = new Set();
     }
     
     async initialize() {
@@ -71,33 +72,79 @@ class ZMQWebSocketBridge {
             // Start listening for PUB messages
             this.listenForPubMessages();
             
-            // Create WebSocket server
-            this.wsServer = new WebSocket.Server({ port: WS_PORT });
-            console.log(`WebSocket server listening on port ${WS_PORT}`);
+            // Create REQ WebSocket server
+            this.reqWsServer = new WebSocket.Server({ 
+                port: WS_PORT,
+                host: 'localhost' 
+            });
             
-            this.wsServer.on('connection', (ws) => {
-                console.log('WebSocket client connected');
-                this.clients.add(ws);
+            this.reqWsServer.on('listening', () => {
+                console.log(`REQ WebSocket server listening on port ${WS_PORT}`);
+            });
+            
+            this.reqWsServer.on('error', (error) => {
+                console.error(`REQ WebSocket server error:`, error);
+            });
+            
+            // Create SUB WebSocket server  
+            this.subWsServer = new WebSocket.Server({ 
+                port: WS_PORT + 1,
+                host: 'localhost'
+            });
+            
+            this.subWsServer.on('listening', () => {
+                console.log(`SUB WebSocket server listening on port ${WS_PORT + 1}`);
+            });
+            
+            this.subWsServer.on('error', (error) => {
+                console.error(`SUB WebSocket server error:`, error);
+            });
+            
+            // Handle REQ connections
+            this.reqWsServer.on('connection', (ws) => {
+                console.log('REQ WebSocket client connected');
+                this.reqClients.add(ws);
                 
-                // Send connection confirmation
                 ws.send(JSON.stringify({
                     type: 'connection',
                     status: 'connected',
-                    message: 'Connected to OptoGrid ZMQ bridge'
+                    message: 'Connected to OptoGrid ZMQ REQ bridge'
                 }));
                 
                 ws.on('message', async (data) => {
-                    await this.handleWebSocketMessage(ws, data);
+                    await this.handleReqMessage(ws, data);
                 });
                 
                 ws.on('close', () => {
-                    console.log('WebSocket client disconnected');
-                    this.clients.delete(ws);
+                    console.log('REQ WebSocket client disconnected');
+                    this.reqClients.delete(ws);
                 });
                 
                 ws.on('error', (error) => {
-                    console.error('WebSocket error:', error);
-                    this.clients.delete(ws);
+                    console.error('REQ WebSocket error:', error);
+                    this.reqClients.delete(ws);
+                });
+            });
+            
+            // Handle SUB connections
+            this.subWsServer.on('connection', (ws) => {
+                console.log('SUB WebSocket client connected');
+                this.subClients.add(ws);
+                
+                ws.send(JSON.stringify({
+                    type: 'connection', 
+                    status: 'connected',
+                    message: 'Connected to OptoGrid ZMQ SUB bridge'
+                }));
+                
+                ws.on('close', () => {
+                    console.log('SUB WebSocket client disconnected');
+                    this.subClients.delete(ws);
+                });
+                
+                ws.on('error', (error) => {
+                    console.error('SUB WebSocket error:', error);
+                    this.subClients.delete(ws);
                 });
             });
             
@@ -106,7 +153,7 @@ class ZMQWebSocketBridge {
         }
     }
     
-    async handleWebSocketMessage(ws, data) {
+    async handleReqMessage(ws, data) {
         try {
             const message = JSON.parse(data.toString());
             const { requestId, command } = message;
@@ -140,7 +187,7 @@ class ZMQWebSocketBridge {
             }
             
         } catch (error) {
-            console.error('Error handling WebSocket message:', error);
+            console.error('Error handling REQ message:', error);
             this.sendError(ws, error.message);
         }
     }
@@ -151,8 +198,8 @@ class ZMQWebSocketBridge {
                 const messageText = msg.toString();
                 console.log(`Received PUB message: ${messageText}`);
                 
-                // Broadcast to all WebSocket clients
-                this.broadcastToClients(messageText);
+                // Broadcast to all SUB WebSocket clients
+                this.broadcastToSubClients(messageText);
             }
         } catch (error) {
             console.error('Error listening for PUB messages:', error);
@@ -161,10 +208,10 @@ class ZMQWebSocketBridge {
         }
     }
     
-    broadcastToClients(message) {
+    broadcastToSubClients(message) {
         const deadClients = [];
         
-        for (const client of this.clients) {
+        for (const client of this.subClients) {
             try {
                 if (client.readyState === WebSocket.OPEN) {
                     client.send(message);
@@ -172,13 +219,13 @@ class ZMQWebSocketBridge {
                     deadClients.push(client);
                 }
             } catch (error) {
-                console.error('Error broadcasting to client:', error);
+                console.error('Error broadcasting to SUB client:', error);
                 deadClients.push(client);
             }
         }
         
         // Remove dead clients
-        deadClients.forEach(client => this.clients.delete(client));
+        deadClients.forEach(client => this.subClients.delete(client));
     }
     
     sendError(ws, errorMessage, requestId = null) {
@@ -196,8 +243,12 @@ class ZMQWebSocketBridge {
     async close() {
         console.log('Closing ZMQ bridge...');
         
-        if (this.wsServer) {
-            this.wsServer.close();
+        if (this.reqWsServer) {
+            this.reqWsServer.close();
+        }
+        
+        if (this.subWsServer) {
+            this.subWsServer.close();
         }
         
         if (this.zmqReqSocket) {
@@ -276,7 +327,8 @@ server.listen(HTTP_PORT, '0.0.0.0', async () => {
     console.log('\n=== OptoGrid Dashboard Server ===');
     console.log(`HTTP Server:    http://localhost:${HTTP_PORT}`);
     console.log(`Network access: http://${localIP}:${HTTP_PORT}`);
-    console.log(`WebSocket:      ws://localhost:${WS_PORT}`);
+    console.log(`REQ WebSocket:  ws://localhost:${WS_PORT}`);
+    console.log(`SUB WebSocket:  ws://localhost:${WS_PORT + 1}`);
     console.log('\nInitializing ZMQ bridge...');
     
     try {

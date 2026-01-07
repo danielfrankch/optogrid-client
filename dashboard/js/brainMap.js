@@ -7,7 +7,7 @@ class BrainMapVisualization {
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas.getContext('2d');
         this.ledPositions = [];
-        this.ledSelectionValue = 0;
+        this.ledSelectionValue = 0n; // Use BigInt for uint64_t compatibility
         this.ledCheckMask = (1n << 64n) - 1n; // All intact by default (using BigInt for 64-bit)
         
         // LED dimensions
@@ -183,8 +183,8 @@ class BrainMapVisualization {
     }
     
     onLedClicked(bitPosition) {
-        // Toggle LED selection
-        this.ledSelectionValue ^= (1 << bitPosition);
+        // Toggle LED selection using BigInt for proper 64-bit handling
+        this.ledSelectionValue ^= (1n << BigInt(bitPosition));
         this.draw();
         
         // Notify the main app
@@ -194,12 +194,13 @@ class BrainMapVisualization {
     }
     
     updateLedSelection(value) {
-        this.ledSelectionValue = value;
+        this.ledSelectionValue = BigInt(value);
         this.draw();
     }
     
     updateLedCheckOverlay(ledCheckMask) {
-        this.ledCheckMask = ledCheckMask;
+        // Convert input to BigInt for proper uint64_t handling
+        this.ledCheckMask = BigInt(ledCheckMask);
         this.draw();
     }
     
@@ -220,8 +221,8 @@ class BrainMapVisualization {
         this.ledPositions.forEach(ledPos => {
             const [x1, y1, x2, y2] = ledPos.coords;
             
-            // Draw LED rectangle if selected
-            if (this.ledSelectionValue & (1 << ledPos.bit)) {
+            // Draw LED rectangle if selected (using BigInt)
+            if (this.ledSelectionValue & (1n << BigInt(ledPos.bit))) {
                 this.ctx.fillStyle = 'rgba(0, 190, 255, 1)';
                 this.ctx.strokeStyle = 'rgb(0, 190, 255)';
                 this.ctx.lineWidth = 2;
@@ -235,16 +236,20 @@ class BrainMapVisualization {
                 this.ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
             }
             
-            // Draw X overlay if LED is broken
-            if ((this.ledCheckMask & (1n << BigInt(ledPos.bit))) === 0n) {
+            // Draw X overlay if LED is broken (bit is 0 in check mask)
+            const ledBit = BigInt(ledPos.bit);
+            const isLedBroken = (this.ledCheckMask & (1n << ledBit)) === 0n;
+            
+            if (isLedBroken) {
                 this.ctx.strokeStyle = 'red';
-                this.ctx.lineWidth = 2;
+                this.ctx.lineWidth = 3;
                 this.ctx.beginPath();
                 this.ctx.moveTo(x1, y1);
                 this.ctx.lineTo(x2, y2);
                 this.ctx.moveTo(x1, y2);
                 this.ctx.lineTo(x2, y1);
                 this.ctx.stroke();
+                
             }
             
             // Always draw LED number

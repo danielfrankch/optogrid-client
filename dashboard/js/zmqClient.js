@@ -13,7 +13,6 @@ class ZMQClient {
         this.requestId = 0;
         
         // Callbacks
-        this.onMessage = null;
         this.onConnectionChange = null;
         this.onPubMessage = null; // For PUB/SUB messages
         
@@ -46,7 +45,7 @@ class ZMQClient {
             // Note: WebSocket cannot directly connect to ZMQ sockets
             // This requires a WebSocket-to-ZMQ bridge/proxy on the backend
             // The backend should provide a WebSocket endpoint that forwards to ZMQ REQ socket
-            const reqUrl = `ws://${host}:8080/zmq-req`; // WebSocket proxy for ZMQ REQ
+            const reqUrl = `ws://${host}:8080`; // WebSocket proxy for ZMQ REQ
             console.log(`Connecting REQ socket to ${reqUrl}`);
             console.log('Note: Backend must provide WebSocket-to-ZMQ bridge');
             
@@ -82,7 +81,7 @@ class ZMQClient {
     initSubSocket(host) {
         try {
             // WebSocket proxy for ZMQ SUB socket
-            const subUrl = `ws://${host}:8080/zmq-sub`; // WebSocket proxy for ZMQ SUB
+            const subUrl = `ws://${host}:8081`; // WebSocket proxy for ZMQ SUB
             console.log(`Connecting SUB socket to ${subUrl}`);
             
             this.subSocket = new WebSocket(subUrl);
@@ -94,9 +93,6 @@ class ZMQClient {
                 
                 // Subscribe to all topics (or specific ones)
                 this.subscribe('IMU');
-                this.subscribe('STATUS');
-                this.subscribe('BATTERY');
-                this.subscribe('LED');
             };
             
             this.subSocket.onmessage = (event) => {
@@ -164,7 +160,19 @@ class ZMQClient {
     // Handle PUB/SUB messages
     handleSubMessage(data) {
         try {
-            const parts = data.split(' ', 2); // Topic and JSON data
+            // First check if it's a WebSocket connection message
+            try {
+                const connectionMessage = JSON.parse(data);
+                if (connectionMessage.type === 'connection') {
+                    console.log('SUB socket connection confirmed:', connectionMessage.message);
+                    return;
+                }
+            } catch (e) {
+                // Not a connection message, continue with normal parsing
+            }
+            
+            // Handle ZMQ PUB messages (format: "TOPIC JSON_DATA")
+            const parts = data.split(' ', 2);
             if (parts.length >= 2) {
                 const topic = parts[0];
                 const jsonData = parts.slice(1).join(' ');
@@ -172,12 +180,17 @@ class ZMQClient {
                 
                 console.log(`Received ${topic} message:`, message);
                 
+                // Forward to main app via onPubMessage callback
                 if (this.onPubMessage) {
                     this.onPubMessage(topic, message);
                 }
+            } else {
+                // Single part message - log but don't try to parse as JSON
+                console.log('SUB received non-topic message:', data);
             }
         } catch (error) {
             console.error('Error parsing SUB message:', error);
+            console.log('Raw SUB message data:', data);
         }
     }
     

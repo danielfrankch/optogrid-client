@@ -38,8 +38,6 @@ class IMUVisualization {
             this.drawPlot();
         }
         
-        // Start simulation for demonstration
-        this.startSimulation();
     }
     
     setup3DCanvas() {
@@ -287,39 +285,4 @@ class IMUVisualization {
         });
     }
     
-    startSimulation() {
-        // Generate simulated IMU data for demonstration
-        let time = 0;
-        
-        const simulate = () => {
-            time += 0.1;
-            
-            // Simulated IMU orientation
-            const roll = 15 * Math.sin(time * 0.3);
-            const pitch = 10 * Math.cos(time * 0.25);
-            const yaw = 20 * Math.sin(time * 0.1);
-            
-            // Simulated sensor data
-            const imuValues = [
-                0.1 * Math.sin(time) + 0.02 * (Math.random() - 0.5), // accelX
-                0.2 * Math.cos(time * 0.7) + 0.02 * (Math.random() - 0.5), // accelY
-                9.8 + 0.1 * Math.sin(time * 0.5) + 0.05 * (Math.random() - 0.5), // accelZ
-                5 * Math.sin(time * 0.4) + (Math.random() - 0.5), // gyroX
-                3 * Math.cos(time * 0.6) + (Math.random() - 0.5), // gyroY
-                2 * Math.sin(time * 0.8) + (Math.random() - 0.5)  // gyroZ
-            ];
-            
-            this.updateIMU(roll, pitch, yaw, imuValues);
-        };
-        
-        // Update at 10 Hz
-        this.simulationInterval = setInterval(simulate, 100);
-    }
-    
-    stopSimulation() {
-        if (this.simulationInterval) {
-            clearInterval(this.simulationInterval);
-            this.simulationInterval = null;
-        }
-    }
 }
