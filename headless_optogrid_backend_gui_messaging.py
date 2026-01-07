@@ -179,9 +179,9 @@ class HeadlessOptoGridClient:
         
         # Data buffers and file handling
         self.imu_data_buffer = []
-        self.imu_csv_file = None
-        self.imu_csv_writer = None
+        self.imu_logging_active = False
         self.current_battery_voltage = None
+        self.parquet_writer = None
         
         # Setup GPIO with nuclear option
         if GPIO_AVAILABLE:
@@ -651,10 +651,8 @@ class HeadlessOptoGridClient:
             self.logger.info(f"Flushed {len(self.imu_data_buffer)} remaining samples")
         
         # Close IMU file if open
-        if self.imu_csv_file:
-            self.imu_csv_file.close()
-            self.imu_csv_file = None
-            self.imu_csv_writer = None
+        if self.imu_logging_active:
+            self.stop_IMU_logging()
             self.imu_enable_state = False
 
     async def handle_device_log_notification(self, sender: int, data: bytearray):
@@ -703,10 +701,10 @@ class HeadlessOptoGridClient:
                     except Exception:
                         uncertainty = None
 
-                # Prepare data for CSV
+                # Prepare data for logging
                 imu_data_with_sync = imu_values + [0]  # Add sync value (default 0)
                 
-                battery_v = ""
+                battery_v = None
                 if self.current_battery_voltage is not None:
                     battery_v = self.current_battery_voltage
                     self.current_battery_voltage = None
@@ -860,12 +858,117 @@ class HeadlessOptoGridClient:
             return False
 
     def flush_imu_buffer(self):
-        """Write buffered IMU data to CSV"""
-        if self.imu_csv_writer and self.imu_data_buffer:
-            self.imu_csv_writer.writerows(self.imu_data_buffer)
-            self.imu_csv_file.flush()  # Force write to disk
+        """Write buffered IMU data to parquet"""
+        if not self.imu_data_buffer:
+            return
+            
+        try:
+            if self.parquet_writer:
+                # Write to parquet file using pyarrow
+                import pyarrow as pa
+                import pandas as pd
+                
+                # Data is already clean with None values - no conversion needed
+                df = pd.DataFrame(self.imu_data_buffer, columns=self.imu_data_columns)
+                
+                # Handle None values in bat_v column to match schema
+                df['bat_v'] = df['bat_v'].astype('float64')
+                df['uncertainty'] = df['uncertainty'].astype('float64')
+                
+                table = pa.Table.from_pandas(df, schema=self.parquet_schema, preserve_index=False)
+                self.parquet_writer.write_table(table)
+                
             self.imu_data_buffer = []
+            
+        except Exception as e:
+            self.logger.error(f"Error flushing IMU buffer: {e}")
 
+    def start_IMU_logging(self, subjid="NoSubjID", sessid="NoSessID", deviceid="NoDeviceID"):
+        """Start IMU logging to parquet file"""
+        if self.imu_logging_active:
+            self.logger.warning("IMU logging already active")
+            return None
+            
+        try:
+            import pyarrow as pa
+            import pyarrow.parquet as pq
+            
+            os.makedirs("data", exist_ok=True)
+            
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"data/{subjid}_{sessid}_{deviceid}_{timestamp}.parquet"
+            
+            # Create column structure for parquet
+            self.imu_data_columns = [
+                "sample", 
+                "acc_x", "acc_y", "acc_z", 
+                "gyro_x", "gyro_y", "gyro_z",
+                "mag_x", "mag_y", "mag_z", 
+                "sync", "roll", "pitch", "yaw", 
+                "uncertainty", "bat_v"
+            ]
+            
+            # Define schema for parquet file
+            schema = pa.schema([
+                pa.field("sample", pa.int64()),
+                pa.field("acc_x", pa.int64()),
+                pa.field("acc_y", pa.int64()),
+                pa.field("acc_z", pa.int64()),
+                pa.field("gyro_x", pa.int64()),
+                pa.field("gyro_y", pa.int64()),
+                pa.field("gyro_z", pa.int64()),
+                pa.field("mag_x", pa.int64()),
+                pa.field("mag_y", pa.int64()),
+                pa.field("mag_z", pa.int64()),
+                pa.field("sync", pa.int64()),
+                pa.field("roll", pa.float64()),
+                pa.field("pitch", pa.float64()),
+                pa.field("yaw", pa.float64()),
+                pa.field("uncertainty", pa.float64()),
+                pa.field("bat_v", pa.float64())
+            ])
+            
+            # Store schema for later use
+            self.parquet_schema = schema
+            
+            # Create parquet writer
+            self.parquet_writer = pq.ParquetWriter(filename, schema, compression='snappy')
+            self.imu_parquet_file = filename
+            self.imu_logging_active = True
+            
+            self.logger.info(f"IMU logging started: {filename}")
+            return filename
+            
+        except Exception as e:
+            self.logger.error(f"Failed to start IMU logging: {e}")
+            return None
+
+    def stop_IMU_logging(self):
+        """Stop IMU logging and write final parquet file"""
+        if not self.imu_logging_active:
+            self.logger.warning("No active IMU logging to stop")
+            return
+            
+        try:
+            # Flush final buffer to parquet
+            if self.imu_data_buffer:
+                self.flush_imu_buffer()
+            
+            # Close parquet writer
+            if self.parquet_writer:
+                self.parquet_writer.close()
+                self.parquet_writer = None
+                
+            # Reset logging state
+            self.imu_logging_active = False
+            if hasattr(self, 'imu_parquet_file'):
+                self.imu_parquet_file = None
+            
+            self.logger.info("IMU logging stopped and file closed")
+            
+        except Exception as e:
+            self.logger.error(f"Error stopping IMU logging: {e}")
+    
     async def send_trigger(self) -> str:
         """Send trigger command"""
         if not self.client or not self.client.is_connected:
@@ -895,31 +998,20 @@ class HeadlessOptoGridClient:
             encoded_value = encode_value(imu_enable_uuid, "True")
             await self.client.write_gatt_char(imu_enable_uuid, encoded_value)
             
-            # Setup CSV logging
-            if not self.imu_csv_file:
-                os.makedirs("data", exist_ok=True)
-                
-                # Get device info for filename
-                device_id = await self.read_characteristic("56781500-5678-1234-1234-5678abcdeff0")
-                
-                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                filename = f"data/{device_id}_{timestamp}.csv"
-                
-                self.imu_csv_file = open(filename, "w", newline="")
-                self.imu_csv_writer = csv.writer(self.imu_csv_file)
-                self.imu_csv_writer.writerow([
-                    "sample", 
-                    "acc_x", "acc_y", "acc_z", 
-                    "gyro_x", "gyro_y", "gyro_z",
-                    "mag_x", "mag_y", "mag_z", 
-                    "sync", "roll", "pitch", "yaw", 
-                    "uncertainty", "bat_v"
-                ])
-                
-                self.logger.info(f"IMU logging started: {filename}")
+            # Setup logging using new function
+            if not self.imu_logging_active:
+                # Try to get device ID for filename
+                try:
+                    device_id = await self.read_characteristic("56781500-5678-1234-1234-5678abcdeff0")
+                except:
+                    device_id = "NoDeviceID"
+                    
+                filename = self.start_IMU_logging(deviceid=device_id)
+                if not filename:
+                    return "IMU enabled but logging failed to start"
             
             self.imu_enable_state = True
-            return "IMU enabled and logging started"
+            return "IMU enabled, and logging started"
             
         except Exception as e:
             return f"IMU enable failed: {str(e)}"
@@ -935,16 +1027,11 @@ class HeadlessOptoGridClient:
             encoded_value = encode_value(imu_enable_uuid, "False")
             await self.client.write_gatt_char(imu_enable_uuid, encoded_value)
             
-            # Close CSV file
-            if self.imu_csv_file:
-                self.flush_imu_buffer()
-                self.imu_csv_file.close()
-                self.imu_csv_file = None
-                self.imu_csv_writer = None
-                self.logger.info("IMU logging stopped and file closed")
+            # Stop logging using new function
+            self.stop_IMU_logging()
             
             self.imu_enable_state = False
-            return "IMU disabled and logging stopped"
+            return "IMU disabled, and logging stopped"
             
         except Exception as e:
             return f"IMU disable failed: {str(e)}"
@@ -1078,10 +1165,9 @@ class HeadlessOptoGridClient:
         self.logger.info("Cleaning up resources...")
         
         # Flush and close IMU file
-        if self.imu_csv_file:
+        if self.imu_logging_active:
             self.flush_imu_buffer()
-            self.imu_csv_file.close()
-            self.imu_csv_file = None
+            self.stop_IMU_logging()
             self.logger.info("IMU log file closed")
         
         # Disconnect BLE

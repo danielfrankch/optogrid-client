@@ -264,7 +264,7 @@ body {
     border: 1px solid #dee2e6;
     border-radius: 4px;
     overflow: hidden; /* Prevent content overflow */
-    min-height: 300px;
+    min-height: 200px;
 }
 
 #brain-map-canvas {

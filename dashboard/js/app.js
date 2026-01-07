@@ -30,7 +30,7 @@ class OptoGridApp {
         // Sync with backend state on page load (with delay for ZMQ initialization)
         setTimeout(() => {
             this.syncWithBackendState();
-        }, 100);
+        }, 400);
     }
     
     initializeElements() {
@@ -94,7 +94,7 @@ class OptoGridApp {
         // Try to get current device status from backend
         this.zmqClient.sendRequest('optogrid.status')
             .then(response => {
-                if (response.includes('Connected') || response.includes('connected')) {
+                if (response.includes('Connected')) {
                     // Extract device name from status if available
                     const deviceMatch = response.match(/Connected to (.+)/);
                     const deviceName = deviceMatch ? deviceMatch[1].trim() : 'Unknown Device';
