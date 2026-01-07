@@ -173,7 +173,7 @@ body {
 }
 
 .imu-3d-widget {
-    flex: 1;
+    flex: 1.5; /* Increased from 1 to 1.5 to take more space */
     position: relative;
     background-color: #ecf0f1;
     border: 1px solid #bdc3c7;
@@ -181,6 +181,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    min-height: 100px; /* Ensure minimum height */
 }
 
 .imu-3d-placeholder {
@@ -191,6 +192,10 @@ body {
 
 #imu-3d-canvas {
     border-radius: 4px;
+    width: 150px;
+    height:150px;
+    min-width: 150px;
+    object-fit: contain;
 }
 
 .log-container {

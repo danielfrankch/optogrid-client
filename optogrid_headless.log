@@ -3491,3 +3491,98 @@
 2026-01-07 01:06:52,435 - INFO - ZMQ closed
 2026-01-07 01:06:52,436 - INFO - Cleaning up resources...
 2026-01-07 01:06:52,436 - INFO - ZMQ closed
+2026-01-07 01:32:33,535 - INFO - ZMQ REP server listening on tcp://192.168.1.233:5555...
+2026-01-07 01:32:33,536 - INFO - ZMQ PUB server publishing on tcp://192.168.1.233:5556...
+2026-01-07 01:32:33,538 - INFO - OptoGrid Headless Client Started
+2026-01-07 01:32:33,583 - INFO - Received ZMQ command: optogrid.status
+2026-01-07 01:32:33,594 - INFO - Received ZMQ command: optogrid.status
+2026-01-07 01:32:42,427 - INFO - Received ZMQ command: optogrid.status
+2026-01-07 01:32:42,438 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-07 01:32:42,448 - INFO - Received ZMQ command: optogrid.readbattery
+2026-01-07 01:32:42,460 - INFO - Received ZMQ command: optogrid.readuLEDCheck
+2026-01-07 01:32:47,611 - INFO - Received ZMQ command: optogrid.scan
+2026-01-07 01:32:47,611 - INFO - Scanning for BLE devices...
+2026-01-07 01:32:51,737 - INFO - Found devices: ['JON-O-0001 (07122822-85FD-2F87-A86C-C6CE03CC76F8)', 'ACTON III [LE] (24A52B68-1A30-A4D7-59D9-BD0CA756E453)']
+2026-01-07 01:32:58,931 - INFO - Received ZMQ command: optogrid.connect = 07122822-85FD-2F87-A86C-C6CE03CC76F8
+2026-01-07 01:32:58,932 - INFO - Connecting directly to device address: 07122822-85FD-2F87-A86C-C6CE03CC76F8
+2026-01-07 01:33:05,023 - INFO - BLE notifications enabled
+2026-01-07 01:33:05,095 - INFO - EKF filter frequency set to 100 Hz
+2026-01-07 01:33:05,403 - INFO - Magnetometer calibration file not found: data/JON-O-0001 Calibration.csv
+2026-01-07 01:33:05,403 - INFO - Using default calibration (no offset correction)
+2026-01-07 01:33:05,403 - INFO - Connected to JON-O-0001 at 07122822-85FD-2F87-A86C-C6CE03CC76F8
+2026-01-07 01:33:05,415 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-07 01:33:06,115 - INFO - Received ZMQ command: optogrid.readbattery
+2026-01-07 01:33:06,227 - INFO - Received ZMQ command: optogrid.readuLEDCheck
+2026-01-07 01:33:06,262 - INFO - uLED Check: 18446744073709551615
+2026-01-07 01:33:13,891 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-07 01:33:13,933 - INFO - Sent opto trigger
+2026-01-07 01:33:15,367 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 0
+2026-01-07 01:33:15,398 - INFO - Status LED turned off
+2026-01-07 01:33:15,730 - INFO - Received ZMQ command: optogrid.toggleShamLED = 1
+2026-01-07 01:33:15,801 - INFO - Sham LED turned on
+2026-01-07 01:33:16,154 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 1
+2026-01-07 01:33:16,183 - INFO - Status LED turned on
+2026-01-07 01:33:34,327 - INFO - Received ZMQ command: optogrid.status
+2026-01-07 01:33:34,338 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-07 01:33:35,030 - INFO - Received ZMQ command: optogrid.readbattery
+2026-01-07 01:33:35,141 - INFO - Received ZMQ command: optogrid.readuLEDCheck
+2026-01-07 01:33:35,175 - INFO - uLED Check: 18446744073709551615
+2026-01-07 01:33:35,766 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 0
+2026-01-07 01:33:35,826 - INFO - Status LED turned off
+2026-01-07 01:33:36,312 - INFO - Received ZMQ command: optogrid.toggleShamLED = 0
+2026-01-07 01:33:36,366 - INFO - Sham LED turned off
+2026-01-07 01:33:39,196 - WARNING - BLE device disconnected unexpectedly at sample 0
+2026-01-07 01:39:31,399 - INFO - Received ZMQ command: optogrid.status
+2026-01-07 01:39:31,422 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-07 01:39:31,433 - INFO - Received ZMQ command: optogrid.readbattery
+2026-01-07 01:39:31,444 - INFO - Received ZMQ command: optogrid.readuLEDCheck
+2026-01-07 01:40:04,729 - INFO - Received ZMQ command: optogrid.scan
+2026-01-07 01:40:04,729 - INFO - Scanning for BLE devices...
+2026-01-07 01:40:08,791 - INFO - Found devices: ['ACTON III [LE] (24A52B68-1A30-A4D7-59D9-BD0CA756E453)', 'JON-O-0001 (07122822-85FD-2F87-A86C-C6CE03CC76F8)']
+2026-01-07 01:40:11,590 - INFO - Received ZMQ command: optogrid.connect = 07122822-85FD-2F87-A86C-C6CE03CC76F8
+2026-01-07 01:40:11,591 - INFO - Connecting directly to device address: 07122822-85FD-2F87-A86C-C6CE03CC76F8
+2026-01-07 01:40:14,214 - INFO - BLE notifications enabled
+2026-01-07 01:40:14,283 - INFO - EKF filter frequency set to 100 Hz
+2026-01-07 01:40:14,325 - INFO - Magnetometer calibration file not found: data/JON-O-0001 Calibration.csv
+2026-01-07 01:40:14,325 - INFO - Using default calibration (no offset correction)
+2026-01-07 01:40:14,325 - INFO - Connected to JON-O-0001 at 07122822-85FD-2F87-A86C-C6CE03CC76F8
+2026-01-07 01:40:14,359 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-07 01:40:15,084 - INFO - Received ZMQ command: optogrid.readbattery
+2026-01-07 01:40:15,190 - INFO - Received ZMQ command: optogrid.readuLEDCheck
+2026-01-07 01:40:15,224 - INFO - uLED Check: 18446744073709551615
+2026-01-07 01:40:21,011 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 0
+2026-01-07 01:40:21,053 - INFO - Status LED turned off
+2026-01-07 01:40:21,528 - INFO - Received ZMQ command: optogrid.toggleShamLED = 1
+2026-01-07 01:40:21,591 - INFO - Sham LED turned on
+2026-01-07 01:40:23,701 - INFO - Received ZMQ command: optogrid.toggleShamLED = 0
+2026-01-07 01:40:23,752 - INFO - Sham LED turned off
+2026-01-07 01:40:24,804 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-07 01:40:24,854 - INFO - Sent opto trigger
+2026-01-07 01:40:27,767 - INFO - Received ZMQ command: optogrid.readbattery
+2026-01-07 01:40:28,590 - INFO - Received ZMQ command: optogrid.readbattery
+2026-01-07 01:40:32,907 - INFO - Received ZMQ command: optogrid.enableIMU
+2026-01-07 01:40:33,004 - INFO - IMU logging started: data/JON-O-0001_20260107_014033.csv
+2026-01-07 01:40:33,026 - INFO - ble_log: TWI initialized successfully
+2026-01-07 01:40:33,070 - INFO - ble_log: Starting IIM42652 initialization...
+2026-01-07 01:40:33,114 - INFO - ble_log: WHO_AM_I register value: 0x6F (expected: 0x6F)
+2026-01-07 01:40:33,116 - INFO - ble_log: WHO_AM_I check passed, configuring IMU...
+2026-01-07 01:40:33,119 - INFO - ble_log: Power management configured successfully
+2026-01-07 01:40:33,137 - INFO - ble_log: Gyroscope configured: 100Hz, ±2000dps
+2026-01-07 01:40:33,143 - INFO - ble_log: Accelerometer configured: 100Hz, ±16g
+2026-01-07 01:40:33,180 - INFO - ble_log: IMU configuration complete!
+2026-01-07 01:40:33,205 - INFO - ble_log: LIS2MDLTR configured for continuous mode @ 100Hz.
+2026-01-07 01:40:33,208 - INFO - ble_log: Power management configured successfully
+2026-01-07 01:40:33,228 - INFO - ble_log: Gyroscope configured: 100Hz, ±2000dps
+2026-01-07 01:40:33,232 - INFO - ble_log: Accelerometer configured: 100Hz, ±16g
+2026-01-07 01:40:33,249 - INFO - ble_log: IMU configuration complete!
+2026-01-07 01:40:34,039 - INFO - Orientation - Roll: -86.2°, Pitch: 69.9°, Yaw: 4.0°
+2026-01-07 01:40:35,005 - INFO - Orientation - Roll: 6.0°, Pitch: 18.3°, Yaw: 315.7°
+2026-01-07 01:40:36,017 - INFO - Orientation - Roll: -1.7°, Pitch: 7.5°, Yaw: 297.7°
+2026-01-07 01:40:37,008 - INFO - Orientation - Roll: 6.7°, Pitch: -7.1°, Yaw: 352.3°
+2026-01-07 01:40:38,020 - INFO - Orientation - Roll: 7.5°, Pitch: -6.0°, Yaw: 307.1°
+2026-01-07 01:40:38,988 - INFO - Orientation - Roll: -10.8°, Pitch: 21.6°, Yaw: 298.7°
+2026-01-07 01:40:40,046 - INFO - Orientation - Roll: 3.1°, Pitch: 3.3°, Yaw: 303.2°
+2026-01-07 01:40:40,994 - INFO - Orientation - Roll: 3.5°, Pitch: -2.7°, Yaw: 316.4°
+2026-01-07 01:40:42,002 - INFO - Orientation - Roll: 8.2°, Pitch: 0.3°, Yaw: 300.6°
+2026-01-07 01:40:42,116 - INFO - Received ZMQ command: optogrid.disableIMU
+2026-01-07 01:40:42,138 - INFO - IMU logging stopped and file closed

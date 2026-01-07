@@ -22,9 +22,9 @@ class ZMQClient {
     
     async initializeConnections() {
         try {
-            // Use localhost for ZMQ connections as specified
-            const zmqHost = 'localhost';
-            console.log(`Using ZMQ host: ${zmqHost}`);
+            // Use the same host as the web page for ZMQ connections
+            const zmqHost = window.location.hostname; // This will be the server's IP when accessed remotely
+            console.log(`Using ZMQ host: ${zmqHost} (from window.location.hostname)`);
             
             // Initialize REQ socket for commands
             this.initReqSocket(zmqHost);

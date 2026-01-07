@@ -75,7 +75,7 @@ class ZMQWebSocketBridge {
             // Create REQ WebSocket server
             this.reqWsServer = new WebSocket.Server({ 
                 port: WS_PORT,
-                host: 'localhost' 
+                host: '0.0.0.0' // Listen on all interfaces
             });
             
             this.reqWsServer.on('listening', () => {
@@ -89,7 +89,7 @@ class ZMQWebSocketBridge {
             // Create SUB WebSocket server  
             this.subWsServer = new WebSocket.Server({ 
                 port: WS_PORT + 1,
-                host: 'localhost'
+                host: '0.0.0.0' // Listen on all interfaces
             });
             
             this.subWsServer.on('listening', () => {
@@ -196,7 +196,7 @@ class ZMQWebSocketBridge {
         try {
             for await (const [msg] of this.zmqSubSocket) {
                 const messageText = msg.toString();
-                console.log(`Received PUB message: ${messageText}`);
+                // console.log(`Received PUB message: ${messageText}`);
                 
                 // Broadcast to all SUB WebSocket clients
                 this.broadcastToSubClients(messageText);
@@ -327,8 +327,8 @@ server.listen(HTTP_PORT, '0.0.0.0', async () => {
     console.log('\n=== OptoGrid Dashboard Server ===');
     console.log(`HTTP Server:    http://localhost:${HTTP_PORT}`);
     console.log(`Network access: http://${localIP}:${HTTP_PORT}`);
-    console.log(`REQ WebSocket:  ws://localhost:${WS_PORT}`);
-    console.log(`SUB WebSocket:  ws://localhost:${WS_PORT + 1}`);
+    console.log(`REQ WebSocket:  ws://${localIP}:${WS_PORT} (accessible from network)`);
+    console.log(`SUB WebSocket:  ws://${localIP}:${WS_PORT + 1} (accessible from network)`);
     console.log('\nInitializing ZMQ bridge...');
     
     try {

@@ -42,11 +42,11 @@ class IMUVisualization {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x8cb8c4); // Match OpenGL background (0.5, 0.6, 0.6)
         
-        // Setup camera with perspective matching OpenGL - force square aspect ratio
+        // Setup camera with perspective matching OpenGL - use larger dimension for better space utilization
         const rect = this.canvas3d.getBoundingClientRect();
-        const size = Math.min(rect.width, rect.height); // Use smaller dimension to make it square
+        const size = Math.max(rect.width, rect.height) * 0.9; // Use 90% of larger dimension
         
-        this.camera = new THREE.PerspectiveCamera(45, 1.0, 0.1, 100.0); // Aspect ratio 1:1 for square
+        this.camera = new THREE.PerspectiveCamera(45, 1.0, 0.1, 100.0); // Keep 1:1 aspect ratio
         this.camera.position.set(0, 0, 6); // Match OpenGL camera distance
         this.camera.lookAt(0, 0, 0);
         
@@ -246,7 +246,7 @@ class IMUVisualization {
         if (!this.canvas3d) return;
         
         const rect = this.canvas3d.getBoundingClientRect();
-        const size = Math.min(rect.width, rect.height); // Keep it square
+        const size = Math.max(rect.width, rect.height) * 0.9; // Use 90% of larger dimension
         
         this.camera.aspect = 1.0; // Always square aspect ratio
         this.camera.updateProjectionMatrix();
