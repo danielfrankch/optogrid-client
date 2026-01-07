@@ -34388,3 +34388,217 @@ bat_v: double
 2026-01-07 16:20:09,777 - INFO - Received ZMQ command: optogrid.disableIMU
 2026-01-07 16:20:09,785 - INFO - Orientation - Roll: -7.5°, Pitch: 0.7°, Yaw: 358.4°
 2026-01-07 16:20:09,791 - INFO - IMU logging stopped and file closed
+2026-01-07 16:20:50,351 - INFO - Received signal 2, shutting down...
+2026-01-07 16:20:50,351 - INFO - Cleaning up resources...
+2026-01-07 16:20:53,526 - WARNING - BLE device disconnected unexpectedly at sample 702
+2026-01-07 16:20:53,527 - INFO - BLE disconnected
+2026-01-07 16:20:53,528 - INFO - ZMQ closed
+2026-01-07 16:20:53,529 - INFO - Cleaning up resources...
+2026-01-07 16:20:53,529 - INFO - ZMQ closed
+2026-01-07 16:29:34,282 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-07 16:29:34,284 - INFO - ZMQ PUB server publishing on tcp://172.24.242.178:5556...
+2026-01-07 16:29:34,287 - INFO - OptoGrid Headless Client Started
+2026-01-07 16:29:41,565 - INFO - Received ZMQ command: optogrid.status
+2026-01-07 16:30:26,733 - INFO - Received ZMQ command: optogrid.scan
+2026-01-07 16:30:26,733 - INFO - Scanning for BLE devices...
+2026-01-07 16:30:30,852 - INFO - Found devices: ['JON-O-0001 (FC:3D:82:50:DA:9A)']
+2026-01-07 16:30:32,793 - INFO - Received ZMQ command: optogrid.connect = FC:3D:82:50:DA:9A
+2026-01-07 16:30:32,793 - INFO - Connecting directly to device address: FC:3D:82:50:DA:9A
+2026-01-07 16:30:39,729 - INFO - BLE notifications enabled
+2026-01-07 16:30:39,769 - INFO - EKF filter frequency set to 100 Hz
+2026-01-07 16:30:40,287 - INFO - Magnetometer calibration file not found: data/JON-O-0001 Calibration.csv
+2026-01-07 16:30:40,287 - INFO - Using default calibration (no offset correction)
+2026-01-07 16:30:40,288 - INFO - Connected to JON-O-0001 at FC:3D:82:50:DA:9A
+2026-01-07 16:30:40,302 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-07 16:30:40,711 - INFO - Received ZMQ command: optogrid.readbattery
+2026-01-07 16:30:40,813 - INFO - ble_log: Connection interval: Min = 1076756480 ms, Max = 0 ms
+2026-01-07 16:30:40,814 - INFO - Received ZMQ command: optogrid.readuLEDCheck
+2026-01-07 16:30:40,842 - INFO - ble_log: Connection interval: Min = 1077805056 ms, Max = 0 ms
+2026-01-07 16:30:40,903 - INFO - uLED Check: 18446744073709551615
+2026-01-07 16:30:42,106 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 0
+2026-01-07 16:30:42,161 - INFO - Status LED turned off
+2026-01-07 16:30:42,564 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 1
+2026-01-07 16:30:42,610 - INFO - Status LED turned on
+2026-01-07 16:30:44,273 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 0
+2026-01-07 16:30:44,322 - INFO - Status LED turned off
+2026-01-07 16:30:45,695 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 1
+2026-01-07 16:30:45,760 - INFO - Status LED turned on
+2026-01-07 16:30:47,010 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 0
+2026-01-07 16:30:47,050 - INFO - Status LED turned off
+2026-01-07 16:30:47,488 - INFO - Received ZMQ command: optogrid.toggleShamLED = 1
+2026-01-07 16:30:47,532 - INFO - Sham LED turned on
+2026-01-07 16:30:47,885 - INFO - Received ZMQ command: optogrid.toggleShamLED = 0
+2026-01-07 16:30:47,920 - INFO - Sham LED turned off
+2026-01-07 16:30:48,487 - INFO - Received ZMQ command: optogrid.enableIMU
+2026-01-07 16:30:48,606 - INFO - IMU logging started: data/NoSubjID_NoSessID_JON-O-0001_20260107_163048.parquet
+2026-01-07 16:30:48,610 - INFO - ble_log: TWI initialized successfully
+2026-01-07 16:30:48,614 - INFO - ble_log: Starting IIM42652 initialization...
+2026-01-07 16:30:48,642 - INFO - ble_log: WHO_AM_I register value: 0x6F (expected: 0x6F)
+2026-01-07 16:30:48,645 - INFO - ble_log: WHO_AM_I check passed, configuring IMU...
+2026-01-07 16:30:48,673 - INFO - ble_log: Power management configured successfully
+2026-01-07 16:30:48,701 - INFO - ble_log: Gyroscope configured: 100Hz, ±2000dps
+2026-01-07 16:30:48,704 - INFO - ble_log: Accelerometer configured: 100Hz, ±16g
+2026-01-07 16:30:48,732 - INFO - ble_log: IMU configuration complete!
+2026-01-07 16:30:48,760 - INFO - ble_log: LIS2MDLTR configured for continuous mode @ 100Hz.
+2026-01-07 16:30:48,763 - INFO - ble_log: Power management configured successfully
+2026-01-07 16:30:48,791 - INFO - ble_log: Gyroscope configured: 100Hz, ±2000dps
+2026-01-07 16:30:48,794 - INFO - ble_log: Accelerometer configured: 100Hz, ±16g
+2026-01-07 16:30:48,823 - INFO - ble_log: IMU configuration complete!
+2026-01-07 16:30:49,581 - INFO - Orientation - Roll: 123.0°, Pitch: -26.3°, Yaw: 31.2°
+2026-01-07 16:30:50,563 - INFO - Orientation - Roll: 13.2°, Pitch: -16.3°, Yaw: 36.5°
+2026-01-07 16:30:51,552 - INFO - Orientation - Roll: -0.7°, Pitch: -3.1°, Yaw: 350.7°
+2026-01-07 16:30:52,544 - INFO - Orientation - Roll: 0.4°, Pitch: -2.1°, Yaw: 115.7°
+2026-01-07 16:30:53,565 - INFO - Orientation - Roll: 10.0°, Pitch: -16.1°, Yaw: 42.2°
+2026-01-07 16:30:54,560 - INFO - Orientation - Roll: 22.1°, Pitch: 29.2°, Yaw: 41.4°
+2026-01-07 16:30:55,574 - INFO - Orientation - Roll: -11.9°, Pitch: -59.6°, Yaw: 35.1°
+2026-01-07 16:30:56,565 - INFO - Orientation - Roll: 121.4°, Pitch: -1.4°, Yaw: 344.7°
+2026-01-07 16:30:57,580 - INFO - Orientation - Roll: -30.8°, Pitch: -9.0°, Yaw: 7.7°
+2026-01-07 16:30:58,575 - INFO - Orientation - Roll: 69.8°, Pitch: 1.1°, Yaw: 26.8°
+2026-01-07 16:30:59,593 - INFO - Orientation - Roll: 91.5°, Pitch: 13.8°, Yaw: 358.2°
+2026-01-07 16:31:00,554 - INFO - Orientation - Roll: -33.0°, Pitch: -29.4°, Yaw: 65.7°
+2026-01-07 16:31:01,574 - INFO - Orientation - Roll: 6.2°, Pitch: -3.9°, Yaw: 348.7°
+2026-01-07 16:31:02,561 - INFO - Orientation - Roll: 2.0°, Pitch: -5.1°, Yaw: 12.8°
+2026-01-07 16:31:03,406 - INFO - Received ZMQ command: optogrid.disableIMU
+2026-01-07 16:31:03,479 - INFO - IMU logging stopped and file closed
+2026-01-07 16:31:11,601 - WARNING - BLE device disconnected unexpectedly at sample 1488
+2026-01-07 16:31:58,217 - INFO - Received ZMQ command: optogrid.status
+2026-01-07 16:32:12,353 - INFO - Received ZMQ command: optogrid.scan
+2026-01-07 16:32:12,355 - INFO - Scanning for BLE devices...
+2026-01-07 16:32:16,383 - INFO - Found devices: ['JON-O-0001 (FC:3D:82:50:DA:9A)']
+2026-01-07 16:32:21,361 - INFO - Received ZMQ command: optogrid.connect = FC:3D:82:50:DA:9A
+2026-01-07 16:32:21,362 - INFO - Connecting directly to device address: FC:3D:82:50:DA:9A
+2026-01-07 16:32:24,326 - INFO - BLE notifications enabled
+2026-01-07 16:32:24,427 - INFO - EKF filter frequency set to 100 Hz
+2026-01-07 16:32:24,474 - INFO - Magnetometer calibration file not found: data/JON-O-0001 Calibration.csv
+2026-01-07 16:32:24,474 - INFO - Using default calibration (no offset correction)
+2026-01-07 16:32:24,475 - INFO - Connected to JON-O-0001 at FC:3D:82:50:DA:9A
+2026-01-07 16:32:24,497 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-07 16:32:25,850 - INFO - Received ZMQ command: optogrid.readbattery
+2026-01-07 16:32:26,038 - INFO - ble_log: Connection interval: Min = 1076756480 ms, Max = 0 ms
+2026-01-07 16:32:26,039 - INFO - Received ZMQ command: optogrid.readuLEDCheck
+2026-01-07 16:32:26,094 - INFO - ble_log: Connection interval: Min = 1077805056 ms, Max = 0 ms
+2026-01-07 16:32:26,124 - INFO - uLED Check: 18446744073709551615
+2026-01-07 16:32:29,636 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 0
+2026-01-07 16:32:29,725 - INFO - Status LED turned off
+2026-01-07 16:32:33,050 - INFO - Received ZMQ command: optogrid.toggleShamLED = 1
+2026-01-07 16:32:33,145 - INFO - Sham LED turned on
+2026-01-07 16:32:35,936 - INFO - Received ZMQ command: optogrid.enableIMU
+2026-01-07 16:32:36,091 - INFO - IMU logging started: data/NoSubjID_NoSessID_JON-O-0001_20260107_163236.parquet
+2026-01-07 16:32:36,232 - INFO - ble_log: TWI initialized successfully
+2026-01-07 16:32:36,262 - INFO - ble_log: Starting IIM42652 initialization...
+2026-01-07 16:32:36,296 - INFO - ble_log: WHO_AM_I register value: 0x6F (expected: 0x6F)
+2026-01-07 16:32:36,445 - INFO - ble_log: WHO_AM_I check passed, configuring IMU...
+2026-01-07 16:32:36,569 - INFO - ble_log: Power management configured successfully
+2026-01-07 16:32:36,625 - INFO - ble_log: Gyroscope configured: 100Hz, ±2000dps
+2026-01-07 16:32:36,716 - INFO - ble_log: Accelerometer configured: 100Hz, ±16g
+2026-01-07 16:32:36,924 - INFO - ble_log: IMU configuration complete!
+2026-01-07 16:32:36,985 - INFO - ble_log: LIS2MDLTR configured for continuous mode @ 100Hz.
+2026-01-07 16:32:37,074 - INFO - ble_log: Power management configured successfully
+2026-01-07 16:32:37,076 - INFO - ble_log: Gyroscope configured: 100Hz, ±2000dps
+2026-01-07 16:32:37,193 - INFO - ble_log: Accelerometer configured: 100Hz, ±16g
+2026-01-07 16:32:37,197 - INFO - ble_log: IMU configuration complete!
+2026-01-07 16:32:37,406 - INFO - Orientation - Roll: -26.8°, Pitch: -33.4°, Yaw: 115.6°
+2026-01-07 16:32:38,304 - INFO - Orientation - Roll: -91.4°, Pitch: -67.7°, Yaw: 125.0°
+2026-01-07 16:32:39,864 - INFO - Orientation - Roll: -1.2°, Pitch: -42.8°, Yaw: 61.3°
+2026-01-07 16:32:41,698 - INFO - Orientation - Roll: 11.3°, Pitch: -13.3°, Yaw: 19.8°
+2026-01-07 16:32:42,743 - INFO - Orientation - Roll: 74.1°, Pitch: 5.2°, Yaw: 354.0°
+2026-01-07 16:32:43,557 - INFO - Orientation - Roll: -35.9°, Pitch: -14.7°, Yaw: 23.6°
+2026-01-07 16:32:44,816 - INFO - Orientation - Roll: -33.3°, Pitch: -14.6°, Yaw: 41.7°
+2026-01-07 16:32:45,714 - INFO - Orientation - Roll: -44.5°, Pitch: 0.3°, Yaw: 20.5°
+2026-01-07 16:32:46,795 - INFO - Orientation - Roll: 37.1°, Pitch: -19.4°, Yaw: 35.2°
+2026-01-07 16:32:47,574 - INFO - Orientation - Roll: -54.6°, Pitch: 1.8°, Yaw: 30.7°
+2026-01-07 16:32:48,563 - INFO - Orientation - Roll: 6.3°, Pitch: -12.0°, Yaw: 38.5°
+2026-01-07 16:32:49,555 - INFO - Orientation - Roll: -81.5°, Pitch: 8.3°, Yaw: 28.1°
+2026-01-07 16:32:50,551 - INFO - Orientation - Roll: 17.2°, Pitch: -11.1°, Yaw: 59.7°
+2026-01-07 16:32:51,565 - INFO - Orientation - Roll: 17.8°, Pitch: 4.9°, Yaw: 109.6°
+2026-01-07 16:32:52,593 - INFO - Orientation - Roll: 8.1°, Pitch: -0.5°, Yaw: 73.4°
+2026-01-07 16:32:53,574 - INFO - Orientation - Roll: -19.5°, Pitch: 18.6°, Yaw: 73.4°
+2026-01-07 16:32:54,659 - INFO - Orientation - Roll: -61.1°, Pitch: 30.0°, Yaw: 53.4°
+2026-01-07 16:32:55,680 - INFO - Orientation - Roll: -22.3°, Pitch: 0.0°, Yaw: 56.3°
+2026-01-07 16:32:56,636 - INFO - Orientation - Roll: -20.9°, Pitch: -1.0°, Yaw: 57.4°
+2026-01-07 16:32:57,660 - INFO - Orientation - Roll: -79.3°, Pitch: -8.7°, Yaw: 33.3°
+2026-01-07 16:32:59,247 - INFO - Orientation - Roll: -55.3°, Pitch: -42.8°, Yaw: 32.4°
+2026-01-07 16:32:59,455 - INFO - Received ZMQ command: optogrid.disableIMU
+2026-01-07 16:32:59,619 - INFO - IMU logging stopped and file closed
+2026-01-07 16:33:05,082 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-07 16:33:05,214 - INFO - Sent opto trigger
+2026-01-07 16:33:17,380 - WARNING - BLE device disconnected unexpectedly at sample 3561
+2026-01-07 16:33:30,165 - INFO - Received ZMQ command: optogrid.status
+2026-01-07 16:33:46,809 - INFO - Received signal 2, shutting down...
+2026-01-07 16:33:46,809 - INFO - Cleaning up resources...
+2026-01-07 16:33:46,810 - INFO - ZMQ closed
+2026-01-07 16:33:46,810 - INFO - Cleaning up resources...
+2026-01-07 16:33:46,810 - INFO - ZMQ closed
+2026-01-07 16:38:10,835 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-07 16:38:10,837 - INFO - ZMQ PUB server publishing on tcp://172.24.242.178:5556...
+2026-01-07 16:38:10,840 - INFO - OptoGrid Headless Client Started
+2026-01-07 16:38:11,092 - INFO - Received ZMQ command: optogrid.status
+2026-01-07 16:38:13,512 - INFO - Received ZMQ command: optogrid.status
+2026-01-07 16:38:14,568 - INFO - Received ZMQ command: optogrid.status
+2026-01-07 16:38:15,563 - INFO - Received ZMQ command: optogrid.status
+2026-01-07 16:38:51,446 - INFO - Received signal 2, shutting down...
+2026-01-07 16:38:51,446 - INFO - Cleaning up resources...
+2026-01-07 16:38:51,447 - INFO - ZMQ closed
+2026-01-07 16:38:51,447 - INFO - Cleaning up resources...
+2026-01-07 16:38:51,447 - INFO - ZMQ closed
+2026-01-07 17:10:30,402 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-07 17:10:30,404 - INFO - ZMQ PUB server publishing on tcp://172.24.242.178:5556...
+2026-01-07 17:10:30,406 - INFO - OptoGrid Headless Client Started
+2026-01-07 17:10:45,665 - INFO - Received signal 2, shutting down...
+2026-01-07 17:10:45,665 - INFO - Cleaning up resources...
+2026-01-07 17:10:45,669 - INFO - ZMQ closed
+2026-01-07 17:10:45,669 - INFO - Cleaning up resources...
+2026-01-07 17:10:45,670 - INFO - ZMQ closed
+2026-01-07 17:10:57,540 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-07 17:10:57,544 - INFO - ZMQ PUB server publishing on tcp://172.24.242.178:5556...
+2026-01-07 17:10:57,546 - INFO - OptoGrid Headless Client Started
+2026-01-07 17:11:50,975 - INFO - Received ZMQ command: optogrid.disableIMU
+2026-01-07 17:12:05,339 - INFO - Received ZMQ command: optogrid.disableIMU
+2026-01-07 17:12:15,187 - INFO - Received ZMQ command: optogrid.status
+2026-01-07 17:12:24,527 - INFO - Received ZMQ command: optogrid.scan
+2026-01-07 17:12:24,527 - INFO - Scanning for BLE devices...
+2026-01-07 17:12:28,658 - INFO - Found devices: ['JON-O-0001 (FC:3D:82:50:DA:9A)']
+2026-01-07 17:12:30,267 - INFO - Received ZMQ command: optogrid.connect = FC:3D:82:50:DA:9A
+2026-01-07 17:12:30,267 - INFO - Connecting directly to device address: FC:3D:82:50:DA:9A
+2026-01-07 17:12:35,185 - INFO - BLE notifications enabled
+2026-01-07 17:12:35,218 - INFO - EKF filter frequency set to 100 Hz
+2026-01-07 17:12:35,554 - INFO - Magnetometer calibration file not found: data/JON-O-0001 Calibration.csv
+2026-01-07 17:12:35,555 - INFO - Using default calibration (no offset correction)
+2026-01-07 17:12:35,555 - INFO - Connected to JON-O-0001 at FC:3D:82:50:DA:9A
+2026-01-07 17:12:35,572 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-07 17:12:35,983 - INFO - Received ZMQ command: optogrid.readbattery
+2026-01-07 17:12:36,060 - INFO - ble_log: Connection interval: Min = 1076756480 ms, Max = 0 ms
+2026-01-07 17:12:36,060 - INFO - Received ZMQ command: optogrid.readuLEDCheck
+2026-01-07 17:12:36,086 - INFO - uLED Check: 18446744073709551615
+2026-01-07 17:13:33,616 - ERROR - Error in main loop: 'utf-8' codec can't decode byte 0xff in position 34: invalid start byte
+2026-01-07 17:13:41,767 - INFO - Received ZMQ command: optogrid.status
+2026-01-07 17:13:41,783 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-07 17:13:42,589 - INFO - Received ZMQ command: optogrid.readbattery
+2026-01-07 17:13:42,719 - INFO - ble_log: Connection interval: Min = 1078853632 ms, Max = 0 ms
+2026-01-07 17:13:42,720 - INFO - Received ZMQ command: optogrid.readuLEDCheck
+2026-01-07 17:13:42,748 - INFO - ble_log: Connection interval: Min = 1077805056 ms, Max = 0 ms
+2026-01-07 17:13:42,777 - INFO - uLED Check: 18446744073709551615
+2026-01-07 17:13:43,691 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 0
+2026-01-07 17:13:43,738 - INFO - Status LED turned off
+2026-01-07 17:14:20,762 - ERROR - Error in main loop: 'utf-8' codec can't decode byte 0xff in position 35: invalid start byte
+2026-01-07 17:14:32,241 - INFO - Received ZMQ command: optogrid.disableIMU
+2026-01-07 17:14:32,339 - WARNING - No active IMU logging to stop
+2026-01-07 17:14:32,342 - INFO - Rsyncing 1 files for subjid NoSubjID
+2026-01-07 17:14:32,342 - INFO - Command: rsync -av --remove-source-files data/imu_session\NoSubjID_NoSessID_JON-O-0001_20260107_163236.parquet http://int.deneuro.org/ogma/IMU/NoSubjID/
+2026-01-07 17:14:32,400 - ERROR - Rsync failed for subjid NoSubjID: 'rsync' is not recognized as an internal or external command,
+operable program or batch file.
+
+2026-01-07 17:16:32,289 - WARNING - BLE device disconnected unexpectedly at sample 0
+2026-01-07 17:19:54,888 - INFO - Received signal 2, shutting down...
+2026-01-07 17:19:54,889 - INFO - Cleaning up resources...
+2026-01-07 17:19:54,891 - INFO - ZMQ closed
+2026-01-07 17:19:54,891 - INFO - Cleaning up resources...
+2026-01-07 17:19:54,891 - INFO - ZMQ closed
+2026-01-07 17:19:57,254 - INFO - ZMQ REP server listening on tcp://172.24.242.178:5555...
+2026-01-07 17:19:57,257 - INFO - ZMQ PUB server publishing on tcp://172.24.242.178:5556...
+2026-01-07 17:19:57,259 - INFO - OptoGrid Headless Client Started
+2026-01-07 17:24:56,320 - INFO - Received signal 2, shutting down...
+2026-01-07 17:24:56,320 - INFO - Cleaning up resources...
+2026-01-07 17:24:56,322 - INFO - ZMQ closed
+2026-01-07 17:24:56,322 - INFO - Cleaning up resources...
+2026-01-07 17:24:56,322 - INFO - ZMQ closed

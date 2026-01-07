@@ -50,6 +50,7 @@ classdef OptoGrid < handle
             end
         end
 
+
         function success = enableIMU(obj)
             obj.socket.sendmsg('optogrid.enableIMU');
             try
@@ -93,6 +94,59 @@ classdef OptoGrid < handle
                     success = 0;
                 end
             catch
+                success = 0;
+            end
+        end
+
+        function [status_info, success] = status(obj)
+            obj.socket.sendmsg('optogrid.status');
+            
+            % Default values
+            success = 0;
+            status_info = '';
+            
+            try
+                reply = obj.socket.waitformsg();
+                status_info = reply;
+                
+                % Check if connected or disconnected
+                if contains(reply, 'Connected to')
+                    success = 1;
+                elseif contains(reply, 'Disconnected')
+                    success = 0;
+                else
+                    success = 0;
+                end
+            catch
+                % Timeout or other error
+                status_info = 'Communication error';
+                success = 0;
+            end
+        end
+
+        function success = startIMULog(obj, subjid, sessid)
+            if nargin < 3
+                error('You must specify subjid and sessid: startIMULog(subjid, sessid)');
+            end
+            obj.socket.sendmsg(sprintf('optogrid.startIMULog = %s, %s', subjid, sessid));
+            try
+                reply = obj.socket.waitformsg();
+                fprintf('%s\n', reply);
+                success = 1;
+            catch
+                fprintf('Error: Failed to start IMU logging\n');
+                success = 0;
+            end
+        end
+
+        function success = stopIMULog(obj)
+            obj.socket.sendmsg('optogrid.stopIMULog');
+            try
+                reply = obj.socket.waitformsg();
+                fprintf('%s\n', reply);
+                success = 1;
+            catch
+                fprintf('Error: Failed to stop IMU logging\n');
                 success = 0;
             end
         end

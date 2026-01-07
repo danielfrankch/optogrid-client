@@ -349,6 +349,18 @@ class HeadlessOptoGridClient:
                 
             elif "optogrid.disableIMU" in message:
                 return await self.disable_imu()
+            
+            elif "optogrid.startIMULog" in message:
+                # Parse subjid and sessid from message: "optogrid.startIMULog = subjid, sessid"
+                try:
+                    params = message.split('=')[1].strip()
+                    subjid, sessid = [param.strip() for param in params.split(',')]
+                    return await self.enable_imu(subjid, sessid)
+                except Exception as e:
+                    return f"ERROR: Invalid startIMULog parameters: {e}"
+            
+            elif "optogrid.stopIMULog" in message:
+                return await self.disable_imu()
                 
             elif "optogrid.readbattery" in message:
                 return await self.read_battery()
@@ -653,6 +665,7 @@ class HeadlessOptoGridClient:
         # Close IMU file if open
         if self.imu_logging_active:
             self.stop_IMU_logging()
+            self.rsync_imu_log()
             self.imu_enable_state = False
 
     async def handle_device_log_notification(self, sender: int, data: bytearray):
@@ -893,10 +906,10 @@ class HeadlessOptoGridClient:
             import pyarrow as pa
             import pyarrow.parquet as pq
             
-            os.makedirs("data", exist_ok=True)
+            os.makedirs("data/imu_session", exist_ok=True)
             
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"data/{subjid}_{sessid}_{deviceid}_{timestamp}.parquet"
+            filename = f"data/imu_session/{subjid}_{sessid}_{deviceid}_{timestamp}.parquet"
             
             # Create column structure for parquet
             self.imu_data_columns = [
@@ -987,7 +1000,7 @@ class HeadlessOptoGridClient:
         await self.client.write_gatt_char(trigger_uuid, encoded_value)
         self.logger.info("Sent opto trigger")
 
-    async def enable_imu(self) -> str:
+    async def enable_imu(self, subjid="NoSubjID", sessid="NoSessID") -> str:
         """Enable IMU and start logging"""
         if not self.client or not self.client.is_connected:
             return "Not connected to device"
@@ -1006,7 +1019,7 @@ class HeadlessOptoGridClient:
                 except:
                     device_id = "NoDeviceID"
                     
-                filename = self.start_IMU_logging(deviceid=device_id)
+                filename = self.start_IMU_logging(subjid=subjid, sessid=sessid, deviceid=device_id)
                 if not filename:
                     return "IMU enabled but logging failed to start"
             
@@ -1030,11 +1043,92 @@ class HeadlessOptoGridClient:
             # Stop logging using new function
             self.stop_IMU_logging()
             
+            # Rsync IMU log files to remote server
+            self.rsync_imu_log()
+            
             self.imu_enable_state = False
             return "IMU disabled, and logging stopped"
             
         except Exception as e:
             return f"IMU disable failed: {str(e)}"
+
+    def rsync_imu_log(self):
+        """Rsync IMU log files to remote server"""
+        try:
+            import subprocess
+            import glob
+            import platform
+            
+            # Check if data/imu_session directory exists
+            imu_session_path = "data/imu_session"
+            if not os.path.exists(imu_session_path):
+                self.logger.info("No IMU session directory found, creating it")
+                os.makedirs(imu_session_path, exist_ok=True)
+                return
+            
+            # Find all parquet files in the imu_session directory
+            parquet_files = glob.glob(os.path.join(imu_session_path, "*.parquet"))
+            
+            if not parquet_files:
+                self.logger.info("No parquet files found for rsync")
+                return
+            
+            # Group files by subjid (extract from filename)
+            subjid_files = {}
+            for file_path in parquet_files:
+                filename = os.path.basename(file_path)
+                # Parse subjid from filename format: subjid_sessid_deviceid_timestamp.parquet
+                try:
+                    subjid = filename.split('_')[0]
+                    if subjid not in subjid_files:
+                        subjid_files[subjid] = []
+                    subjid_files[subjid].append(file_path)
+                except Exception as e:
+                    self.logger.warning(f"Could not parse subjid from filename {filename}: {e}")
+                    continue
+            
+            # Get operating system
+            os_type = platform.system()
+            
+            if os_type == "Linux":
+                # Linux: Use rsync
+                for subjid, files in subjid_files.items():
+                    try:
+                        # Create remote directory and rsync files
+                        remote_path = f"http://int.deneuro.org/ogma/IMU/{subjid}/"
+                        rsync_cmd = f"rsync -av --remove-source-files {' '.join(files)} {remote_path}"
+                        
+                        self.logger.info(f"Rsyncing {len(files)} files for subjid {subjid}")
+                        self.logger.info(f"Command: {rsync_cmd}")
+                        
+                        # Execute rsync command
+                        result = subprocess.Popen(rsync_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        stdout, stderr = result.communicate()
+                        
+                        if result.returncode == 0:
+                            self.logger.info(f"Successfully rsynced files for subjid {subjid}")
+                        else:
+                            self.logger.error(f"Rsync failed for subjid {subjid}: {stderr.decode()}")
+                            
+                    except Exception as e:
+                        self.logger.error(f"Error rsyncing files for subjid {subjid}: {e}")
+            
+            elif os_type == "Windows":
+                # Windows: TODO - implement Windows-specific file transfer
+                self.logger.info("Windows file transfer not implemented yet")
+                pass
+            
+            elif os_type == "Darwin":  # macOS
+                # macOS: TODO - implement macOS-specific file transfer
+                self.logger.info("macOS file transfer not implemented yet")
+                pass
+            
+            else:
+                self.logger.warning(f"Unsupported operating system: {os_type}")
+            
+        except Exception as e:
+            self.logger.error(f"Error in rsync_imu_log: {e}")
+
 
     async def read_battery(self) -> str:
         """Read battery voltage"""
@@ -1168,7 +1262,8 @@ class HeadlessOptoGridClient:
         if self.imu_logging_active:
             self.flush_imu_buffer()
             self.stop_IMU_logging()
-            self.logger.info("IMU log file closed")
+            self.rsync_imu_log()
+            self.logger.info("IMU log file closed and rsynced")
         
         # Disconnect BLE
         if self.client and self.client.is_connected:
