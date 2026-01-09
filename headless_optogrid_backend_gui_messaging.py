@@ -1073,45 +1073,30 @@ class HeadlessOptoGridClient:
                 self.logger.info("No parquet files found for rsync")
                 return
             
-            # Group files by subjid (extract from filename)
-            subjid_files = {}
-            for file_path in parquet_files:
-                filename = os.path.basename(file_path)
-                # Parse subjid from filename format: subjid_sessid_deviceid_timestamp.parquet
-                try:
-                    subjid = filename.split('_')[0]
-                    if subjid not in subjid_files:
-                        subjid_files[subjid] = []
-                    subjid_files[subjid].append(file_path)
-                except Exception as e:
-                    self.logger.warning(f"Could not parse subjid from filename {filename}: {e}")
-                    continue
-            
             # Get operating system
             os_type = platform.system()
             
             if os_type == "Linux":
                 # Linux: Use rsync
-                for subjid, files in subjid_files.items():
-                    try:
-                        # Create remote directory and rsync files
-                        remote_path = f"ogma:/ceph/ogma/IMU/{subjid}/"
-                        rsync_cmd = f"rsync -av --remove-source-files {' '.join(files)} {remote_path}"
+                try:
+                    # Rsync all parquet files to remote directory
+                    remote_path = f"ogma:/ceph/ogma/IMU"
+                    rsync_cmd = f"rsync -avzP --remove-source-files {' '.join(parquet_files)} {remote_path}"
+                    
+                    self.logger.info(f"Rsyncing {len(parquet_files)} files")
+                    self.logger.info(f"Command: {rsync_cmd}")
+                    
+                    # Execute rsync command
+                    result = subprocess.Popen(rsync_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    stdout, stderr = result.communicate()
+                    
+                    if result.returncode == 0:
+                        self.logger.info(f"Successfully rsynced all files")
+                    else:
+                        self.logger.error(f"Rsync failed: {stderr.decode()}")
                         
-                        self.logger.info(f"Rsyncing {len(files)} files for subjid {subjid}")
-                        self.logger.info(f"Command: {rsync_cmd}")
-                        
-                        # Execute rsync command
-                        result = subprocess.Popen(rsync_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                        stdout, stderr = result.communicate()
-                        
-                        if result.returncode == 0:
-                            self.logger.info(f"Successfully rsynced files for subjid {subjid}")
-                        else:
-                            self.logger.error(f"Rsync failed for subjid {subjid}: {stderr.decode()}")
-                            
-                    except Exception as e:
-                        self.logger.error(f"Error rsyncing files for subjid {subjid}: {e}")
+                except Exception as e:
+                    self.logger.error(f"Error rsyncing files: {e}")
             
             elif os_type == "Windows":
                 # Windows: TODO - implement Windows-specific file transfer
