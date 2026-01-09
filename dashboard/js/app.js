@@ -367,6 +367,11 @@ class OptoGridApp {
             return;
         }
         
+        // Debug: Log the collected settings to verify BigInt preservation
+        if (optoSettings.led_selection) {
+            this.log(`LED Selection value being sent: ${optoSettings.led_selection} (type: ${typeof optoSettings.led_selection})`);
+        }
+        
         // Send optogrid.program command first
         this.zmqClient.sendRequest('optogrid.program')
             .then(response => {
@@ -429,8 +434,8 @@ class OptoGridApp {
                 // Convert value to appropriate type
                 let convertedValue;
                 if (settingKey === 'led_selection') {
-                    // LED Selection should be uint64
-                    convertedValue = parseInt(value);
+                    // LED Selection should be uint64 - keep as string to preserve precision
+                    convertedValue = value; // Send as string to preserve 64-bit precision
                 } else if (settingKey === 'sequence_length' || settingKey === 'amplitude') {
                     // These are typically integers
                     convertedValue = parseInt(value);
@@ -439,7 +444,7 @@ class OptoGridApp {
                     convertedValue = parseFloat(value);
                 }
                 
-                if (!isNaN(convertedValue)) {
+                if (settingKey === 'led_selection' || !isNaN(convertedValue)) {
                     optoSettings[settingKey] = convertedValue;
                 }
             }
@@ -715,6 +720,8 @@ class OptoGridApp {
             const lines = csvData.trim().split('\n');
             
             // Skip header line (Service,Characteristic,UUID,Value,Unit)
+            // Table displays: Parameter | Value | Write Value | Unit
+            // (Service column omitted, Characteristic becomes Parameter)
             const dataLines = lines.slice(1);
             
             let displayedRows = 0;
@@ -744,10 +751,10 @@ class OptoGridApp {
                     
                     const row = document.createElement('tr');
                     
-                    // Characteristic cell (no service column displayed)
-                    const charCell = document.createElement('td');
-                    charCell.textContent = characteristic;
-                    row.appendChild(charCell);
+                    // Parameter cell (use characteristic name)
+                    const paramCell = document.createElement('td');
+                    paramCell.textContent = characteristic;
+                    row.appendChild(paramCell);
                     
                     // Value cell
                     const valueCell = document.createElement('td');
@@ -765,9 +772,13 @@ class OptoGridApp {
                     }
                     row.appendChild(writeCell);
                     
-                    // Unit cell
+                    // Unit cell (fix Pulse Width unit)
                     const unitCell = document.createElement('td');
-                    unitCell.textContent = unit;
+                    let displayUnit = unit;
+                    if (characteristic === 'Pulse Width') {
+                        displayUnit = 'ms'; // Override unit for Pulse Width
+                    }
+                    unitCell.textContent = displayUnit;
                     row.appendChild(unitCell);
                     
                     this.elements.gattTableBody.appendChild(row);

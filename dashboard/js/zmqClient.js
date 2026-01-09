@@ -309,14 +309,6 @@ class ZMQClient {
         return this.sendRequest('optogrid.trigger');
     }
     
-    sendLedSelectionCommand(selection) {
-        return this.sendRequest('optogrid.led_selection', { value: selection });
-    }
-    
-    sendLedStateCommand(ledType, state) {
-        return this.sendRequest(`optogrid.${ledType}_led`, { state });
-    }
-    
     sendImuEnableCommand(enabled) {
         return this.sendRequest('optogrid.imu_enable', { enabled });
     }

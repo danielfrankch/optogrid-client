@@ -34602,3 +34602,146 @@ operable program or batch file.
 2026-01-07 17:24:56,322 - INFO - ZMQ closed
 2026-01-07 17:24:56,322 - INFO - Cleaning up resources...
 2026-01-07 17:24:56,322 - INFO - ZMQ closed
+2026-01-09 14:33:08,274 - INFO - ZMQ REP server listening on tcp://10.97.234.223:5555...
+2026-01-09 14:33:08,275 - INFO - ZMQ PUB server publishing on tcp://10.97.234.223:5556...
+2026-01-09 14:33:08,275 - INFO - OptoGrid Headless Client Started
+2026-01-09 14:33:12,870 - INFO - Received ZMQ command: optogrid.status
+2026-01-09 14:33:13,907 - INFO - Received ZMQ command: optogrid.scan
+2026-01-09 14:33:13,908 - INFO - Scanning for BLE devices...
+2026-01-09 14:33:18,030 - INFO - No BLE devices containing 'O' found
+2026-01-09 14:33:21,201 - INFO - Received ZMQ command: optogrid.scan
+2026-01-09 14:33:21,201 - INFO - Scanning for BLE devices...
+2026-01-09 14:33:25,259 - INFO - Found devices: ['JON-O-0001 (07122822-85FD-2F87-A86C-C6CE03CC76F8)']
+2026-01-09 14:33:27,151 - INFO - Received ZMQ command: optogrid.connect = 07122822-85FD-2F87-A86C-C6CE03CC76F8
+2026-01-09 14:33:27,152 - INFO - Connecting directly to device address: 07122822-85FD-2F87-A86C-C6CE03CC76F8
+2026-01-09 14:33:30,008 - INFO - BLE notifications enabled
+2026-01-09 14:33:30,073 - INFO - EKF filter frequency set to 100 Hz
+2026-01-09 14:33:30,428 - INFO - Magnetometer calibration file not found: data/JON-O-0001 Calibration.csv
+2026-01-09 14:33:30,429 - INFO - Using default calibration (no offset correction)
+2026-01-09 14:33:30,429 - INFO - Connected to JON-O-0001 at 07122822-85FD-2F87-A86C-C6CE03CC76F8
+2026-01-09 14:33:30,440 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-09 14:33:31,190 - INFO - Received ZMQ command: optogrid.readbattery
+2026-01-09 14:33:31,310 - INFO - Received ZMQ command: optogrid.readuLEDCheck
+2026-01-09 14:33:31,388 - INFO - uLED Check: 18446744073709551615
+2026-01-09 14:33:33,240 - INFO - Received ZMQ command: optogrid.status
+2026-01-09 14:33:33,252 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-09 14:33:34,010 - INFO - Received ZMQ command: optogrid.readbattery
+2026-01-09 14:33:34,131 - INFO - Received ZMQ command: optogrid.readuLEDCheck
+2026-01-09 14:33:34,179 - INFO - uLED Check: 18446744073709551615
+2026-01-09 14:33:38,301 - INFO - Received ZMQ command: optogrid.program
+2026-01-09 14:33:38,349 - INFO - Written sequence_length: 1
+2026-01-09 14:33:38,409 - INFO - Written led_selection: 0
+2026-01-09 14:33:38,469 - INFO - Written duration: 550
+2026-01-09 14:33:38,532 - INFO - Written period: 100
+2026-01-09 14:33:38,589 - INFO - Written pulse_width: 1
+2026-01-09 14:33:38,648 - INFO - Written amplitude: 100
+2026-01-09 14:33:38,709 - INFO - Written pwm_frequency: 50000
+2026-01-09 14:33:38,770 - INFO - Written ramp_up: 0
+2026-01-09 14:33:38,829 - INFO - Written ramp_down: 0
+2026-01-09 14:33:38,840 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-09 14:33:39,681 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-09 14:33:39,729 - INFO - Sent opto trigger
+2026-01-09 14:33:45,074 - INFO - Received ZMQ command: optogrid.program
+2026-01-09 14:33:45,128 - INFO - Written sequence_length: 1
+2026-01-09 14:33:45,188 - INFO - Written led_selection: 0
+2026-01-09 14:33:45,248 - INFO - Written duration: 550
+2026-01-09 14:33:45,308 - INFO - Written period: 10
+2026-01-09 14:33:45,370 - INFO - Written pulse_width: 1
+2026-01-09 14:33:45,428 - INFO - Written amplitude: 100
+2026-01-09 14:33:45,488 - INFO - Written pwm_frequency: 50000
+2026-01-09 14:33:45,548 - INFO - Written ramp_up: 0
+2026-01-09 14:33:45,608 - INFO - Written ramp_down: 0
+2026-01-09 14:33:45,619 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-09 14:33:48,999 - INFO - Received ZMQ command: optogrid.program
+2026-01-09 14:33:49,059 - INFO - Written sequence_length: 1
+2026-01-09 14:33:49,119 - INFO - Written led_selection: 1729382256910270464
+2026-01-09 14:33:49,179 - INFO - Written duration: 550
+2026-01-09 14:33:49,239 - INFO - Written period: 10
+2026-01-09 14:33:49,301 - INFO - Written pulse_width: 1
+2026-01-09 14:33:49,360 - INFO - Written amplitude: 100
+2026-01-09 14:33:49,420 - INFO - Written pwm_frequency: 50000
+2026-01-09 14:33:49,479 - INFO - Written ramp_up: 0
+2026-01-09 14:33:49,541 - INFO - Written ramp_down: 0
+2026-01-09 14:33:49,553 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-09 14:33:50,394 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-09 14:33:50,439 - INFO - Sent opto trigger
+2026-01-09 14:33:51,446 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-09 14:33:51,488 - INFO - Sent opto trigger
+2026-01-09 14:33:52,948 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-09 14:33:52,988 - INFO - Sent opto trigger
+2026-01-09 14:33:54,050 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-09 14:33:54,098 - INFO - Sent opto trigger
+2026-01-09 14:33:55,573 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-09 14:33:55,628 - INFO - Sent opto trigger
+2026-01-09 14:33:56,762 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-09 14:33:56,798 - INFO - Sent opto trigger
+2026-01-09 14:33:57,965 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-09 14:33:58,030 - INFO - Sent opto trigger
+2026-01-09 14:33:59,593 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-09 14:33:59,649 - INFO - Sent opto trigger
+2026-01-09 14:34:11,615 - INFO - Received ZMQ command: optogrid.program
+2026-01-09 14:34:11,678 - INFO - Written sequence_length: 1
+2026-01-09 14:34:11,738 - INFO - Written led_selection: 18374686479671623680
+2026-01-09 14:34:11,798 - INFO - Written duration: 550
+2026-01-09 14:34:11,858 - INFO - Written period: 10
+2026-01-09 14:34:11,918 - INFO - Written pulse_width: 1
+2026-01-09 14:34:11,978 - INFO - Written amplitude: 100
+2026-01-09 14:34:12,039 - INFO - Written pwm_frequency: 50000
+2026-01-09 14:34:12,099 - INFO - Written ramp_up: 0
+2026-01-09 14:34:12,158 - INFO - Written ramp_down: 0
+2026-01-09 14:34:12,170 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-09 14:34:13,102 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-09 14:34:13,148 - INFO - Sent opto trigger
+2026-01-09 14:34:14,302 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-09 14:34:14,348 - INFO - Sent opto trigger
+2026-01-09 14:34:15,596 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-09 14:34:15,638 - INFO - Sent opto trigger
+2026-01-09 14:34:17,117 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-09 14:34:17,169 - INFO - Sent opto trigger
+2026-01-09 14:34:18,469 - INFO - Received ZMQ command: optogrid.toggleStatusLED = 0
+2026-01-09 14:34:18,518 - INFO - Status LED turned off
+2026-01-09 14:34:19,242 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-09 14:34:19,300 - INFO - Sent opto trigger
+2026-01-09 14:34:21,409 - INFO - Received ZMQ command: optogrid.trigger
+2026-01-09 14:34:21,458 - INFO - Sent opto trigger
+2026-01-09 14:38:21,866 - INFO - Received ZMQ command: optogrid.status
+2026-01-09 14:38:21,878 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-09 14:38:22,673 - INFO - Received ZMQ command: optogrid.readbattery
+2026-01-09 14:38:22,791 - INFO - Received ZMQ command: optogrid.readuLEDCheck
+2026-01-09 14:38:22,841 - INFO - uLED Check: 18446744073709551615
+2026-01-09 14:38:31,190 - INFO - Received ZMQ command: optogrid.status
+2026-01-09 14:38:31,201 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-09 14:38:31,942 - INFO - Received ZMQ command: optogrid.readbattery
+2026-01-09 14:38:32,063 - INFO - Received ZMQ command: optogrid.readuLEDCheck
+2026-01-09 14:38:32,112 - INFO - uLED Check: 18446744073709551615
+2026-01-09 14:39:30,404 - INFO - Received ZMQ command: optogrid.status
+2026-01-09 14:39:30,416 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-09 14:39:31,189 - INFO - Received ZMQ command: optogrid.readbattery
+2026-01-09 14:39:31,308 - INFO - Received ZMQ command: optogrid.readuLEDCheck
+2026-01-09 14:39:31,356 - INFO - uLED Check: 18446744073709551615
+2026-01-09 14:48:04,885 - INFO - Received ZMQ command: optogrid.status
+2026-01-09 14:48:04,897 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-09 14:48:05,608 - INFO - Received ZMQ command: optogrid.readbattery
+2026-01-09 14:48:05,728 - INFO - Received ZMQ command: optogrid.readuLEDCheck
+2026-01-09 14:48:05,777 - INFO - uLED Check: 18446744073709551615
+2026-01-09 14:48:41,145 - INFO - Received ZMQ command: optogrid.status
+2026-01-09 14:48:41,157 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-09 14:48:41,878 - INFO - Received ZMQ command: optogrid.readbattery
+2026-01-09 14:48:41,998 - INFO - Received ZMQ command: optogrid.readuLEDCheck
+2026-01-09 14:48:42,047 - INFO - uLED Check: 18446744073709551615
+2026-01-09 14:48:47,772 - INFO - Received ZMQ command: optogrid.readuLEDCheck
+2026-01-09 14:48:47,808 - INFO - uLED Check: 18446744073709551615
+2026-01-09 14:48:48,701 - INFO - Received ZMQ command: optogrid.readuLEDCheck
+2026-01-09 14:48:48,741 - INFO - uLED Check: 18446744073709551615
+2026-01-09 14:52:16,311 - INFO - Received ZMQ command: optogrid.status
+2026-01-09 14:52:16,323 - INFO - Received ZMQ command: optogrid.gattread
+2026-01-09 14:52:17,075 - INFO - Received ZMQ command: optogrid.readbattery
+2026-01-09 14:52:17,194 - INFO - Received ZMQ command: optogrid.readuLEDCheck
+2026-01-09 14:52:17,243 - INFO - uLED Check: 18446744073709551615
+2026-01-09 14:52:25,025 - INFO - Received signal 2, shutting down...
+2026-01-09 14:52:25,035 - INFO - Cleaning up resources...
+2026-01-09 14:52:25,036 - WARNING - BLE device disconnected unexpectedly at sample 0
+2026-01-09 14:52:25,036 - INFO - BLE disconnected
+2026-01-09 14:52:25,037 - INFO - ZMQ closed
+2026-01-09 14:52:25,037 - INFO - Cleaning up resources...
+2026-01-09 14:52:25,037 - INFO - ZMQ closed

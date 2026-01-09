@@ -150,8 +150,9 @@ class BrainMapVisualization {
     setupEventListeners() {
         this.canvas.addEventListener('click', (event) => {
             const rect = this.canvas.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
+            // Get mouse coordinates relative to canvas with proper scaling
+            const x = (event.clientX - rect.left) * (this.canvasWidth / rect.width);
+            const y = (event.clientY - rect.top) * (this.canvasHeight / rect.height);
             
             // Find clicked LED
             for (const ledPos of this.ledPositions) {
@@ -166,8 +167,9 @@ class BrainMapVisualization {
         // Add cursor pointer when hovering over LEDs
         this.canvas.addEventListener('mousemove', (event) => {
             const rect = this.canvas.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
+            // Get mouse coordinates relative to canvas with proper scaling
+            const x = (event.clientX - rect.left) * (this.canvasWidth / rect.width);
+            const y = (event.clientY - rect.top) * (this.canvasHeight / rect.height);
             
             let overLed = false;
             for (const ledPos of this.ledPositions) {
@@ -178,6 +180,7 @@ class BrainMapVisualization {
                 }
             }
             
+            this.canvas.style.cursor = overLed ? 'pointer' : 'default';
             this.canvas.style.cursor = overLed ? 'pointer' : 'default';
         });
     }

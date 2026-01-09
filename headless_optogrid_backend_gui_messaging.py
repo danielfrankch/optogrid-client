@@ -1095,7 +1095,7 @@ class HeadlessOptoGridClient:
                 for subjid, files in subjid_files.items():
                     try:
                         # Create remote directory and rsync files
-                        remote_path = f"http://int.deneuro.org/ogma/IMU/{subjid}/"
+                        remote_path = f"ogma:/ceph/ogma/IMU/{subjid}/"
                         rsync_cmd = f"rsync -av --remove-source-files {' '.join(files)} {remote_path}"
                         
                         self.logger.info(f"Rsyncing {len(files)} files for subjid {subjid}")
