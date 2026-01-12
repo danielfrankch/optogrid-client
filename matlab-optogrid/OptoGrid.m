@@ -100,11 +100,7 @@ classdef OptoGrid < handle
 
         function [status_info, success] = status(obj)
             obj.socket.sendmsg('optogrid.status');
-            
-            % Default values
-            success = 0;
-            status_info = '';
-            
+
             try
                 reply = obj.socket.waitformsg();
                 status_info = reply;
