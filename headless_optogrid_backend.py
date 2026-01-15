@@ -906,8 +906,10 @@ class HeadlessOptoGridClient:
             
             os.makedirs("data/imu_session", exist_ok=True)
             
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"data/imu_session/{subjid}_{sessid}_{deviceid}_{timestamp}.parquet"
+            timestamp = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+            # Ensure sessid is formatted as integer to avoid scientific notation
+            sessid_int = int(float(sessid)) if isinstance(sessid, str) else int(sessid)
+            filename = f"data/imu_session/{subjid}_{sessid_int}_{deviceid}_{timestamp}.parquet"
             
             # Create column structure for parquet
             self.imu_data_columns = [
