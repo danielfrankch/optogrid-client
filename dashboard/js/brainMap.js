@@ -14,7 +14,14 @@ class BrainMapVisualization {
         this.ledWidth = 12;
         this.ledHeight = 23
         
+        // Drag selection state
+        this.isDragging = false;
+        this.dragStart = { x: 0, y: 0 };
+        this.dragEnd = { x: 0, y: 0 };
+        this.selectionBox = null;
+        
         this.setupCanvas();
+        this.createOverlayCanvas();
         this.calculateLedPositions();
         this.setupEventListeners();
         this.draw();
@@ -34,6 +41,28 @@ class BrainMapVisualization {
         
         this.canvasWidth = 358;
         this.canvasHeight = 300;
+    }
+    
+    createOverlayCanvas() {
+        // Create overlay canvas for selection box
+        this.overlayCanvas = document.createElement('canvas');
+        this.overlayCtx = this.overlayCanvas.getContext('2d');
+        
+        const dpr = window.devicePixelRatio || 1;
+        this.overlayCanvas.width = 358 * dpr;
+        this.overlayCanvas.height = 300 * dpr;
+        this.overlayCtx.scale(dpr, dpr);
+        
+        // Position overlay canvas on top of main canvas
+        this.overlayCanvas.style.position = 'absolute';
+        this.overlayCanvas.style.left = this.canvas.offsetLeft + 'px';
+        this.overlayCanvas.style.top = this.canvas.offsetTop + 'px';
+        this.overlayCanvas.style.width = 358 + 'px';
+        this.overlayCanvas.style.height = 300 + 'px';
+        this.overlayCanvas.style.pointerEvents = 'none';
+        
+        // Insert overlay canvas after the main canvas
+        this.canvas.parentNode.insertBefore(this.overlayCanvas, this.canvas.nextSibling);
     }
     
     calculateLedPositions() {
@@ -148,40 +177,82 @@ class BrainMapVisualization {
     }
     
     setupEventListeners() {
-        this.canvas.addEventListener('click', (event) => {
+        // Mouse down - start drag selection
+        this.canvas.addEventListener('mousedown', (event) => {
             const rect = this.canvas.getBoundingClientRect();
-            // Get mouse coordinates relative to canvas with proper scaling
             const x = (event.clientX - rect.left) * (this.canvasWidth / rect.width);
             const y = (event.clientY - rect.top) * (this.canvasHeight / rect.height);
             
-            // Find clicked LED
-            for (const ledPos of this.ledPositions) {
-                const [x1, y1, x2, y2] = ledPos.coords;
-                if (x >= x1 && x <= x2 && y >= y1 && y <= y2) {
-                    this.onLedClicked(ledPos.bit);
-                    break;
+            this.isDragging = true;
+            this.dragStart = { x, y };
+            this.dragEnd = { x, y };
+        });
+        
+        // Mouse move - update drag selection
+        this.canvas.addEventListener('mousemove', (event) => {
+            const rect = this.canvas.getBoundingClientRect();
+            const x = (event.clientX - rect.left) * (this.canvasWidth / rect.width);
+            const y = (event.clientY - rect.top) * (this.canvasHeight / rect.height);
+            
+            if (this.isDragging) {
+                this.dragEnd = { x, y };
+                this.drawSelectionBoxOverlay();
+            } else {
+                // Update cursor when hovering over LEDs
+                let overLed = false;
+                for (const ledPos of this.ledPositions) {
+                    const [x1, y1, x2, y2] = ledPos.coords;
+                    if (x >= x1 && x <= x2 && y >= y1 && y <= y2) {
+                        overLed = true;
+                        break;
+                    }
                 }
+                this.canvas.style.cursor = overLed ? 'pointer' : 'crosshair';
             }
         });
         
-        // Add cursor pointer when hovering over LEDs
-        this.canvas.addEventListener('mousemove', (event) => {
-            const rect = this.canvas.getBoundingClientRect();
-            // Get mouse coordinates relative to canvas with proper scaling
-            const x = (event.clientX - rect.left) * (this.canvasWidth / rect.width);
-            const y = (event.clientY - rect.top) * (this.canvasHeight / rect.height);
-            
-            let overLed = false;
-            for (const ledPos of this.ledPositions) {
-                const [x1, y1, x2, y2] = ledPos.coords;
-                if (x >= x1 && x <= x2 && y >= y1 && y <= y2) {
-                    overLed = true;
-                    break;
+        // Mouse up - complete drag selection
+        this.canvas.addEventListener('mouseup', (event) => {
+            if (this.isDragging) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = (event.clientX - rect.left) * (this.canvasWidth / rect.width);
+                const y = (event.clientY - rect.top) * (this.canvasHeight / rect.height);
+                
+                this.dragEnd = { x, y };
+                
+                // Check if it was a click (minimal movement) or a drag
+                const dragDistance = Math.sqrt(
+                    Math.pow(this.dragEnd.x - this.dragStart.x, 2) + 
+                    Math.pow(this.dragEnd.y - this.dragStart.y, 2)
+                );
+                
+                if (dragDistance < 5) {
+                    // Treat as click - toggle single LED
+                    for (const ledPos of this.ledPositions) {
+                        const [x1, y1, x2, y2] = ledPos.coords;
+                        if (x >= x1 && x <= x2 && y >= y1 && y <= y2) {
+                            this.onLedClicked(ledPos.bit);
+                            break;
+                        }
+                    }
+                } else {
+                    // Treat as drag - toggle all LEDs in selection box
+                    this.toggleLedsInBox();
                 }
+                
+                this.isDragging = false;
+                this.clearOverlay();
+                this.draw();
             }
-            
-            this.canvas.style.cursor = overLed ? 'pointer' : 'default';
-            this.canvas.style.cursor = overLed ? 'pointer' : 'default';
+        });
+        
+        // Mouse leave - cancel drag selection
+        this.canvas.addEventListener('mouseleave', () => {
+            if (this.isDragging) {
+                this.isDragging = false;
+                this.clearOverlay();
+                this.draw();
+            }
         });
     }
     
@@ -193,6 +264,65 @@ class BrainMapVisualization {
         // Notify the main app
         if (window.optoGridApp) {
             window.optoGridApp.onLedClicked(bitPosition);
+        }
+    }
+    
+    toggleLedsInBox() {
+        // Calculate selection box bounds
+        const minX = Math.min(this.dragStart.x, this.dragEnd.x);
+        const maxX = Math.max(this.dragStart.x, this.dragEnd.x);
+        const minY = Math.min(this.dragStart.y, this.dragEnd.y);
+        const maxY = Math.max(this.dragStart.y, this.dragEnd.y);
+        
+        // Find all LEDs within the selection box
+        const ledsToToggle = [];
+        for (const ledPos of this.ledPositions) {
+            const ledCenterX = ledPos.x + this.ledWidth / 2;
+            const ledCenterY = ledPos.y + this.ledHeight / 2;
+            
+            if (ledCenterX >= minX && ledCenterX <= maxX && 
+                ledCenterY >= minY && ledCenterY <= maxY) {
+                ledsToToggle.push(ledPos.bit);
+            }
+        }
+        
+        // Toggle all selected LEDs and notify for each one
+        for (const bit of ledsToToggle) {
+            this.ledSelectionValue ^= (1n << BigInt(bit));
+            
+            // Notify the main app for each LED change
+            if (window.optoGridApp) {
+                window.optoGridApp.onLedClicked(bit);
+            }
+        }
+    }
+    
+    drawSelectionBoxOverlay() {
+        if (!this.isDragging || !this.overlayCanvas) return;
+        
+        // Clear overlay canvas
+        this.overlayCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+        
+        const minX = Math.min(this.dragStart.x, this.dragEnd.x);
+        const maxX = Math.max(this.dragStart.x, this.dragEnd.x);
+        const minY = Math.min(this.dragStart.y, this.dragEnd.y);
+        const maxY = Math.max(this.dragStart.y, this.dragEnd.y);
+        
+        // Draw selection box on overlay
+        this.overlayCtx.strokeStyle = 'rgba(255, 255, 0, 0.8)';
+        this.overlayCtx.fillStyle = 'rgba(255, 255, 0, 0.1)';
+        this.overlayCtx.lineWidth = 2;
+        this.overlayCtx.setLineDash([5, 5]);
+        
+        this.overlayCtx.fillRect(minX, minY, maxX - minX, maxY - minY);
+        this.overlayCtx.strokeRect(minX, minY, maxX - minX, maxY - minY);
+        
+        this.overlayCtx.setLineDash([]);
+    }
+    
+    clearOverlay() {
+        if (this.overlayCanvas) {
+            this.overlayCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
         }
     }
     
