@@ -900,12 +900,27 @@ class HeadlessOptoGridClient:
             import pyarrow as pa
             import pyarrow.parquet as pq
             
+            # Validate and sanitize input parameters
+            if not subjid or subjid.strip() == "":
+                subjid = "NoSubjID"
+            if not sessid or sessid.strip() == "":
+                sessid = "NoSessID" 
+            if not deviceid or deviceid.strip() == "":
+                deviceid = "NoDeviceID"
+
             os.makedirs("data/imu_session", exist_ok=True)
             
             timestamp = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
             # Ensure sessid is formatted as integer to avoid scientific notation
-            sessid_int = int(float(sessid)) if isinstance(sessid, str) else int(sessid)
-            filename = f"data/imu_session/{subjid}_{sessid_int}_{deviceid}_{timestamp}.parquet"
+            try:
+                if str(sessid) == "NoSessID":
+                    sessid_int = 0  # Default value for "NoSessID"
+                else:
+                    sessid_int = int(float(str(sessid))) if str(sessid) else 0
+            except (ValueError, TypeError):
+                self.logger.warning(f"Invalid sessid '{sessid}', using 0")
+                sessid_int = 0
+                filename = f"data/imu_session/{subjid}_{sessid_int}_{deviceid}_{timestamp}.parquet"
             
             # Create column structure for parquet
             self.imu_data_columns = [
