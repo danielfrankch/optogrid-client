@@ -1015,7 +1015,10 @@ class HeadlessOptoGridClient:
         
         # Record a sync event in IMU logging
         if self.imu_logging_active:
-            self.handle_sync(64)
+            self.handle_sync(int(65536))
+        else:
+            self.logger.warning("IMU logging not active, sync event not recorded")
+            self.handle_sync(int(65536))
 
     async def enable_imu(self, subjid="NoSubjID", sessid="NoSessID") -> str:
         """Enable IMU and start logging"""
