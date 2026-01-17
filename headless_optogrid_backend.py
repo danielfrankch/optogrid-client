@@ -920,7 +920,8 @@ class HeadlessOptoGridClient:
             except (ValueError, TypeError):
                 self.logger.warning(f"Invalid sessid '{sessid}', using 0")
                 sessid_int = 0
-                filename = f"data/imu_session/{subjid}_{sessid_int}_{deviceid}_{timestamp}.parquet"
+            
+            filename = f"data/imu_session/{subjid}_{sessid_int}_{deviceid}_{timestamp}.parquet"
             
             # Create column structure for parquet
             self.imu_data_columns = [
