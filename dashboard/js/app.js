@@ -849,9 +849,9 @@ class OptoGridApp {
                         // Update IMU visualization with roll, pitch, yaw
                         this.imuVisualization.updateIMU(data.roll, data.pitch, data.yaw, null);
                         // Log IMU data occasionally (every 100th update to avoid spam)
-                        if (Math.random() < 0.01) { // 1% chance to log
-                            this.log(`IMU Update - Roll: ${data.roll.toFixed(1)}°, Pitch: ${data.pitch.toFixed(1)}°, Yaw: ${data.yaw.toFixed(1)}°`);
-                        }
+                        // if (Math.random() < 0.01) { // 1% chance to log
+                        //     this.log(`IMU Update - Roll: ${data.roll.toFixed(1)}°, Pitch: ${data.pitch.toFixed(1)}°, Yaw: ${data.yaw.toFixed(1)}°`);
+                        // }
                     }
                     break;
 

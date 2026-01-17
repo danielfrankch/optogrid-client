@@ -277,10 +277,6 @@ class HeadlessOptoGridClient:
             except Exception as e:
                 self.logger.error(f"Failed to send trigger from GPIO: {e}")
 
-        # Record a sync event in IMU logging
-        if self.imu_logging_active:
-            self.handle_sync(64)
-
         print(f"[GPIOZERO] Rising edge detected on GPIO {self.gpio_pin}")
         self.logger.info(f"Rising edge detected on GPIO {self.gpio_pin}")
 
@@ -694,13 +690,13 @@ class HeadlessOptoGridClient:
             imu_values = [int(x.strip()) for x in imu_values_str.split(",")]
             self.imu_counter += 1
             
-            if self.imu_counter % 100 == 0:  # Log every 100th message
+            if self.imu_counter % 30000 == 0:  # Log every 30000th message
                 self.logger.debug(f"IMU Data: {imu_values_str}")
 
             # Process orientation using AHRS sensor fusion
             smooth_roll, smooth_pitch, smooth_yaw = self.process_imu_orientation(imu_values)
 
-            if self.imu_counter % 100 == 0:  # Log orientation every 100th sample
+            if self.imu_counter % 30000 == 0:  # Log orientation every 30000th sample
                 self.logger.info(f"Orientation - Roll: {smooth_roll:.1f}°, Pitch: {smooth_pitch:.1f}°, Yaw: {smooth_yaw:.1f}°")
 
             # Buffer IMU data if logging is enabled
@@ -999,6 +995,10 @@ class HeadlessOptoGridClient:
         encoded_value = encode_value(trigger_uuid, "True")
         await self.client.write_gatt_char(trigger_uuid, encoded_value)
         self.logger.info("Sent opto trigger")
+        
+        # Record a sync event in IMU logging
+        if self.imu_logging_active:
+            self.handle_sync(64)
 
     async def enable_imu(self, subjid="NoSubjID", sessid="NoSessID") -> str:
         """Enable IMU and start logging"""
