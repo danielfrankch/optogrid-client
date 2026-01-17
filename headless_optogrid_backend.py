@@ -896,16 +896,17 @@ class HeadlessOptoGridClient:
             self.logger.warning("IMU logging already active")
             return None
             
+        filename = None  # Initialize filename variable
         try:
             import pyarrow as pa
             import pyarrow.parquet as pq
             
             # Validate and sanitize input parameters
-            if not subjid or subjid.strip() == "":
+            if not subjid or str(subjid).strip() == "":
                 subjid = "NoSubjID"
-            if not sessid or sessid.strip() == "":
+            if not sessid or str(sessid).strip() == "":
                 sessid = "NoSessID" 
-            if not deviceid or deviceid.strip() == "":
+            if not deviceid or str(deviceid).strip() == "":
                 deviceid = "NoDeviceID"
 
             os.makedirs("data/imu_session", exist_ok=True)

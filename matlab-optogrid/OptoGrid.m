@@ -16,7 +16,7 @@ classdef OptoGrid < handle
         ZMQSocket = 'tcp://localhost:5555'
         socket
         trigger_success_flag = 0
-        timeout = 20000 % Timeout in milliseconds (add this property)
+        timeout = 60000 % Timeout in milliseconds (add this property)
     end
 
     methods
@@ -42,12 +42,18 @@ classdef OptoGrid < handle
                     if contains(reply, sprintf('%s Connected', obj.DeviceName))
                         success = 1;
                         return;
+                    else 
+                        fprintf('Connect attempt %d failed: %s \n',attempt,reply)
                     end
                 catch
                     % Timeout or other error occurred
-                    continue;
+                    sprintf('ZMQ timeout, check BLE backend server')
+                    obj.cleanup;
+                    obj.start;
+
                 end
             end
+            sprintf('10 connect attempted reached, no device connected')
         end
 
 
