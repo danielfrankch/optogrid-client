@@ -30,7 +30,7 @@ class OptoGridApp {
         // Sync with backend state on page load (with delay for ZMQ initialization)
         setTimeout(() => {
             this.syncWithBackendState();
-        }, 400);
+        }, 600);
     }
     
     initializeElements() {
@@ -201,7 +201,7 @@ class OptoGridApp {
         let devices = [];
         try {
             if (typeof response === 'string') {
-                if (response.trim() === 'No Bluetooth devices found') {
+                if (response.trim() === 'No BLE devices found') {
                     devices = [];
                 } else {
                     // Split by newlines and filter out empty lines
