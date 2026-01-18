@@ -270,12 +270,15 @@ class HeadlessOptoGridClient:
     
     def gpio_trigger_callback(self):
         """Callback function for GPIO interrupt"""
+        
         # Trigger device if connected
         if self.client and self.client.is_connected:
             try:
                 asyncio.run_coroutine_threadsafe(self.do_send_trigger(), self.ble_loop)
             except Exception as e:
                 self.logger.error(f"Failed to send trigger from GPIO: {e}")
+        else:
+            self.logger.warning("GPIO trigger ignored - device not connected")
 
         print(f"[GPIOZERO] Rising edge detected on GPIO {self.gpio_pin}")
         self.logger.info(f"Rising edge detected on GPIO {self.gpio_pin}")
