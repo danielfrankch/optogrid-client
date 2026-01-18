@@ -33,28 +33,34 @@ classdef OptoGrid < handle
             obj.socket.socket.setReceiveTimeOut(obj.timeout);
         end
 
-        function success = connect(obj)
+        function success = connect(obj, maxAttempts)
+        
+            % Default number of attempts
+            if nargin < 2 || isempty(maxAttempts)
+                maxAttempts = 5;
+            end
             success = 0;
-            for attempt = 1:5
+        
+            for attempt = 1:maxAttempts
                 obj.socket.sendmsg(sprintf('optogrid.connect = %s', obj.DeviceName));
                 try
                     reply = obj.socket.waitformsg();
                     if contains(reply, sprintf('%s Connected', obj.DeviceName))
                         success = 1;
                         return;
-                    else 
-                        fprintf('Connect attempt %d failed: %s \n',attempt,reply)
+                    else
+                        fprintf('Connect attempt %d failed: %s\n', attempt, reply);
                     end
                 catch
                     % Timeout or other error occurred
-                    sprintf('ZMQ timeout, check BLE backend server')
+                    fprintf('ZMQ timeout, check BLE backend server\n');
                     obj.cleanup;
                     obj.start;
-
                 end
             end
-            sprintf('10 connect attempted reached, no device connected')
+            fprintf('%d connect attempts reached, no device connected\n', maxAttempts);
         end
+
 
 
         function success = enableIMU(obj)

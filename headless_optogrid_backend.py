@@ -1040,10 +1040,17 @@ class HeadlessOptoGridClient:
             return "Not connected to device"
             
         try:
-            # Enable IMU
+            # Check if IMU is already enabled
             imu_enable_uuid = "56781700-5678-1234-1234-5678abcdeff0"
-            encoded_value = encode_value(imu_enable_uuid, "True")
-            await self.client.write_gatt_char(imu_enable_uuid, encoded_value)
+            current_state = await self.read_characteristic(imu_enable_uuid)
+            
+            if current_state.lower() == "true":
+                self.logger.info("IMU is already enabled")
+            else:
+                # Enable IMU
+                encoded_value = encode_value(imu_enable_uuid, "True")
+                await self.client.write_gatt_char(imu_enable_uuid, encoded_value)
+                self.logger.info("IMU enabled")
             
             # Setup logging using new function
             if not self.imu_logging_active:
