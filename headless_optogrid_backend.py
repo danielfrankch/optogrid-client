@@ -268,21 +268,31 @@ class HeadlessOptoGridClient:
         except Exception as e:
             self.logger.error(f"Failed to setup GPIO {pin} using gpiozero: {e}")
     
-    async def gpio_trigger_callback(self):
+    def gpio_trigger_callback(self):
         """Callback function for GPIO interrupt"""
         # Trigger device if connected
         if self.client and self.client.is_connected:
             try:
-                # Send trigger immediately (no latency)
-                await self.do_send_trigger()
-                self.logger.info("GPIO trigger executed")
+                # Schedule trigger immediately (no latency)
+                future = asyncio.run_coroutine_threadsafe(self.do_send_trigger(), self.ble_loop)
+                # Add non-blocking callback to check result
+                future.add_done_callback(self._on_gpio_trigger_complete)
+                self.logger.info("GPIO trigger scheduled")
             except Exception as e:
-                self.logger.error(f"Failed to trigger from GPIO Interrupt: {e}")
+                self.logger.error(f"Failed to schedule trigger from GPIO: {e}")
         else:
             self.logger.warning("GPIO trigger ignored - device not connected")
 
         print(f"[GPIOZERO] Rising edge detected on GPIO {self.gpio_pin}")
         self.logger.info(f"Rising edge detected on GPIO {self.gpio_pin}")
+
+    def _on_gpio_trigger_complete(self, future):
+        """Handle GPIO trigger completion (success/failure)"""
+        try:
+            future.result()  # This will raise if there was an exception
+            self.logger.info("GPIO trigger executed successfully")
+        except Exception as e:
+            self.logger.error(f"GPIO trigger failed: {e}")
 
     def signal_handler(self, signum, frame):
         """Handle shutdown signals"""
