@@ -274,7 +274,7 @@ class HeadlessOptoGridClient:
         if self.client and self.client.is_connected:
             try:
                 # Schedule trigger immediately (no latency)
-                future = asyncio.run_coroutine_threadsafe(self.do_send_trigger(), self.ble_loop)
+                future = asyncio.run_coroutine_threadsafe(self.do_send_trigger(), self.loop)
                 # Add non-blocking callback to check result
                 future.add_done_callback(self._on_gpio_trigger_complete)
                 self.logger.info("GPIO trigger scheduled")
