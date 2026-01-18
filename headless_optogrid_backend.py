@@ -268,13 +268,13 @@ class HeadlessOptoGridClient:
         except Exception as e:
             self.logger.error(f"Failed to setup GPIO {pin} using gpiozero: {e}")
     
-    def gpio_trigger_callback(self):
+    async def gpio_trigger_callback(self):
         """Callback function for GPIO interrupt"""
         # Trigger device if connected
         if self.client and self.client.is_connected:
             try:
                 # Send trigger immediately (no latency)
-                self.do_send_trigger()
+                await self.do_send_trigger()
                 self.logger.info("GPIO trigger executed")
             except Exception as e:
                 self.logger.error(f"Failed to trigger from GPIO Interrupt: {e}")
