@@ -291,7 +291,7 @@ classdef OptoGrid < handle
             obj.socket.sendmsg(sprintf('optogrid.sync = %d', val));
             try
                 reply = obj.socket.waitformsg();
-                if contains(reply, 'Sync Written')
+                if contains(reply, 'Sync value written') || contains(reply, 'Sync queued')
                     success = 1;
                 else
                     success = 0;

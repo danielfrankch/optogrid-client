@@ -176,6 +176,8 @@ class HeadlessOptoGridClient:
         
         # IMU processing setup
         self.setup_imu_processing()
+        # Add sync queue for pending sync values
+        self.pending_sync_queue = []
         
         # Data buffers and file handling
         self.imu_data_buffer = []
@@ -209,6 +211,7 @@ class HeadlessOptoGridClient:
         signal.signal(signal.SIGTERM, self.signal_handler)
         
         self.running = True
+
         
     def start_ble_loop(self):
         """Start the dedicated BLE event loop"""
@@ -389,7 +392,9 @@ class HeadlessOptoGridClient:
                 
             elif "optogrid.sync" in message:
                 sync_value = int(message.split('=')[1].strip())
-                return self.handle_sync(sync_value)
+                return_handle_sync = self.handle_sync(sync_value)
+                self.logger.info(return_handle_sync)
+                return return_handle_sync
                 
             elif "optogrid.toggleStatusLED" in message:
                 # Parse value (should be 0 or 1)
@@ -723,8 +728,14 @@ class HeadlessOptoGridClient:
                         uncertainty = None
 
                 # Prepare data for logging
-                imu_data_with_sync = imu_values + [0]  # Add sync value (default 0)
-                
+                sync_value = 0  # Default sync value
+                if self.pending_sync_queue:
+                    sync_value = self.pending_sync_queue.pop(0)  # Take first queued sync
+                    self.logger.info(f"Applied sync value {sync_value} to sample {imu_values[0]}")
+
+                # Prepare data for logging with actual sync value
+                imu_data_with_sync = imu_values + [sync_value]
+            
                 battery_v = None
                 if self.current_battery_voltage is not None:
                     battery_v = self.current_battery_voltage
@@ -1021,18 +1032,20 @@ class HeadlessOptoGridClient:
             return f"Trigger failed: {str(e)}"
 
     async def do_send_trigger(self):
+        # Record a sync event in IMU logging
+        if self.imu_logging_active:
+            return_handle_sync = self.handle_sync(int(65536))
+            self.logger.info(return_handle_sync)
+        else:
+            self.logger.warning("IMU logging not active, sync event not recorded")
+
         """Perform the actual trigger operation"""
         trigger_uuid = "56781609-5678-1234-1234-5678abcdeff0"
         encoded_value = encode_value(trigger_uuid, "True")
         await self.client.write_gatt_char(trigger_uuid, encoded_value)
         self.logger.info("Sent opto trigger")
         
-        # Record a sync event in IMU logging
-        if self.imu_logging_active:
-            self.handle_sync(int(65536))
-        else:
-            self.logger.warning("IMU logging not active, sync event not recorded")
-            self.handle_sync(int(65536))
+        
 
     async def enable_imu(self, subjid="NoSubjID", sessid="NoSessID") -> str:
         """Enable IMU and start logging"""
@@ -1218,9 +1231,11 @@ class HeadlessOptoGridClient:
         """Handle sync value for IMU data"""
         if self.imu_data_buffer:
             self.imu_data_buffer[-1][10] = sync_value  # Update sync value in last sample
-            self.logger.info(f"Sync value {sync_value} written to IMU data")
-            return "Sync Written"
-        return "No IMU data buffer available"
+            return f"Sync value written to IMU data, value: {sync_value}"
+        else:
+            self.pending_sync_queue.append(sync_value)
+            self.logger.info(f"Sync value {sync_value} queued for next IMU sample")
+            return f"Sync queued, value: {sync_value}"
 
     async def program_device(self, program_data: dict) -> str:
         """Program device parameters"""
