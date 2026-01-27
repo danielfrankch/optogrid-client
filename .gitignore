@@ -1,6 +1,7 @@
 /optogrid-client-env/
 /optogrid-env/
-/data/
+/data/*.parquet
+/data/*.asv
 *.img
 /bak/
 *.log

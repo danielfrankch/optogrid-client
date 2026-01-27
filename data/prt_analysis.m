@@ -1,0 +1,102 @@
+%% Query data
+clear; clc;
+dbc = db.labdb.getConnection();
+
+% Opto experiments starts on 2025-07-16
+df = dbc.query(['SELECT a.* FROM prt.aleaepi4ab_fm_view a ' ...
+                'left join beh.sessview b on (a.sessid=b.sessid) ' ...
+                'WHERE a.firstChoice IS NOT NULL ' ...
+                'AND a.subjid NOT LIKE "%%-T-%%" ' ...
+                'AND a.trialtime >= "2026-01-27" ' ...
+                'AND a.isopto = 1 ']);
+
+% Take valid trials only
+df = df(~isnan(df.hit),:);
+%%
+subjids = unique(df.subjid);
+close all
+figure
+colors = lines(height(subjids));   % 6 distinct colours
+
+% Plot continuity of stimulation
+subplot(2,2,1)
+for i = 1:height(subjids)
+    dff = df(string(df.subjid)==subjids(i),:);
+    
+    dff = sortrows(dff,'trialnum');
+    
+    plot(dff.trialnum,str2double(dff.last_stim_time_ms)/1000,'LineWidth',2,'Color',colors(i,:));
+    hold on
+end
+title('Optogrid Stimulation Time')
+xlabel('Trial Count')
+ylabel('Last Stim Time (s)')
+
+% Plot time accuracy
+subplot(2,2,2)
+for i = 1:height(subjids)
+    dff = df(string(df.subjid)==subjids(i),:);
+    
+    dff = sortrows(dff,'trialnum');
+    sessid = dff.sessid(1);
+    peh_dff = get_session_state_timestamps(sessid,'settleIn_Sound_opto');
+    
+    scale_factor = (32/32.768); %Rounding of RTC counter
+    optogrid_stim_time = (scale_factor)*str2double(dff.last_stim_time_ms); %ms
+    
+    peh_stim_time = 1000*peh_dff{:,2}; %ms
+
+    Delta_time = optogrid_stim_time - peh_stim_time;
+    plot(dff.trialnum,Delta_time-Delta_time(1),'LineWidth',2,'Color',colors(i,:));
+    hold on
+end
+title('Optogrid Time Accuracy')
+xlabel('Trial Count')
+ylabel('Delta Time (ms)')
+
+% Plot battery 
+subplot(2,2,3)
+for i = 1:height(subjids)
+    dff = df(string(df.subjid)==subjids(i),:);
+    
+    dff = sortrows(dff,'trialnum');
+    
+    plot(dff.trialnum,str2double(dff.battery_mv)/1000,'LineWidth',1.5,'Color',colors(i,:));
+    hold on
+end
+title('Optogrid Battery')
+xlabel('Trial Count')
+ylabel('Battery Voltage (V)')
+
+% Plot uLED_check
+subplot(2,2,4)
+
+checks = df.uLED_check;
+
+% Get unique cases and their counts
+[uChecks, ~, idx] = unique(checks);
+counts = accumarray(idx, 1);
+
+% Sort by count (largest → smallest)
+[countsSorted, sortIdx] = sort(counts, 'descend');
+uChecksSorted = uChecks(sortIdx);
+
+% Convert all strings to Python integers (BigInt equivalent)
+pyInts = cellfun(@(s) py.int(s), uChecksSorted, 'UniformOutput', false);
+
+% Count number of 1 bits for each
+nLEDsWorking = cellfun(@(x) double(int32(py.bin(x).count('1'))), pyInts);
+
+% Plot
+bar(countsSorted)
+xlabel('uLED configuration (ranked)')
+ylabel('Number of cases')
+title('uLED check distributions')
+
+% Custom x-ticks: show number of working LEDs
+xticks(1:numel(nLEDsWorking))
+xticklabels(string(nLEDsWorking))
+xtickangle(45)
+
+title('uLED Check')
+
