@@ -54,7 +54,7 @@ title('Optogrid Time Accuracy')
 xlabel('Trial Count')
 ylabel('Delta Time (ms)')
 
-% Plot battery 
+%% Plot battery 
 subplot(2,2,3)
 for i = 1:height(subjids)
     dff = df(string(df.subjid)==subjids(i),:);
@@ -67,13 +67,15 @@ end
 title('Optogrid Battery')
 xlabel('Trial Count')
 ylabel('Battery Voltage (V)')
+ylim([3.5,4.2])
 
-% Plot uLED_check
+%% Plot uLED_check
 subplot(2,2,4)
 
 checks = df.uLED_check;
+subjids = df.subjid;  % table column of subject IDs
 
-% Get unique cases and their counts
+% Get unique uLED_check values and their counts
 [uChecks, ~, idx] = unique(checks);
 counts = accumarray(idx, 1);
 
@@ -87,16 +89,40 @@ pyInts = cellfun(@(s) py.int(s), uChecksSorted, 'UniformOutput', false);
 % Count number of 1 bits for each
 nLEDsWorking = cellfun(@(x) double(int32(py.bin(x).count('1'))), pyInts);
 
-% Plot
+% Plot bar chart
 bar(countsSorted)
-xlabel('uLED configuration (ranked)')
+xlabel('Number of working uLEDs')
 ylabel('Number of cases')
 title('uLED check distributions')
 
-% Custom x-ticks: show number of working LEDs
+% Custom x-ticks: number of working LEDs
 xticks(1:numel(nLEDsWorking))
 xticklabels(string(nLEDsWorking))
 xtickangle(45)
 
-title('uLED Check')
+% --- Add text annotation for each bar ---
+hold on
+
+for i = 1:numel(uChecksSorted)
+    % Find indices in df that match this uLED_check value
+    mask = strcmp(checks, uChecksSorted(i));
+    
+    % Get the corresponding subject IDs
+    subj_list = subjids(mask);
+    
+    % Get unique
+    unique_subj_list = unique(subj_list);
+
+    % Convert to comma-separated string (truncate if too long)
+    txt = strjoin(string(unique_subj_list), '\n ');
+    if strlength(txt) > 50
+        txt = extractBefore(txt, 50) + "...";  % truncate for readability
+    end
+    
+    % Place text above the bar
+    text(i, countsSorted(i)-10, txt, 'HorizontalAlignment', 'center', ...
+        'VerticalAlignment', 'middle', 'FontSize', 12)
+end
+
+hold off
 
