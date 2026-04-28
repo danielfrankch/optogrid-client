@@ -444,6 +444,15 @@ body {
     vertical-align: top;
 }
 
+/* GATT table - make Parameter column narrower */
+#gatt-table thead th:first-child,
+#gatt-table tbody td:first-child {
+    width: 150px;
+    max-width: 150px;
+    word-wrap: break-word;
+}
+
+
 #gatt-table tr:hover {
     background-color: #f8f9fa;
 }

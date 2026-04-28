@@ -18,6 +18,9 @@ class OptoGridApp {
         this.initializeElements();
         this.setupEventListeners();
         this.initializeLog();
+
+        // Initialize GATT table with defaults
+        this.initializeDefaultGattTable();
         
         // Initialize brain map and IMU visualization
         this.brainMap = new BrainMapVisualization('brain-map-canvas');
@@ -55,7 +58,25 @@ class OptoGridApp {
             gattTableBody: document.getElementById('gatt-table-body')
         };
     }
-    
+
+    initializeDefaultGattTable() {
+    // Create default CSV data with characteristic ranges/placeholders
+    const defaultGattCsv = `Service,Characteristic,UUID,Value,Unit
+    Opto Control,Sequence Length,56781600-5678-1234-1234-5678abcdeff0,1~10,count
+    Opto Control,LED Selection,56781601-5678-1234-1234-5678abcdeff0,0~2^64,bitmap
+    Opto Control,Duration,56781602-5678-1234-1234-5678abcdeff0,0~65535,ms
+    Opto Control,Period,56781603-5678-1234-1234-5678abcdeff0,0~65535,ms
+    Opto Control,Pulse Width,56781604-5678-1234-1234-5678abcdeff0,0~65535,ms
+    Opto Control,Amplitude,56781605-5678-1234-1234-5678abcdeff0,0~100,%
+    Opto Control,PWM Frequency,56781606-5678-1234-1234-5678abcdeff0,0~2^32,Hz
+    Opto Control,Ramp Up Time,56781607-5678-1234-1234-5678abcdeff0,0~65535,ms
+    Opto Control,Ramp Down Time,56781608-5678-1234-1234-5678abcdeff0,0~65535,ms`;
+
+    // Populate the GATT table with default values
+    this.parseAndPopulateGattTable(defaultGattCsv, true);
+    this.log('GATT table initialized with defaults (awaiting device data)');
+    }
+        
     setupEventListeners() {
         // Device control buttons
         this.elements.scanButton.addEventListener('click', () => this.startScan());
@@ -116,9 +137,6 @@ class OptoGridApp {
                     this.parseAndPopulateGattTable(response);
                     this.updateDeviceStatus(response);
                     
-                    // Extract LED Selection from GATT data and update brain map
-                    this.syncLedSelectionFromGattData(response);
-                    
                     this.log('State synchronized with backend');
                 } else {
                     this.log('Ready for new connection');
@@ -144,7 +162,9 @@ class OptoGridApp {
                     if (characteristic === 'LED Selection') {
                         // Update LED selection from backend data
                         try {
-                            this.ledSelectionValue = BigInt(value);
+                            // Extract last value if it's an array
+                            const lastValue = this.getLastArrayValue(value);
+                            this.ledSelectionValue = BigInt(lastValue);
                             this.brainMap.updateLedSelection(this.ledSelectionValue);
                             this.log(`LED Selection synced: ${this.ledSelectionValue}`);
                         } catch (e) {
@@ -345,6 +365,7 @@ class OptoGridApp {
         this.zmqClient.sendRequest('optogrid.gattread')
             .then(response => {
                 this.parseAndPopulateGattTable(response);
+                this.updateDeviceStatus(response);
                 this.elements.readButton.disabled = false;
                 this.log('Read all complete');
             })
@@ -368,9 +389,9 @@ class OptoGridApp {
         }
         
         // Debug: Log the collected settings to verify BigInt preservation
-        if (optoSettings.led_selection) {
-            this.log(`LED Selection value being sent: ${optoSettings.led_selection} (type: ${typeof optoSettings.led_selection})`);
-        }
+        // if (optoSettings.led_selection) {
+        //     this.log(`LED Selection value being sent: ${optoSettings.led_selection} (type: ${typeof optoSettings.led_selection})`);
+        // }
         
         // Send optogrid.program command first
         this.zmqClient.sendRequest('optogrid.program')
@@ -394,6 +415,7 @@ class OptoGridApp {
             .then(response => {
                 // Update the table with fresh values
                 this.parseAndPopulateGattTable(response);
+                this.updateDeviceStatus(response);
                 this.elements.writeButton.disabled = false;
                 this.log('Write complete, table refreshed');
             })
@@ -430,21 +452,42 @@ class OptoGridApp {
             const charName = charCell.textContent.trim();
             
             const settingKey = charToSettingMap[charName];
+
             if (settingKey) {
-                // Convert value to appropriate type
                 let convertedValue;
-                if (settingKey === 'led_selection') {
-                    // LED Selection should be uint64 - keep as string to preserve precision
-                    convertedValue = value; // Send as string to preserve 64-bit precision
-                } else if (settingKey === 'sequence_length' || settingKey === 'amplitude') {
-                    // These are typically integers
-                    convertedValue = parseInt(value);
+                
+                // Check if value is array-like (contains comma or space separator)
+                const isArrayInput = value.includes(',') || 
+                                    (value.includes(' ') && !value.includes('.'));
+                
+                if (isArrayInput) {
+                    // Parse as array
+                    const separator = value.includes(',') ? ',' : ' ';
+                    const arrayValues = value.split(separator).map(v => v.trim());
+                    
+                    if (settingKey === 'led_selection') {
+                        // Keep as string array for precision
+                        convertedValue = arrayValues.map(v => v);
+                    } else {
+                        // Parse as numbers
+                        convertedValue = arrayValues.map(v => {
+                            return settingKey === 'sequence_length' || settingKey === 'amplitude' 
+                                ? parseInt(v) 
+                                : parseFloat(v);
+                        }).filter(v => !isNaN(v));
+                    }
                 } else {
-                    // Duration, period, pulse_width, pwm_frequency, ramp_up, ramp_down are numbers
-                    convertedValue = parseFloat(value);
+                    // Single value
+                    if (settingKey === 'led_selection') {
+                        convertedValue = value;
+                    } else if (settingKey === 'sequence_length' || settingKey === 'amplitude') {
+                        convertedValue = parseInt(value);
+                    } else {
+                        convertedValue = parseFloat(value);
+                    }
                 }
                 
-                if (settingKey === 'led_selection' || !isNaN(convertedValue)) {
+                if (settingKey === 'led_selection' || !isNaN(convertedValue) || Array.isArray(convertedValue)) {
                     optoSettings[settingKey] = convertedValue;
                 }
             }
@@ -645,19 +688,10 @@ class OptoGridApp {
     }
     
     updateDeviceStatus(gattData = null) {
-        // Parse device states from provided GATT data or read fresh data if not provided
+        // Parse device states from provided GATT data 
         if (gattData) {
             this.parseDeviceStates(gattData);
-        } else {
-            // Read GATT characteristics for LED states and IMU state
-            this.zmqClient.sendRequest('optogrid.gattread')
-                .then(response => {
-                    this.parseDeviceStates(response);
-                })
-                .catch(error => {
-                    this.log(`Failed to read device states: ${error}`);
-                });
-        }
+        } 
         
         // Read battery voltage
         this.readBatteryVoltage();
@@ -715,7 +749,7 @@ class OptoGridApp {
     }
     
     
-    parseAndPopulateGattTable(csvData) {
+    parseAndPopulateGattTable(csvData, init = false) {
         this.elements.gattTableBody.innerHTML = '';
         
         try {
@@ -723,7 +757,7 @@ class OptoGridApp {
             const lines = csvData.trim().split('\n');
             
             // Skip header line (Service,Characteristic,UUID,Value,Unit)
-            // Table displays: Parameter | Value | Write Value | Unit
+            // Table displays: Parameter | Current Value | Write Value | Unit
             // (Service column omitted, Characteristic becomes Parameter)
             const dataLines = lines.slice(1);
             
@@ -733,7 +767,7 @@ class OptoGridApp {
                 // Parse CSV line
                 const columns = line.split(',');
                 if (columns.length >= 5) {
-                    const service = columns[0].trim();
+                    const service = columns[0].trim(); //Intentionally not used in table display
                     const characteristic = columns[1].trim();
                     const uuid = columns[2].trim();
                     const value = columns[3].trim();
@@ -759,9 +793,9 @@ class OptoGridApp {
                     paramCell.textContent = characteristic;
                     row.appendChild(paramCell);
                     
-                    // Value cell
+                    // Value cell - display arrays with readable formatting
                     const valueCell = document.createElement('td');
-                    valueCell.textContent = value;
+                    valueCell.textContent = this.formatArrayValue(value);
                     row.appendChild(valueCell);
                     
                     // Write value cell (empty for now, could be made editable)
@@ -769,7 +803,12 @@ class OptoGridApp {
                     writeCell.textContent = '';
                     // Make certain characteristics writable
                     if (this.isWritableCharacteristic(characteristic)) {
-                        writeCell.textContent = value; // Use current value as default
+                        if (init) {
+                            writeCell.textContent = ' '; // Start with 
+                        }   
+                        else {
+                        writeCell.textContent = this.formatArrayValue(value); // Use current value as default
+                        }
                         writeCell.classList.add('writable-cell');
                         writeCell.setAttribute('data-uuid', uuid); // Store UUID for writing
                     }
@@ -778,9 +817,6 @@ class OptoGridApp {
                     // Unit cell (fix Pulse Width unit)
                     const unitCell = document.createElement('td');
                     let displayUnit = unit;
-                    if (characteristic === 'Pulse Width') {
-                        displayUnit = 'ms'; // Override unit for Pulse Width
-                    }
                     unitCell.textContent = displayUnit;
                     row.appendChild(unitCell);
                     
@@ -797,6 +833,31 @@ class OptoGridApp {
         }
     }
     
+    // Helper method to format array values for display
+    formatArrayValue(value) {
+        // If value contains spaces, format as readable array
+        if (value.includes(' ')) {
+            const arr = value.split(' ').map(v => v.trim());
+            return arr.length > 1 ? `${arr.join(', ')}` : value;
+        }
+        return value;
+    }
+
+    // Characteristics that can be arrays (when sequence_length >= 2)
+    isArrayCapableCharacteristic(charName) {
+        const arrayCapableChars = [
+            'LED Selection',
+            'Duration', 
+            'Period',
+            'Pulse Width',
+            'Amplitude',
+            'PWM Frequency',
+            'Ramp Up Time',
+            'Ramp Down Time'
+        ];
+        return arrayCapableChars.includes(charName);
+    }
+
     isWritableCharacteristic(charName) {
         // Define which characteristics are writable
         const writableChars = [
@@ -821,28 +882,115 @@ class OptoGridApp {
         if (!cell.classList.contains('writable-cell')) return;
         
         const currentValue = cell.textContent;
-        const newValue = prompt('Enter new value:', currentValue);
+        const row = cell.closest('tr');
+        const charCell = row.querySelector('td:first-child');
+        const charName = charCell.textContent.trim();
+        
+        let prompt_text = 'Enter new value:';
+        if (this.isArrayCapableCharacteristic(charName)) {
+            prompt_text = 'Enter value(s) - single value or comma/space-separated for array:';
+        }
+        
+        const newValue = prompt(prompt_text, currentValue);
         
         if (newValue !== null && newValue !== currentValue) {
-            cell.textContent = newValue;
-            this.log(`Set write value: ${newValue}`);
+            // Normalize input: support both comma and space separators
+            const normalizedValue = this.normalizeArrayInput(newValue);
+            cell.textContent = this.formatArrayValue(normalizedValue);
+            this.log(`Set write value for ${charName}: ${newValue}`);
             
-            // Check if this is the LED Selection characteristic
-            const row = cell.closest('tr');
-            const charCell = row.querySelector('td:first-child');
-            if (charCell && charCell.textContent.trim() === 'LED Selection') {
-                // Update the brain map visualization and internal value
+            // Special handling for Sequence Length changes
+            if (charName === 'Sequence Length') {
                 try {
-                    this.ledSelectionValue = BigInt(newValue);
+                    const newSequenceLength = parseInt(normalizedValue);
+                    if (newSequenceLength > 0) {
+                        this.populateArrayWriteCells(newSequenceLength);
+                        this.log(`Sequence length set to ${newSequenceLength}, write values updated`);
+                    }
+                    else {
+                        // populate with empty cells
+                        this.populateArrayWriteCells(0);
+                    }
+                } catch (error) {
+                    this.log(`Error processing Sequence Length change: ${error}`);
+                }
+            }
+
+            // Update brain map if LED Selection changed
+            if (charName === 'LED Selection') {
+                try {
+                    // Handle both single value and array
+                    const lastValue = this.getLastArrayValue(newValue);
+                    this.ledSelectionValue = BigInt(lastValue);
+   
                     this.brainMap.updateLedSelection(this.ledSelectionValue);
-                    this.log(`LED Selection updated from GATT table: ${this.ledSelectionValue}`);
+                    this.log(`LED Selection updated: ${this.ledSelectionValue}`);
                 } catch (error) {
                     this.log(`Error parsing LED Selection value: ${error}`);
                 }
             }
         }
     }
-    
+
+    // Helper: Normalize input to space-separated format (converts commas to spaces)
+    normalizeArrayInput(value) {
+        // If contains commas, convert to space-separated
+        if (value.includes(',')) {
+            return value.split(',').map(v => v.trim()).join(' ');
+        }
+        // If contains multiple spaces, clean them up
+        return value.trim().replace(/\s+/g, ' ');
+    }
+
+    // Helper: Get first value from potentially multi-value string
+    getFirstArrayValue(value) {
+        const separator = value.includes(' ') ? ' ' : ',';
+        return value.split(separator)[0].trim();
+    }
+
+    // Helper: Get last value from potentially multi-value string
+    getLastArrayValue(value) {
+        // Handle both space and comma-separated values
+        const separator = value.includes(',') ? ',' : ' ';
+        const values = value.split(separator).map(v => v.trim()).filter(v => v !== '');
+        return values.length > 0 ? values[values.length - 1] : value;
+    }
+
+    // Helper: Populate write cells when Sequence Length changes
+    populateArrayWriteCells(sequenceLength) {
+        const rows = this.elements.gattTableBody.querySelectorAll('tr');
+        rows.forEach(row => {
+            const charCell = row.querySelector('td:first-child');
+            if (!charCell) return;
+            
+            const charName = charCell.textContent.trim();
+            
+            // Skip non-array-capable characteristics and Sequence Length itself
+            if (!this.isArrayCapableCharacteristic(charName) || charName === 'Sequence Length') {
+                return;
+            }
+            
+            // Get the current value cell
+            const valueCell = row.querySelector('td:nth-child(2)');
+            if (!valueCell) return;
+            
+            const currentValue = valueCell.textContent.trim();
+            
+            // Extract first value from current value (could be single or array)
+            const firstValue = this.getFirstArrayValue(currentValue);
+            
+            // Create array with n copies of first value
+            const arrayValuesStr = Array(sequenceLength).fill(firstValue).join(' ');
+            
+            // Update write cell
+            const writeCell = row.querySelector('td:nth-child(3)');
+            if (writeCell && writeCell.classList.contains('writable-cell')) {
+                writeCell.textContent = this.formatArrayValue(arrayValuesStr);
+                this.log(`Updated ${charName} write value to: ${arrayValuesStr}`);
+            }
+        });
+    }
+        
     // Handle ZMQ PUB messages from backend
     handleZMQMessage(topic, data) {
         try {
@@ -902,16 +1050,22 @@ class OptoGridApp {
         rows.forEach(row => {
             const charCell = row.querySelector('td:first-child');
             if (charCell && charCell.textContent.trim() === 'LED Selection') {
-                // Update the current value cell (second column)
-                const valueCell = row.querySelector('td:nth-child(2)');
-                if (valueCell) {
-                    valueCell.textContent = this.ledSelectionValue.toString();
-                }
-                
-                // Update the write value cell (third column) if it exists
+                // Update write cell only - replace last value with current LED selection
                 const writeCell = row.querySelector('td:nth-child(3)');
                 if (writeCell && writeCell.classList.contains('writable-cell')) {
-                    writeCell.textContent = this.ledSelectionValue.toString();
+                    const currentWriteValue = writeCell.textContent.trim();
+                    
+                    // If it's an array, replace last value; if single, just update it
+                    if (currentWriteValue.includes(' ') || currentWriteValue.includes(',')) {
+                        const separator = currentWriteValue.includes(' ') ? ' ' : ',';
+                        const values = currentWriteValue.split(separator).map(v => v.trim());
+                        values[values.length - 1] = String(this.ledSelectionValue); // Replace last value
+                        writeCell.textContent = values.join(' ');
+                    } else {
+                        // Single value - just update it
+                        writeCell.textContent = String(this.ledSelectionValue);
+                    }
+
                 }
             }
         });

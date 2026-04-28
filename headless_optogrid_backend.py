@@ -578,6 +578,17 @@ class HeadlessOptoGridClient:
                 char_name = UUID_NAME_MAP.get(uuid, "Unknown Characteristic")
                 return f"{char_name}: {value}"
             else:
+                
+                 # First, read sequence_length to determine if values are arrays
+                sequence_length = 1
+                try:
+                    seq_len_str = await self.read_characteristic("56781600-5678-1234-1234-5678abcdeff0")
+                    sequence_length = int(seq_len_str)
+                    self.logger.info(f"Sequence length: {sequence_length}")
+                except Exception as e:
+                    self.logger.warning(f"Could not read sequence_length, defaulting to 1: {e}")
+                    sequence_length = 1
+                
                 # Read all GATT characteristics - only Opto Control Service plus LED/IMU states
                 gatt_table = []
                 gatt_table.append("Service,Characteristic,UUID,Value,Unit")
@@ -588,16 +599,33 @@ class HeadlessOptoGridClient:
                     ("56781601-5678-1234-1234-5678abcdeff0", "LED Selection", "bitmap"),
                     ("56781602-5678-1234-1234-5678abcdeff0", "Duration", "ms"),
                     ("56781603-5678-1234-1234-5678abcdeff0", "Period", "ms"),
-                    ("56781604-5678-1234-1234-5678abcdeff0", "Pulse Width", "us"),
+                    ("56781604-5678-1234-1234-5678abcdeff0", "Pulse Width", "ms"),
                     ("56781605-5678-1234-1234-5678abcdeff0", "Amplitude", "%"),
                     ("56781606-5678-1234-1234-5678abcdeff0", "PWM Frequency", "Hz"),
                     ("56781607-5678-1234-1234-5678abcdeff0", "Ramp Up Time", "ms"),
                     ("56781608-5678-1234-1234-5678abcdeff0", "Ramp Down Time", "ms")
                 ]
                 
+                # Array-capable characteristics (all except Sequence Length)
+                array_capable_uuids = {
+                    "56781601-5678-1234-1234-5678abcdeff0",  # LED Selection
+                    "56781602-5678-1234-1234-5678abcdeff0",  # Duration
+                    "56781603-5678-1234-1234-5678abcdeff0",  # Period
+                    "56781604-5678-1234-1234-5678abcdeff0",  # Pulse Width
+                    "56781605-5678-1234-1234-5678abcdeff0",  # Amplitude
+                    "56781606-5678-1234-1234-5678abcdeff0",  # PWM Frequency
+                    "56781607-5678-1234-1234-5678abcdeff0",  # Ramp Up Time
+                    "56781608-5678-1234-1234-5678abcdeff0"   # Ramp Down Time
+                }
+                
                 for char_uuid, char_name, unit in opto_control_chars:
                     try:
-                        value = await self.read_characteristic(char_uuid)
+                        # For array-capable characteristics with sequence_length > 1, decode as array
+                        if char_uuid in array_capable_uuids and sequence_length > 1:
+                            value = await self.read_characteristic_array(char_uuid, sequence_length)
+                        else:
+                            value = await self.read_characteristic(char_uuid)
+                        
                         service_name = "Opto Control" if char_uuid == opto_control_chars[0][0] else ""
                         gatt_table.append(f"{service_name},{char_name},{char_uuid},{value},{unit}")
                     except Exception as e:
@@ -623,6 +651,30 @@ class HeadlessOptoGridClient:
         except Exception as e:
             self.logger.error(f"GATT read error: {e}")
             return f"GATT read failed: {str(e)}"
+
+    async def read_characteristic_array(self, uuid: str, array_length: int) -> str:
+        """Read an array characteristic - decode each element separately"""
+        try:
+            raw_bytes = await self.client.read_gatt_char(uuid)
+            
+            # Get the byte size for a single element by encoding a dummy value
+            single_encoded = encode_value(uuid, "0")
+            element_size = len(single_encoded)
+            
+            decoded_elements = []
+            for i in range(array_length):
+                start_idx = i * element_size
+                end_idx = start_idx + element_size
+                element_bytes = raw_bytes[start_idx:end_idx]
+                decoded_element = decode_value(uuid, element_bytes)
+                decoded_elements.append(decoded_element)
+            
+            # Return as comma-separated string
+            return " ".join(decoded_elements)
+            
+        except Exception as e:
+            self.logger.error(f"Error reading array characteristic {uuid}: {e}")
+            raise
 
     async def setup_notifications(self):
         """Setup BLE notifications"""
@@ -1255,18 +1307,37 @@ class HeadlessOptoGridClient:
                 "ramp_down": "56781608-5678-1234-1234-5678abcdeff0"
             }
             
+            # Write sequence_length first to establish array size
+            if "sequence_length" in program_data and "sequence_length" in opto_char_map:
+                uuid = opto_char_map["sequence_length"]
+                value = program_data["sequence_length"]
+                encoded_value = encode_value(uuid, str(value))
+                await self.client.write_gatt_char(uuid, encoded_value)
+                self.logger.info(f"Written sequence_length: {value}")
+            
+            # Write remaining characteristics
             for setting_name, value in program_data.items():
+                if setting_name == "sequence_length":
+                    continue  # Already written
+                    
                 if setting_name in opto_char_map:
                     uuid = opto_char_map[setting_name]
-                    encoded_value = encode_value(uuid, str(value))
-                    await self.client.write_gatt_char(uuid, encoded_value)
-                    self.logger.info(f"Written {setting_name}: {value}")
                     
-                    if setting_name == "led_selection":
-                        try:
-                            self.led_selection_value = int(value)
-                        except ValueError:
-                            pass
+                    # Handle both single values and arrays
+                    if isinstance(value, (list, tuple)):
+                        # Encode array: encode each element separately and concatenate
+                        encoded_value = bytearray()
+                        for v in value:
+                            element_encoded = encode_value(uuid, str(v))
+                            encoded_value.extend(element_encoded)
+                        self.logger.info(f"Written {setting_name}: {value} (array of {len(value)} elements)")
+                    else:
+                        # Single value
+                        encoded_value = encode_value(uuid, str(value))
+                        self.logger.info(f"Written {setting_name}: {value}")
+                    
+                    await self.client.write_gatt_char(uuid, bytes(encoded_value))
+                    
             
             return "Opto Programmed"
         except Exception as e:
