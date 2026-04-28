@@ -664,6 +664,9 @@ class OptoGridApp {
         
         // Read uLED check
         this.readuLEDCheck();
+
+        // Sync LED selection from GATT data to brainMap
+        this.syncLedSelectionFromGattData(gattData);
     }
     
     parseDeviceStates(csvData) {
