@@ -3,6 +3,7 @@
 /data/*.parquet
 /data/*.asv
 /data/*.mp4
+/data/IMU_session/
 *.img
 /bak/
 *.log
