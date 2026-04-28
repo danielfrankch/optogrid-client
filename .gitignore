@@ -2,6 +2,7 @@
 /optogrid-env/
 /data/*.parquet
 /data/*.asv
+/data/*.mp4
 *.img
 /bak/
 *.log

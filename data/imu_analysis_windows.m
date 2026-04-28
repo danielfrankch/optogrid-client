@@ -48,7 +48,9 @@ df = [ ...
     peh(:, {'StartTime','States'}) ...
 ];
 
-df = df(~cellfun('isempty', df.hit), :);
+% % Remove force trial
+% df = df(~cellfun('isempty', df.hit), :);
+df = df(~cellfun('isempty', df.choice), :);
 
 
 
@@ -63,9 +65,18 @@ for i = 1:height(df)
 
     df.cue_time(i) = States.settleIn_Sound_opto(1); % cue time = opto sync time
 
-    A = States.choiceMade_1(1);
-    B = States.choiceMade_2(1);
-    df.choiceMade(i) = min(A,B); % choiceMade time, which ever choice comes first, inclusive nan
+    try
+        A = States.choiceMade_1(1);
+    catch 
+        A = NaN;
+    end
+    try
+        B = States.choiceMade_2(1);
+    catch 
+        B = NaN;
+    end
+
+    df.choiceMade(i) = min([A,B]); % choiceMade time, which ever choice comes first, inclusive nan
 
     df.ITI_begin(i) = States.ITI(1); % Take the time of entry to ITI state
 end
@@ -161,8 +172,8 @@ for n = 1:height(df)% loop through all included trials
         IMU_smooth(:,j) = table(movmean(table2array(IMU(:,j)), windowSize));
     end
     
-    before_time = 1;
-    after_time = 1;
+    before_time = 0.25;
+    after_time = 3;
     sync_sample = IMU_smooth.sample(find(IMU_smooth.sync == 2^16));
     sync_sample = sync_sample(1);
     poke_sample = sync_sample + round(fs*(df.choiceMade(n) - df.cue_time(n)));
@@ -171,8 +182,8 @@ for n = 1:height(df)% loop through all included trials
     relative_ITI_sample = round(fs*(df.ITI_begin(n) - df.settleIn(n)));
     relative_ITI_sample_all = [relative_ITI_sample_all;relative_ITI_sample];
 
-    start_sample = (poke_sample - before_time*fs); % Starts on a bit before start poke
-    end_sample =  poke_sample + after_time*fs;
+    start_sample = (sync_sample - before_time*fs); % Starts on a bit before start poke
+    end_sample =  sync_sample + after_time*fs;
     % end_sample =  sync_sample - round(fs*(df.cue_time(n) - df.choiceMade(n)))+after_time*fs; % Ends a bit after choice
     a = find(IMU_smooth.sample == start_sample);
     b = find(IMU_smooth.sample == end_sample);

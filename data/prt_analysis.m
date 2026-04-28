@@ -126,3 +126,65 @@ end
 
 hold off
 
+%% Analysis on one animal
+dff = df(string(df.subjid)=="COS-M-0164", :);
+% dff = dff( ...
+%     datetime(dff.trialtime,'InputFormat','yyyy-MM-dd HH:mm:ss.SSSS') ...
+%     < datetime(2026,3,27), :);
+%
+values = dff.led_selection;
+hitVals = dff.hit;
+
+[uniqueVals, ~, idx] = unique(values);
+
+% Count occurrences
+counts = accumarray(idx, 1);
+
+% Mean of hit per group
+meanHit = accumarray(idx, hitVals, [], @mean);
+
+% Combine into table
+result = table(uniqueVals, counts, meanHit)
+
+% Psychometric plot
+
+% Compute difference variable
+dff.dEV = dff.Aev - dff.Cev;
+
+% Logical for TopL choice
+dff.choose_lottery = string(dff.firstChoice) == "BotL";
+
+% Plot Psycho curve
+c = ["k","b","r","m","b","r"];
+
+XPos = [0.1,0.1,0.4,0.6,0.7];
+YPos = [0.1,0.6,0.1,0.6,0.1];
+Opto = ["Sham","V1","RSC","M2","S1","mPFC"];
+for i = 2:6
+    ax = draw.jaxes;
+    ax.Position = [XPos(i-1) YPos(i-1) 0.2 0.25];
+    hold on
+    inc = string(dff.led_selection) == uniqueVals{1};
+    % [bx,by,be] = stats.binned(round(dff.dEV(inc)), dff.choose_lottery(inc),'n_bins',4);
+    [bx,by,be] = stats.binned(round(dff.dEV(inc)), dff.choose_lottery(inc),'bin_e',[unique(round(dff.dEV(inc)))-0.5;max(unique(round(dff.dEV(inc))))+0.5]);
+    bx = unique(round(dff.dEV(inc)));
+    draw.errorplot(ax,bx,by,be,'Color',c(1));
+    inc = string(dff.led_selection) == uniqueVals{i};
+    % [bx,by,be] = stats.binned(round(dff.dEV(inc)), dff.choose_lottery(inc),'n_bins',4);
+    [bx,by,be] = stats.binned(round(dff.dEV(inc)), dff.choose_lottery(inc),'bin_e',[unique(round(dff.dEV(inc)))-0.5;max(unique(round(dff.dEV(inc))))+0.5]);
+    bx = unique(round(dff.dEV(inc)));
+    draw.errorplot(ax,bx,by,be,'Color',c(i));
+    yline(0.5,'--')
+    % ax.YLim= [-0.2,1.2];
+    % ax.XLim = [-1,4];
+    ax.XTick = unique(round(dff.dEV(inc)));
+    xlabel('delta EV');
+    ylabel('P(Lottery)');
+    title(uniqueVals{i})
+    lgd = legend("","Sham","",Opto(i));
+    lgd.Position(2) = lgd.Position(2) + 0.15;  % move upward
+
+end
+sgtitle('COS-M-0164, Optogrid Results')
+grid on;
+hold off;

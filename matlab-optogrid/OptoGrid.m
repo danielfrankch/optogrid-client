@@ -24,7 +24,15 @@ classdef OptoGrid < handle
 
             % Add JeroMQ to Java class path
             [classDir, ~, ~] = fileparts(which('OptoGrid'));
-            javaaddpath(fullfile(classDir, 'jeromq-0.5.2.jar'));
+            jarPath = fullfile(classDir, 'jeromq-0.5.2.jar');
+
+            % Get current dynamic Java classpath
+            cp = javaclasspath('-dynamic');
+            
+            % Add only if not already present
+            if ~any(strcmp(cp, jarPath))
+                javaaddpath(jarPath);
+            end
 
             % Initialize ZMQ socket using zmqhelper
             obj.socket = net.zmqhelper('type', 'req', 'url', obj.ZMQSocket);
