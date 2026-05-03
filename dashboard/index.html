@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OptoGrid BLE Browser</title>
+    <title>OptoGrid App</title>
     <link rel="stylesheet" href="styles.css">
     
     <!-- Three.js Library -->
@@ -13,7 +13,7 @@
 <body>
     <div class="app-container">
         <header class="app-header">
-            <h1>OptoGrid BLE Browser</h1>
+            <h1>OptoGrid App</h1>
         </header>
         
         <div class="main-content">
@@ -30,13 +30,6 @@
                             </select>
                             <button id="connect-button" class="control-button primary">Connect</button>
                             
-                            <div class="debug-container">
-                                <label class="debug-checkbox">
-                                    <input type="checkbox" id="debug-button">
-                                    <span class="checkmark"></span>
-                                    Debug Mode
-                                </label>
-                            </div>
                         </div>
                         
                         <!-- IMU 3D Display -->
@@ -113,7 +106,7 @@
                 
                 <!-- IMU Data Panel -->
                 <div class="imu-panel">
-                    <h3>IMU Data (last 200 samples):</h3>
+                    <h3>IMU Raw Data (most recent 500 samples):</h3>
                     <div class="imu-plot-widget">
                         <canvas id="imu-plot-canvas" width="450" height="350"></canvas>
                     </div>

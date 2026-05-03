@@ -20,11 +20,14 @@ class IMUVisualization {
                 gyroX: [],
                 gyroY: [],
                 gyroZ: [],
+                magX: [],
+                magY: [],
+                magZ: [],
                 timestamps: []
             }
         };
         
-        this.maxSamples = 200;
+        this.maxSamples = 500;
         
         // Three.js setup for 3D visualization
         if (this.canvas3d) {
@@ -281,7 +284,7 @@ class IMUVisualization {
         this.imuData.pitch = pitch;
         this.imuData.yaw = yaw;
         
-        if (imuValues && imuValues.length >= 6) {
+        if (imuValues && imuValues.length >= 9) {
             const timestamp = Date.now();
             
             // Add new samples
@@ -291,6 +294,9 @@ class IMUVisualization {
             this.imuData.samples.gyroX.push(imuValues[3]);
             this.imuData.samples.gyroY.push(imuValues[4]);
             this.imuData.samples.gyroZ.push(imuValues[5]);
+            this.imuData.samples.magX.push(imuValues[6]);
+            this.imuData.samples.magY.push(imuValues[7]);
+            this.imuData.samples.magZ.push(imuValues[8]);
             this.imuData.samples.timestamps.push(timestamp);
             
             // Limit to maxSamples
@@ -462,23 +468,31 @@ class IMUVisualization {
         this.ctxPlot.fillRect(0, 0, this.plotCanvasWidth, this.plotCanvasHeight);
         
         const margin = 40;
-        const plotWidth = this.plotCanvasWidth - 2 * margin;
-        const plotHeight = (this.plotCanvasHeight - 3 * margin) / 2;
+        const plotWidth = (this.plotCanvasWidth/3) - 2 * margin;
+        const plotHeight = this.plotCanvasHeight - 2 * margin;
         
         // Draw accelerometer data
         this.drawSubPlot(
             margin, margin, plotWidth, plotHeight,
             'Accelerometer (g)',
             ['accelX', 'accelY', 'accelZ'],
-            ['#e74c3c', '#2ecc71', '#3498db']
+            ['#ff0000', '#00a000', '#0000ff']
         );
         
         // Draw gyroscope data
         this.drawSubPlot(
-            margin, margin * 2 + plotHeight, plotWidth, plotHeight,
+            margin * 3 + plotWidth, margin, plotWidth, plotHeight,
             'Gyroscope (°/s)',
             ['gyroX', 'gyroY', 'gyroZ'],
-            ['#f39c12', '#9b59b6', '#1abc9c']
+            ['#ff0000', '#00a000', '#0000ff']
+        );
+
+        // Draw magnetometer data
+        this.drawSubPlot(
+            margin * 5 + 2*plotWidth, margin, plotWidth, plotHeight,
+            'Magnetometer (μT)',
+            ['magX', 'magY', 'magZ'],
+            ['#ff0000', '#00a000', '#0000ff']
         );
     }
     
@@ -497,8 +511,8 @@ class IMUVisualization {
         this.ctxPlot.fillText(title, x, y - 5);
         
         // Find data range
-        let minVal = Infinity;
-        let maxVal = -Infinity;
+        let minVal = 0;
+        let maxVal = 0;
         
         dataKeys.forEach(key => {
             if (this.imuData.samples[key].length > 0) {
@@ -509,23 +523,20 @@ class IMUVisualization {
             }
         });
         
-        if (minVal === maxVal) {
-            minVal -= 1;
-            maxVal += 1;
+        // if (minVal === maxVal) {
+        //     minVal -= 1;
+        //     maxVal += 1;
+        // }
+
+        // Add padding (15% on each side) for white space
+        if (minVal !== 0 && maxVal !== 0) {
+            const paddingPercent = 0.15;
+            const padding = (maxVal - minVal) * paddingPercent;
+            minVal -= padding;
+            maxVal += padding;
         }
         
         const range = maxVal - minVal;
-        
-        // Draw grid lines
-        this.ctxPlot.strokeStyle = '#f8f9fa';
-        this.ctxPlot.lineWidth = 1;
-        for (let i = 1; i < 5; i++) {
-            const gridY = y + (height * i) / 5;
-            this.ctxPlot.beginPath();
-            this.ctxPlot.moveTo(x, gridY);
-            this.ctxPlot.lineTo(x + width, gridY);
-            this.ctxPlot.stroke();
-        }
         
         // Draw data lines
         dataKeys.forEach((key, index) => {
@@ -554,8 +565,8 @@ class IMUVisualization {
         this.ctxPlot.fillStyle = '#6c757d';
         this.ctxPlot.font = '10px Arial';
         this.ctxPlot.textAlign = 'right';
-        this.ctxPlot.fillText(maxVal.toFixed(2), x - 5, y + 5);
-        this.ctxPlot.fillText(minVal.toFixed(2), x - 5, y + height);
+        this.ctxPlot.fillText(maxVal.toFixed(1), x - 5, y + 5);
+        this.ctxPlot.fillText(minVal.toFixed(1), x - 5, y + height);
         
         // Draw legend
         dataKeys.forEach((key, index) => {

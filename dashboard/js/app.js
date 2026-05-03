@@ -42,7 +42,6 @@ class OptoGridApp {
             scanButton: document.getElementById('scan-button'),
             devicesCombo: document.getElementById('devices-combo'),
             connectButton: document.getElementById('connect-button'),
-            debugButton: document.getElementById('debug-button'),
             readButton: document.getElementById('read-button'),
             writeButton: document.getElementById('write-button'),
             triggerButton: document.getElementById('trigger-button'),
@@ -81,7 +80,6 @@ class OptoGridApp {
         // Device control buttons
         this.elements.scanButton.addEventListener('click', () => this.startScan());
         this.elements.connectButton.addEventListener('click', () => this.connectToDevice());
-        this.elements.debugButton.addEventListener('change', (e) => this.toggleDebugMode(e.target.checked));
         
         // Control buttons
         this.elements.readButton.addEventListener('click', () => this.readAllValues());
@@ -352,10 +350,6 @@ class OptoGridApp {
         this.elements.readLastStimButton.disabled = !enabled;
     }
     
-    // Control methods
-    toggleDebugMode(enabled) {
-        this.log(`Debug mode: ${enabled ? 'enabled' : 'disabled'}`);
-    }
     
     readAllValues() {
         this.log('Reading all values...');
@@ -888,7 +882,7 @@ class OptoGridApp {
         
         let prompt_text = 'Enter new value:';
         if (this.isArrayCapableCharacteristic(charName)) {
-            prompt_text = 'Enter value(s) - single value or comma/space-separated for array:';
+            prompt_text = 'Enter value(s) - single value or space-separated for array:';
         }
         
         const newValue = prompt(prompt_text, currentValue);
@@ -998,7 +992,7 @@ class OptoGridApp {
                 case 'IMU':
                     if (data.type === 'imu_update') {
                         // Update IMU visualization with roll, pitch, yaw
-                        this.imuVisualization.updateIMU(data.roll, data.pitch, data.yaw, null);
+                        this.imuVisualization.updateIMU(data.roll, data.pitch, data.yaw, data.raw_imu_data);
                         // Log IMU data occasionally (every 100th update to avoid spam)
                         // if (Math.random() < 0.01) { // 1% chance to log
                         //     this.log(`IMU Update - Roll: ${data.roll.toFixed(1)}°, Pitch: ${data.pitch.toFixed(1)}°, Yaw: ${data.yaw.toFixed(1)}°`);

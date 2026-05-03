@@ -765,7 +765,7 @@ class HeadlessOptoGridClient:
                 self.logger.debug(f"IMU Data: {imu_values_str}")
 
             # Process orientation using AHRS sensor fusion
-            smooth_roll, smooth_pitch, smooth_yaw = self.process_imu_orientation(imu_values)
+            smooth_roll, smooth_pitch, smooth_yaw, imu_values_head_coordinate_with_unit = self.process_imu_orientation(imu_values)
 
             if self.imu_counter % 30000 == 0:  # Log orientation every 30000th sample
                 self.logger.info(f"Orientation - Roll: {smooth_roll:.1f}°, Pitch: {smooth_pitch:.1f}°, Yaw: {smooth_yaw:.1f}°")
@@ -800,7 +800,7 @@ class HeadlessOptoGridClient:
                     self.flush_imu_buffer()
 
             # Publish orientation update via ZMQ PUB socket
-            self.publish_imu_data(smooth_roll, smooth_pitch, smooth_yaw)
+            self.publish_imu_data(smooth_roll, smooth_pitch, smooth_yaw, imu_values_head_coordinate_with_unit)
             
 
 
@@ -826,6 +826,9 @@ class HeadlessOptoGridClient:
         acc_world = np.array([acc[0], -acc[1], -acc[2]])  
         gyr_world = np.array([gyr[0], -gyr[1], -gyr[2]])
         mag_world = np.array([mag[1], -mag[0], -mag[2]])  
+        
+        # imu_values_world, 
+        imu_values_head_coordinate_with_unit = acc_world.tolist() + gyr_world.tolist() + mag_world.tolist()
 
         # Zero small gyro values
         gyro_noise_threshold = 5
@@ -886,7 +889,7 @@ class HeadlessOptoGridClient:
         self.last_pitch = smooth_pitch
         self.last_yaw = smooth_yaw
 
-        return smooth_roll, smooth_pitch, smooth_yaw
+        return smooth_roll, smooth_pitch, smooth_yaw, imu_values_head_coordinate_with_unit
 
     def load_magnetometer_calibration(self, device_name):
         """Load magnetometer calibration from device-specific CSV file"""
@@ -1344,7 +1347,7 @@ class HeadlessOptoGridClient:
             return f"Programming failed: {str(e)}"
 
     # Publishing IMU data
-    def publish_imu_data(self, roll, pitch, yaw):
+    def publish_imu_data(self, roll, pitch, yaw, raw_imu_data):
         """Publish IMU data to ZMQ PUB socket"""
         imu_message = {
             "type": "imu_update",
@@ -1352,6 +1355,7 @@ class HeadlessOptoGridClient:
             "roll": roll,
             "pitch": pitch, 
             "yaw": yaw,
+            "raw_imu_data": raw_imu_data
         }
         # Send as JSON string with topic prefix
         self.zmq_pub_socket.send_string(f"IMU {json.dumps(imu_message)}")
